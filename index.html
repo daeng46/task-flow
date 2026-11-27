@@ -112,7 +112,7 @@
                     <label for="login-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
                     <div class="relative">
                         <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" id="login-username" required placeholder="Masukkan Username" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
+                        <input type="text" id="login-username" required autocomplete="username" placeholder="Masukkan Username" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
                     </div>
                 </div>
 
@@ -120,7 +120,7 @@
                     <label for="login-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="password" id="login-password" required placeholder="Masukkan Password" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
+                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Masukkan Password" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
                     </div>
                 </div>
 
@@ -130,14 +130,14 @@
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.2.3</span>
+                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.2.8</span>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- ==================== MODAL: TAMBAH / EDIT MASTER DATA ==================== -->
-    <div id="master-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="master-modal" data-modal-backdrop="closeMasterModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <h3 id="master-modal-title" class="text-base font-bold text-slate-800">Tambah Master Data</h3>
@@ -182,11 +182,16 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1">Username Login <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-username" placeholder="Username..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1">Password Login <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-password" placeholder="Password..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                            <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1">Password Login <span id="master-password-required-mark" class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <input type="password" id="master-input-password" autocomplete="new-password" placeholder="Password..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg pl-3 pr-9 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                                <button type="button" onclick="toggleMasterPasswordVisibility()" aria-label="Tampilkan atau sembunyikan password" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                                    <i id="master-password-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -225,7 +230,7 @@
     </div>
 
     <!-- ==================== MODAL: KONFIRMASI HAPUS ==================== -->
-    <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="confirm-modal" data-modal-backdrop="closeConfirmModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 fade-in">
             <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
                 <i data-lucide="alert-triangle" class="w-6 h-6"></i>
@@ -242,7 +247,7 @@
     </div>
 
     <!-- ==================== MODAL: MY PROFILE ==================== -->
-    <div id="profile-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="profile-modal" data-modal-backdrop="closeProfileModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden fade-in">
             <div class="px-6 py-5 bg-[#090B16] text-white flex items-center justify-between border-b border-slate-800">
                 <div class="flex items-center gap-3.5 min-w-0">
@@ -294,7 +299,7 @@
     </div>
 
     <!-- ==================== MODAL: TAMBAH / EDIT TASK ==================== -->
-    <div id="task-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="task-modal" data-modal-backdrop="closeTaskModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <h3 id="task-modal-title" class="text-base font-bold text-slate-800">Tambah Task Baru</h3>
@@ -347,7 +352,7 @@
                             <label for="task-input-progress" class="block text-xs font-semibold text-slate-700">Progress (%)</label>
                             <span id="task-progress-label" class="text-xs font-bold text-indigo-600">0%</span>
                         </div>
-                        <input type="range" id="task-input-progress" min="0" max="100" step="5" value="0" oninput="document.getElementById('task-progress-label').textContent = this.value + '%'" class="w-full accent-indigo-600 mt-2 cursor-pointer">
+                        <input type="range" id="task-input-progress" min="0" max="100" step="5" value="0" oninput="onTaskProgressInput(this.value)" class="w-full accent-indigo-600 mt-2 cursor-pointer">
                     </div>
                 </div>
 
@@ -378,7 +383,7 @@
     <!-- ==================== MAIN APPLICATION SHELL ==================== -->
     <div id="app-shell" class="hidden w-full min-h-[100dvh] lg:h-[100dvh] flex flex-col lg:flex-row lg:overflow-hidden bg-slate-50">
         <!-- Mobile Sidebar Backdrop -->
-        <div id="mobile-sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-xs hidden lg:hidden"></div>
+        <div id="mobile-sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-[2px] hidden lg:hidden"></div>
 
         <!-- Sidebar -->
         <aside id="app-sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 shrink-0 bg-[#090B16] text-slate-300 flex flex-col border-r border-slate-800/80 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-out">
@@ -421,9 +426,9 @@
             </nav>
 
             <div class="p-4 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5 text-emerald-400 font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Sheet Terhubung
+                <span id="sidebar-sync-indicator" class="inline-flex items-center gap-1.5 text-emerald-400 font-medium">
+                    <span id="sidebar-sync-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="sidebar-sync-text">Sheet Terhubung</span>
                 </span>
                 <button type="button" onclick="syncWithGoogleSheets()" class="text-indigo-400 hover:text-indigo-300 font-semibold">Sync</button>
             </div>
@@ -444,6 +449,11 @@
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <button type="button" id="unsynced-retry-btn" onclick="retryUnsyncedOperations()" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-semibold transition-colors">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span id="unsynced-retry-label">Kirim Ulang</span>
+                    </button>
+
                     <span id="sync-status-pill" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">
                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
                         <span>Menyimpan ke Sheet...</span>
@@ -487,7 +497,7 @@
                 <section id="view-dashboard" class="space-y-4">
                     <!-- KPI Cards (Interactive Drill-Down) -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <div onclick="drillDownTasks('all')" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="all" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">Total Task</span>
                                 <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -501,7 +511,7 @@
                             </div>
                         </div>
 
-                        <div onclick="drillDownTasks('completed')" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-emerald-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="completed" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-emerald-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Completed</span>
                                 <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -515,7 +525,7 @@
                             </div>
                         </div>
 
-                        <div onclick="drillDownTasks('inprogress')" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="inprogress" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">In Progress</span>
                                 <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -529,7 +539,7 @@
                             </div>
                         </div>
 
-                        <div onclick="drillDownTasks('overdue')" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-rose-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="overdue" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-rose-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-semibold text-slate-500 group-hover:text-rose-600 transition-colors">Overdue</span>
                                 <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -642,13 +652,17 @@
                                 <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
                             </div>
 
-                            <!-- Baris 1: Kotak Pencarian, Tombol Reset & Tombol Tambah Task -->
+                            <!-- Baris 1: Kotak Pencarian, Toggle Filter Mobile, Tombol Reset & Tombol Tambah Task -->
                             <div class="flex flex-col sm:flex-row gap-2.5">
                                 <div class="flex-1 relative">
                                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="filter-search" oninput="tasksCurrentPage=1; renderTasksTable()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" class="lg:hidden inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors">
+                                        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                                        <span id="mobile-filter-toggle-label">Filter</span>
+                                    </button>
                                     <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                                         <span>Reset Filter</span>
@@ -661,7 +675,7 @@
                             </div>
 
                             <!-- Baris 2: Grid 6 Filter (Kategori, Priority, PIC, Status, Reference, Action Plan) -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                            <div id="tasks-filter-grid-wrapper" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
                                 <div>
                                     <label for="filter-kategori" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori</label>
                                     <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
@@ -708,7 +722,7 @@
                                 <thead id="tasks-table-head" class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                                     <tr class="text-[11px] uppercase tracking-wider text-slate-500">
                                         <th class="py-3 px-4 font-semibold bg-slate-50 rounded-tl-2xl">ID</th>
-                                        <th class="py-3 px-4 font-semibold bg-slate-50">Pekerjaan &amp; Kategori</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">Pekerjaan &amp; Detail</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">Priority</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">PIC</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">Target Date</th>
@@ -852,7 +866,7 @@
                             <div id="master-filter-grid" class="grid grid-cols-1 gap-2">
                                 <div class="relative">
                                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="master-filter-search" oninput="renderMasterTable()" placeholder="Cari data master..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                                    <input type="text" id="master-filter-search" oninput="onMasterSearchInput()" placeholder="Cari data master..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <select id="master-filter-role" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Role</option>
@@ -997,82 +1011,27 @@
 
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
-            // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.2.7',
-            // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
+            APP_VERSION: 'v1.2.8',
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
-            // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
             SESSION_TTL_MS: 6 * 60 * 60 * 1000
         };
 
-        // Hybrid Safe Storage (Mendukung Embed Google Sites / Sandboxed Iframe via IndexedDB, Cache API, Hash, Window.name, Cookie & Web Storage)
+        // Origin-Isolated Hybrid Safe Storage (Tanpa menyimpan token/cache di URL hash atau window.name)
         const SafeStorage = {
             _mem: {},
             _idbName: 'TaskFlowEmbedStore',
             _idbStore: 'kv',
             _cacheName: 'taskflow-session-v1',
-            _encodeBase64Url(str) {
+            _scrubLegacyUnsafeStorage() {
                 try {
-                    const bytes = new TextEncoder().encode(String(str));
-                    let bin = '';
-                    bytes.forEach(b => { bin += String.fromCharCode(b); });
-                    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-                } catch (e) {
-                    return '';
-                }
-            },
-            _decodeBase64Url(b64) {
-                try {
-                    let norm = String(b64).replace(/-/g, '+').replace(/_/g, '/');
-                    while (norm.length % 4) norm += '=';
-                    const bin = atob(norm);
-                    const bytes = new Uint8Array(bin.length);
-                    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-                    return new TextDecoder().decode(bytes);
-                } catch (e) {
-                    return null;
-                }
-            },
-            _readHashState() {
-                try {
-                    const hash = String(window.location.hash || '');
-                    const match = hash.match(/tf_s=([A-Za-z0-9\-_]+)/);
-                    if (!match) return {};
-                    const decoded = this._decodeBase64Url(match[1]);
-                    if (!decoded) return {};
-                    const parsed = JSON.parse(decoded);
-                    return (parsed && typeof parsed === 'object') ? parsed : {};
-                } catch (e) {
-                    return {};
-                }
-            },
-            _writeHashState(obj) {
-                try {
-                    const keys = Object.keys(obj || {});
-                    if (keys.length === 0) {
-                        if (window.location.hash && window.location.hash.includes('tf_s=')) {
-                            window.location.hash = '';
-                        }
-                        return;
-                    }
-                    const encoded = this._encodeBase64Url(JSON.stringify(obj));
-                    if (encoded) {
-                        window.location.hash = 'tf_s=' + encoded;
+                    if (window.location.hash && window.location.hash.includes('tf_s=')) {
+                        window.history.replaceState(null, '', window.location.pathname + window.location.search);
                     }
                 } catch (e) {}
-            },
-            _readWindowName() {
                 try {
                     if (typeof window.name === 'string' && window.name.startsWith('TF_STATE:')) {
-                        const parsed = JSON.parse(window.name.slice(9));
-                        return (parsed && typeof parsed === 'object') ? parsed : {};
+                        window.name = '';
                     }
-                } catch (e) {}
-                return {};
-            },
-            _writeWindowName(obj) {
-                try {
-                    window.name = 'TF_STATE:' + JSON.stringify(obj || {});
                 } catch (e) {}
             },
             _readCookie(key) {
@@ -1175,29 +1134,19 @@
                     return this._mem[key];
                 }
                 try {
-                    const lsVal = window.localStorage.getItem(key);
-                    if (lsVal !== null) {
-                        this._mem[key] = lsVal;
-                        return lsVal;
-                    }
-                } catch (e) {}
-                try {
                     const ssVal = window.sessionStorage.getItem(key);
                     if (ssVal !== null) {
                         this._mem[key] = ssVal;
                         return ssVal;
                     }
                 } catch (e) {}
-                const wn = this._readWindowName();
-                if (Object.prototype.hasOwnProperty.call(wn, key)) {
-                    this._mem[key] = wn[key];
-                    return wn[key];
-                }
-                const hs = this._readHashState();
-                if (Object.prototype.hasOwnProperty.call(hs, key)) {
-                    this._mem[key] = hs[key];
-                    return hs[key];
-                }
+                try {
+                    const lsVal = window.localStorage.getItem(key);
+                    if (lsVal !== null) {
+                        this._mem[key] = lsVal;
+                        return lsVal;
+                    }
+                } catch (e) {}
                 const ck = this._readCookie(key);
                 if (ck !== null) {
                     this._mem[key] = ck;
@@ -1208,17 +1157,9 @@
             setItem(key, value, persistInEmbed = false) {
                 const strVal = String(value);
                 this._mem[key] = strVal;
-                try { window.localStorage.setItem(key, strVal); } catch (e) {}
                 try { window.sessionStorage.setItem(key, strVal); } catch (e) {}
+                try { window.localStorage.setItem(key, strVal); } catch (e) {}
                 if (persistInEmbed) {
-                    const wn = this._readWindowName();
-                    wn[key] = strVal;
-                    this._writeWindowName(wn);
-
-                    const hs = this._readHashState();
-                    hs[key] = strVal;
-                    this._writeHashState(hs);
-
                     if (strVal.length <= 3200) {
                         this._writeCookie(key, strVal, Math.floor(APP_DEFAULT_CONFIG.SESSION_TTL_MS / 1000));
                     }
@@ -1227,37 +1168,28 @@
             },
             removeItem(key) {
                 delete this._mem[key];
-                try { window.localStorage.removeItem(key); } catch (e) {}
                 try { window.sessionStorage.removeItem(key); } catch (e) {}
-                const wn = this._readWindowName();
-                if (Object.prototype.hasOwnProperty.call(wn, key)) {
-                    delete wn[key];
-                    this._writeWindowName(wn);
-                }
-                const hs = this._readHashState();
-                if (Object.prototype.hasOwnProperty.call(hs, key)) {
-                    delete hs[key];
-                    this._writeHashState(hs);
-                }
+                try { window.localStorage.removeItem(key); } catch (e) {}
                 this._deleteCookie(key);
                 this._removeAsyncStore(key);
             },
             async hydrateKeys(keys) {
-                for (const k of keys) {
+                await Promise.all(keys.map(async (k) => {
                     if (this.getItem(k) === null) {
                         const asyncVal = await this._readAsyncStore(k);
                         if (asyncVal !== null) {
                             this.setItem(k, asyncVal, true);
                         }
                     }
-                }
+                }));
             }
         };
 
         const SESSION_STORAGE_KEYS = {
             TOKEN: 'taskflow_session_token',
             USER_PROFILE: 'taskflow_user_profile',
-            EXPIRES_AT: 'taskflow_session_expires_at'
+            EXPIRES_AT: 'taskflow_session_expires_at',
+            UNSYNCED_QUEUE: 'taskflow_unsynced_queue'
         };
 
         let db = JSON.parse(JSON.stringify(EMPTY_DB));
@@ -1277,6 +1209,130 @@
         let reportTrendChart = null;
         let reportCategoryChart = null;
         let pendingSyncCount = 0;
+        let unsyncedQueue = [];
+        let activeView = 'dashboard';
+        let dirtyViews = {
+            dashboard: true,
+            tasks: true,
+            monitoring: true,
+            reports: true,
+            master: true
+        };
+        let tasksSearchTimer = null;
+        let masterSearchTimer = null;
+
+        function updateSidebarConnectionStatus(state = 'connected') {
+            const indicator = document.getElementById('sidebar-sync-indicator');
+            const dot = document.getElementById('sidebar-sync-dot');
+            const text = document.getElementById('sidebar-sync-text');
+            if (!indicator || !dot || !text) return;
+
+            if (state === 'syncing') {
+                indicator.className = 'inline-flex items-center gap-1.5 text-amber-400 font-medium';
+                dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+                text.textContent = 'Menyimpan...';
+            } else if (state === 'error') {
+                indicator.className = 'inline-flex items-center gap-1.5 text-rose-400 font-medium';
+                dot.className = 'w-2 h-2 rounded-full bg-rose-400';
+                text.textContent = 'Gagal Sinkron';
+            } else {
+                indicator.className = 'inline-flex items-center gap-1.5 text-emerald-400 font-medium';
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                text.textContent = 'Sheet Terhubung';
+            }
+        }
+
+        function loadUnsyncedQueue() {
+            try {
+                const raw = SafeStorage.getItem(SESSION_STORAGE_KEYS.UNSYNCED_QUEUE);
+                const parsed = raw ? JSON.parse(raw) : [];
+                unsyncedQueue = Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                unsyncedQueue = [];
+            }
+            updateUnsyncedBanner();
+        }
+
+        function saveUnsyncedQueue() {
+            if (unsyncedQueue.length > 0) {
+                SafeStorage.setItem(SESSION_STORAGE_KEYS.UNSYNCED_QUEUE, JSON.stringify(unsyncedQueue), true);
+            } else {
+                SafeStorage.removeItem(SESSION_STORAGE_KEYS.UNSYNCED_QUEUE);
+            }
+            updateUnsyncedBanner();
+        }
+
+        function enqueueUnsyncedOp(op) {
+            if (op.type === 'SAVE_TASK' || op.type === 'DELETE_TASK') {
+                unsyncedQueue = unsyncedQueue.filter(item => !(item.type === 'SAVE_TASK' || item.type === 'DELETE_TASK') || item.key !== op.key);
+            } else if (op.type === 'SYNC_SHEET') {
+                unsyncedQueue = unsyncedQueue.filter(item => item.type !== 'SYNC_SHEET' || item.key !== op.key);
+            }
+            unsyncedQueue.push(op);
+            saveUnsyncedQueue();
+            updateSidebarConnectionStatus('error');
+        }
+
+        function updateUnsyncedBanner() {
+            const btn = document.getElementById('unsynced-retry-btn');
+            const lbl = document.getElementById('unsynced-retry-label');
+            if (!btn || !lbl) return;
+            if (unsyncedQueue.length > 0) {
+                lbl.textContent = `${unsyncedQueue.length} Belum Tersinkron • Kirim Ulang`;
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        async function retryUnsyncedOperations() {
+            if (!gasUrl || !sessionToken || unsyncedQueue.length === 0) return;
+            showToast(`Mengirim ulang ${unsyncedQueue.length} perubahan ke Spreadsheet...`, 'info');
+            const snapshot = [...unsyncedQueue];
+            const remaining = [];
+            setPendingSync(1);
+
+            for (const op of snapshot) {
+                try {
+                    let payload = null;
+                    if (op.type === 'SAVE_TASK') {
+                        const latestTask = (db.Tasks || []).find(t => String(t.ID) === String(op.key)) || op.payload;
+                        payload = { action: 'SAVE_TASK', token: sessionToken, data: latestTask };
+                    } else if (op.type === 'DELETE_TASK') {
+                        payload = { action: 'DELETE_TASK', token: sessionToken, id: op.key };
+                    } else if (op.type === 'SYNC_SHEET') {
+                        payload = { action: 'SYNC_SHEET', token: sessionToken, sheetName: op.key, items: db[op.key] || op.payload || [] };
+                    }
+                    if (!payload) continue;
+
+                    const res = await fetch(gasUrl, {
+                        method: 'POST',
+                        cache: 'no-store',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+                    if (result.status !== 'success') {
+                        remaining.push(op);
+                    }
+                } catch (e) {
+                    remaining.push(op);
+                }
+            }
+
+            unsyncedQueue = remaining;
+            saveUnsyncedQueue();
+            setPendingSync(-1);
+
+            if (remaining.length === 0) {
+                refreshAuthSessionExpiry();
+                updateSidebarConnectionStatus('connected');
+                showToast('Seluruh perubahan berhasil disinkronkan ke Google Sheet!', 'success');
+            } else {
+                updateSidebarConnectionStatus('error');
+                showToast(`${remaining.length} perubahan masih gagal terkirim. Periksa koneksi Anda.`, 'error');
+            }
+        }
 
         function setPendingSync(delta) {
             pendingSyncCount = Math.max(0, pendingSyncCount + delta);
@@ -1286,8 +1342,10 @@
             }
             if (pendingSyncCount > 0) {
                 SafeStorage.setItem('taskflow_last_mutation_ts', String(Date.now()), true);
+                updateSidebarConnectionStatus('syncing');
             } else {
                 SafeStorage.removeItem('taskflow_last_mutation_ts');
+                updateSidebarConnectionStatus(unsyncedQueue.length > 0 ? 'error' : 'connected');
             }
         }
 
@@ -1406,10 +1464,13 @@
         function clearAuthSession() {
             sessionToken = '';
             currentUser = null;
+            unsyncedQueue = [];
             SafeStorage.removeItem(SESSION_STORAGE_KEYS.TOKEN);
             SafeStorage.removeItem(SESSION_STORAGE_KEYS.USER_PROFILE);
             SafeStorage.removeItem(SESSION_STORAGE_KEYS.EXPIRES_AT);
+            SafeStorage.removeItem(SESSION_STORAGE_KEYS.UNSYNCED_QUEUE);
             SafeStorage.removeItem('taskflow_cached_db');
+            updateUnsyncedBanner();
         }
 
         function restoreActiveSession() {
@@ -1428,6 +1489,7 @@
                 currentUser = null;
             }
             loadFromLocal();
+            loadUnsyncedQueue();
             return true;
         }
 
@@ -1598,7 +1660,7 @@
 
         async function fetchAuthorizedData(token, isBackgroundRefresh = false) {
             if (!gasUrl || !token) return false;
-            if (isBackgroundRefresh && pendingSyncCount > 0) return false;
+            if (isBackgroundRefresh && (pendingSyncCount > 0 || unsyncedQueue.length > 0)) return false;
 
             const lastMutationTs = Number(SafeStorage.getItem('taskflow_last_mutation_ts') || 0);
             if (isBackgroundRefresh && lastMutationTs > 0 && (Date.now() - lastMutationTs) < 8000) {
@@ -1613,7 +1675,7 @@
                     body: JSON.stringify({ action: 'GET_DATA', token, _ts: Date.now() })
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                if (isBackgroundRefresh && pendingSyncCount > 0) return false;
+                if (isBackgroundRefresh && (pendingSyncCount > 0 || unsyncedQueue.length > 0)) return false;
                 const result = await res.json();
 
                 if (result.status === 'success' && result.data) {
@@ -1624,6 +1686,7 @@
                     }
                     refreshAuthSessionExpiry();
                     saveToLocal();
+                    updateSidebarConnectionStatus(unsyncedQueue.length > 0 ? 'error' : 'connected');
                     return true;
                 }
 
@@ -1634,6 +1697,7 @@
                 }
                 return false;
             } catch (err) {
+                updateSidebarConnectionStatus('error');
                 if (!isBackgroundRefresh) {
                     showToast('Gagal mengambil data terbaru dari Google Spreadsheet.', 'error');
                 }
@@ -1646,7 +1710,8 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-shell').classList.remove('hidden');
             applyUserSession();
-            refreshAllViews();
+            updateSidebarConnectionStatus(unsyncedQueue.length > 0 ? 'error' : 'connected');
+            refreshAllViews(true);
             switchView('dashboard');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
@@ -1704,6 +1769,24 @@
             if (wrapper && !wrapper.contains(e.target)) {
                 closeProfileDropdown();
             }
+            // Tutup modal jika klik pada area backdrop di luar kotak dialog
+            if (e.target && e.target.dataset && e.target.dataset.modalBackdrop) {
+                const fnName = e.target.dataset.modalBackdrop;
+                if (typeof window[fnName] === 'function') {
+                    window[fnName]();
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeProfileDropdown();
+                closeTaskModal();
+                closeMasterModal();
+                closeProfileModal();
+                closeConfirmModal();
+                closeMobileSidebar();
+            }
         });
 
         function openProfileModal() {
@@ -1723,7 +1806,7 @@
             document.getElementById('profile-modal-task-stats').textContent = `${myDone} Completed / ${myTasks.length} Total`;
 
             modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
 
         function closeProfileModal() {
@@ -1743,6 +1826,15 @@
 
         function switchView(viewName) {
             closeMobileSidebar();
+
+            // RBAC Guard: Role Staff tidak diizinkan mengakses Monitoring Tim maupun Master Data
+            const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
+            if (isStaff && (viewName === 'monitoring' || viewName === 'master')) {
+                showToast('Akses terbatas: Halaman tersebut hanya tersedia untuk Manager atau Admin.', 'error');
+                viewName = 'dashboard';
+            }
+
+            activeView = viewName;
             const views = ['dashboard', 'tasks', 'monitoring', 'reports', 'master'];
             views.forEach(v => {
                 const el = document.getElementById(`view-${v}`);
@@ -1783,25 +1875,150 @@
             if (titleEl) titleEl.textContent = t;
             if (subEl) subEl.textContent = sub;
 
-            if (viewName === 'dashboard') renderDashboard();
-            if (viewName === 'tasks') {
+            if (viewName === 'dashboard') {
+                renderDashboard();
+                dirtyViews.dashboard = false;
+            } else if (viewName === 'tasks') {
                 renderTasksTable();
+                dirtyViews.tasks = false;
                 requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
+            } else if (viewName === 'monitoring') {
+                renderMonitoringView();
+                dirtyViews.monitoring = false;
+            } else if (viewName === 'reports') {
+                renderReportsView();
+                dirtyViews.reports = false;
+            } else if (viewName === 'master') {
+                switchMasterTab(currentMasterTab);
+                dirtyViews.master = false;
             }
-            if (viewName === 'monitoring') renderMonitoringView();
-            if (viewName === 'reports') renderReportsView();
-            if (viewName === 'master') switchMasterTab(currentMasterTab);
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function refreshAllViews() {
+        function refreshAllViews(forceAll = false) {
             populateFilterAndFormDropdowns();
-            renderDashboard();
-            renderTasksTable();
-            renderMonitoringView();
-            renderReportsView();
-            renderMasterTable();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            Object.keys(dirtyViews).forEach(k => { dirtyViews[k] = true; });
+
+            if (forceAll) {
+                renderDashboard();
+                renderTasksTable();
+                renderMonitoringView();
+                renderReportsView();
+                renderMasterTable();
+                Object.keys(dirtyViews).forEach(k => { dirtyViews[k] = false; });
+                return;
+            }
+
+            // Lazy View Rendering: hanya render ulang halaman yang sedang aktif
+            if (activeView === 'dashboard') {
+                renderDashboard();
+                dirtyViews.dashboard = false;
+            } else if (activeView === 'tasks') {
+                renderTasksTable();
+                dirtyViews.tasks = false;
+            } else if (activeView === 'monitoring') {
+                renderMonitoringView();
+                dirtyViews.monitoring = false;
+            } else if (activeView === 'reports') {
+                renderReportsView();
+                dirtyViews.reports = false;
+            } else if (activeView === 'master') {
+                renderMasterTable();
+                dirtyViews.master = false;
+            }
+        }
+
+        // Single-Pass Task Aggregator O(N)
+        function aggregateTasksStats(tasks, today) {
+            const byPic = new Map();
+            const byCategory = new Map();
+            const byPriority = new Map();
+            const byStatus = new Map();
+            const byMonth = new Map();
+
+            let total = 0;
+            let doneCount = 0;
+            let inProgressCount = 0;
+            let overdueCount = 0;
+            let totalProgressSum = 0;
+
+            for (let i = 0; i < tasks.length; i++) {
+                const t = tasks[i];
+                total++;
+                const done = isTaskCompleted(t);
+                const overdue = isTaskOverdue(t, today);
+                const prog = Number(t.Progress || 0);
+                totalProgressSum += prog;
+
+                if (done) doneCount++;
+                else inProgressCount++;
+                if (overdue) overdueCount++;
+
+                const picKey = String(t.PIC || '').trim().toLowerCase();
+                if (picKey) {
+                    let pStat = byPic.get(picKey);
+                    if (!pStat) {
+                        pStat = { total: 0, done: 0, inProgress: 0, overdue: 0, progSum: 0, activeTasks: [] };
+                        byPic.set(picKey, pStat);
+                    }
+                    pStat.total++;
+                    pStat.progSum += prog;
+                    if (done) pStat.done++;
+                    else {
+                        pStat.inProgress++;
+                        if (pStat.activeTasks.length < 3) pStat.activeTasks.push(t);
+                    }
+                    if (overdue) pStat.overdue++;
+                }
+
+                const catKey = String(t.Kategori || '').trim().toLowerCase();
+                if (catKey) {
+                    let cStat = byCategory.get(catKey);
+                    if (!cStat) {
+                        cStat = { total: 0, done: 0, byStatus: new Map() };
+                        byCategory.set(catKey, cStat);
+                    }
+                    cStat.total++;
+                    if (done) cStat.done++;
+                    const stKey = String(t.Status || '').trim().toLowerCase();
+                    if (stKey) {
+                        cStat.byStatus.set(stKey, (cStat.byStatus.get(stKey) || 0) + 1);
+                    }
+                }
+
+                const prioKey = String(t.Priority || '').trim().toLowerCase();
+                if (prioKey) {
+                    byPriority.set(prioKey, (byPriority.get(prioKey) || 0) + 1);
+                }
+
+                const stGlobalKey = String(t.Status || '').trim().toLowerCase();
+                if (stGlobalKey) {
+                    byStatus.set(stGlobalKey, (byStatus.get(stGlobalKey) || 0) + 1);
+                }
+
+                const iso = normalizeDateISO(t.Tanggal) || normalizeDateISO(t.TargetDate) || today;
+                const ym = iso.slice(0, 7);
+                let mStat = byMonth.get(ym);
+                if (!mStat) {
+                    mStat = { total: 0, done: 0 };
+                    byMonth.set(ym, mStat);
+                }
+                mStat.total++;
+                if (done) mStat.done++;
+            }
+
+            return {
+                total,
+                doneCount,
+                inProgressCount,
+                overdueCount,
+                totalProgressSum,
+                byPic,
+                byCategory,
+                byPriority,
+                byStatus,
+                byMonth
+            };
         }
 
         function renderMonitoringView() {
@@ -1812,6 +2029,7 @@
             const pics = db.PIC || [];
             const tasks = getScopedTasks();
             const today = getTodayOffset(0);
+            const agg = aggregateTasksStats(tasks, today);
 
             if (divSelect) {
                 const prevDiv = divSelect.value;
@@ -1830,16 +2048,13 @@
             }
 
             gridEl.innerHTML = filteredPics.map(pic => {
-                const picTasks = tasks.filter(t => isSameText(t.PIC, pic.Nama));
-                const total = picTasks.length;
-                const completed = picTasks.filter(t => isTaskCompleted(t)).length;
-                const inProgress = total - completed;
-                const overdue = picTasks.filter(t => isTaskOverdue(t, today)).length;
-                const avgProg = total ? Math.round(picTasks.reduce((sum, t) => sum + Number(t.Progress || 0), 0) / total) : 0;
-                const activeList = picTasks.filter(t => !isTaskCompleted(t)).slice(0, 3);
+                const pStat = agg.byPic.get(String(pic.Nama || '').trim().toLowerCase()) || {
+                    total: 0, done: 0, inProgress: 0, overdue: 0, progSum: 0, activeTasks: []
+                };
+                const avgProg = pStat.total ? Math.round(pStat.progSum / pStat.total) : 0;
 
                 return `
-                <div onclick="drillDownTasks('pic', '${escapeHtml(pic.Nama)}')" class="group bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between space-y-4">
+                <div data-drill-mode="pic" data-drill-value="${escapeHtml(pic.Nama)}" role="button" tabindex="0" class="group bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between space-y-4">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-3">
                             <div class="flex items-center gap-3 min-w-0">
@@ -1851,20 +2066,20 @@
                                     <p class="text-[11px] text-slate-500 truncate">${escapeHtml(pic.Divisi || '-')} • <span class="font-semibold text-slate-600">${escapeHtml(pic.Role || 'Staff')}</span></p>
                                 </div>
                             </div>
-                            <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold shrink-0">${total} Task</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold shrink-0">${pStat.total} Task</span>
                         </div>
 
                         <div class="grid grid-cols-3 gap-2 pt-1">
                             <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
-                                <p class="text-base font-bold text-emerald-700">${completed}</p>
+                                <p class="text-base font-bold text-emerald-700">${pStat.done}</p>
                                 <p class="text-[10px] font-semibold text-emerald-600">Selesai</p>
                             </div>
                             <div class="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-center">
-                                <p class="text-base font-bold text-blue-700">${inProgress}</p>
+                                <p class="text-base font-bold text-blue-700">${pStat.inProgress}</p>
                                 <p class="text-[10px] font-semibold text-blue-600">Berjalan</p>
                             </div>
                             <div class="p-2.5 rounded-xl bg-rose-50/70 border border-rose-100 text-center">
-                                <p class="text-base font-bold text-rose-700">${overdue}</p>
+                                <p class="text-base font-bold text-rose-700">${pStat.overdue}</p>
                                 <p class="text-[10px] font-semibold text-rose-600">Overdue</p>
                             </div>
                         </div>
@@ -1881,9 +2096,9 @@
 
                         <div class="pt-2 border-t border-slate-100 space-y-1.5">
                             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Task Aktif Teratas</p>
-                            ${activeList.length === 0
+                            ${pStat.activeTasks.length === 0
                                 ? `<p class="text-[11px] text-slate-400 italic">Tidak ada task aktif saat ini.</p>`
-                                : activeList.map(t => `
+                                : pStat.activeTasks.map(t => `
                                     <div class="flex items-center justify-between gap-2 text-[11px]">
                                         <span class="text-slate-700 truncate">${escapeHtml(t.Task)}</span>
                                         <span class="font-semibold text-slate-500 shrink-0">${Number(t.Progress || 0)}%</span>
@@ -1922,14 +2137,19 @@
         function renderReportsView() {
             const tasks = getFilteredReportTasks();
             const today = getTodayOffset(0);
-            const total = tasks.length;
+            const agg = aggregateTasksStats(tasks, today);
+            const total = agg.total;
             const doneTasks = tasks.filter(t => isTaskCompleted(t));
             const doneCount = doneTasks.length;
             const rate = total ? Math.round((doneCount / total) * 100) : 0;
-            const avgProg = total ? Math.round(tasks.reduce((s, t) => s + Number(t.Progress || 0), 0) / total) : 0;
+            const avgProg = total ? Math.round(agg.totalProgressSum / total) : 0;
+
+            // Akurasi On-Time Delivery: bandingkan tanggal penyelesaian (atau hari ini jika belum tercatat) terhadap TargetDate
             const onTimeCount = doneTasks.filter(t => {
                 const target = normalizeDateISO(t.TargetDate);
-                return !target || target >= today || Number(t.Progress || 0) === 100;
+                if (!target) return true;
+                const completedIso = normalizeDateISO(t.CompletedDate) || today;
+                return completedIso <= target;
             }).length;
             const onTimeRate = doneCount ? Math.round((onTimeCount / doneCount) * 100) : 0;
 
@@ -1943,15 +2163,7 @@
             // Chart 1: Tren Bulanan
             const trendCanvas = document.getElementById('chart-report-trend');
             if (trendCanvas && typeof Chart !== 'undefined') {
-                const monthMap = {};
-                tasks.forEach(t => {
-                    const iso = normalizeDateISO(t.Tanggal) || normalizeDateISO(t.TargetDate) || today;
-                    const ym = iso.slice(0, 7);
-                    if (!monthMap[ym]) monthMap[ym] = { total: 0, done: 0 };
-                    monthMap[ym].total += 1;
-                    if (isTaskCompleted(t)) monthMap[ym].done += 1;
-                });
-                const months = Object.keys(monthMap).sort();
+                const months = Array.from(agg.byMonth.keys()).sort();
                 if (reportTrendChart) reportTrendChart.destroy();
                 reportTrendChart = new Chart(trendCanvas, {
                     type: 'line',
@@ -1960,7 +2172,7 @@
                         datasets: [
                             {
                                 label: 'Task Masuk',
-                                data: months.length ? months.map(m => monthMap[m].total) : [0],
+                                data: months.length ? months.map(m => agg.byMonth.get(m).total) : [0],
                                 borderColor: '#4F46E5',
                                 backgroundColor: 'rgba(79, 70, 229, 0.12)',
                                 fill: true,
@@ -1968,7 +2180,7 @@
                             },
                             {
                                 label: 'Completed',
-                                data: months.length ? months.map(m => monthMap[m].done) : [0],
+                                data: months.length ? months.map(m => agg.byMonth.get(m).done) : [0],
                                 borderColor: '#059669',
                                 backgroundColor: 'rgba(5, 150, 105, 0.12)',
                                 fill: true,
@@ -1992,7 +2204,7 @@
                     ...(db.Kategori || []).map(k => String(k.Nama || '').trim()),
                     ...tasks.map(t => String(t.Kategori || '').trim())
                 ].filter(Boolean)));
-                const catCounts = catNames.map(c => tasks.filter(t => isSameText(t.Kategori, c)).length);
+                const catCounts = catNames.map(c => (agg.byCategory.get(c.toLowerCase())?.total || 0));
 
                 if (reportCategoryChart) reportCategoryChart.destroy();
                 reportCategoryChart = new Chart(catCanvas, {
@@ -2036,28 +2248,25 @@
 
                     tbody.innerHTML = picNames.map(picName => {
                         const picObj = (db.PIC || []).find(p => isSameText(p.Nama, picName));
-                        const pTasks = tasks.filter(t => isSameText(t.PIC, picName));
-                        const pTotal = pTasks.length;
-                        const pDone = pTasks.filter(t => isTaskCompleted(t)).length;
-                        const pProg = pTotal - pDone;
-                        const pOver = pTasks.filter(t => isTaskOverdue(t, today)).length;
-                        const pProgRaw = pTasks.reduce((s, t) => s + Number(t.Progress || 0), 0);
-                        const pAvg = pTotal ? Math.round(pProgRaw / pTotal) : 0;
-                        const pRate = pTotal ? Math.round((pDone / pTotal) * 100) : 0;
+                        const pStat = agg.byPic.get(picName.toLowerCase()) || {
+                            total: 0, done: 0, inProgress: 0, overdue: 0, progSum: 0
+                        };
+                        const pAvg = pStat.total ? Math.round(pStat.progSum / pStat.total) : 0;
+                        const pRate = pStat.total ? Math.round((pStat.done / pStat.total) * 100) : 0;
 
-                        sumTotal += pTotal;
-                        sumDone += pDone;
-                        sumProg += pProg;
-                        sumOver += pOver;
-                        sumAllProgressVal += pProgRaw;
+                        sumTotal += pStat.total;
+                        sumDone += pStat.done;
+                        sumProg += pStat.inProgress;
+                        sumOver += pStat.overdue;
+                        sumAllProgressVal += pStat.progSum;
 
                         return `<tr class="hover:bg-slate-50">
                             <td class="sticky left-0 z-10 bg-white py-3 px-4 font-bold text-slate-800 whitespace-nowrap border-r border-slate-100">${escapeHtml(picName)}</td>
                             <td class="py-3 px-4 text-slate-500 whitespace-nowrap">${escapeHtml(picObj?.Divisi || '-')}</td>
-                            <td class="py-3 px-3 text-center font-bold text-slate-800">${pTotal}</td>
-                            <td class="py-3 px-3 text-center font-semibold text-emerald-600">${pDone}</td>
-                            <td class="py-3 px-3 text-center font-semibold text-blue-600">${pProg}</td>
-                            <td class="py-3 px-3 text-center font-semibold text-rose-600">${pOver}</td>
+                            <td class="py-3 px-3 text-center font-bold text-slate-800">${pStat.total}</td>
+                            <td class="py-3 px-3 text-center font-semibold text-emerald-600">${pStat.done}</td>
+                            <td class="py-3 px-3 text-center font-semibold text-blue-600">${pStat.inProgress}</td>
+                            <td class="py-3 px-3 text-center font-semibold text-rose-600">${pStat.overdue}</td>
                             <td class="py-3 px-3 text-center font-semibold text-slate-700">${pAvg}%</td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
                                 <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${pRate >= 80 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${pRate}%</span>
@@ -2130,27 +2339,34 @@
             const picEl = document.getElementById('filter-pic');
             const statusEl = document.getElementById('filter-status');
 
+            const setSelectCaseInsensitive = (sel, val) => {
+                if (!sel) return false;
+                const matched = Array.from(sel.options).find(o => isSameText(o.value, val));
+                if (matched) {
+                    sel.value = matched.value;
+                    return true;
+                }
+                return false;
+            };
+
             if (mode === 'completed') {
                 tasksSpecialFilter = 'completed';
             } else if (mode === 'inprogress') {
                 tasksSpecialFilter = 'inprogress';
             } else if (mode === 'overdue') {
                 tasksSpecialFilter = 'overdue';
-            } else if (mode === 'pic' && picEl) {
-                picEl.value = value;
-            } else if (mode === 'status' && statusEl) {
-                statusEl.value = value;
-            } else if (mode === 'kategori' && katEl) {
-                katEl.value = value;
+            } else if (mode === 'pic') {
+                setSelectCaseInsensitive(picEl, value);
+            } else if (mode === 'status') {
+                setSelectCaseInsensitive(statusEl, value);
+            } else if (mode === 'kategori') {
+                setSelectCaseInsensitive(katEl, value);
             } else if (mode === 'kategori_status') {
                 const [katName, statusName] = String(value || '').split('|||');
-                if (katEl && katName) katEl.value = katName;
-                if (statusEl && statusName) statusEl.value = statusName;
+                if (katName) setSelectCaseInsensitive(katEl, katName);
+                if (statusName) setSelectCaseInsensitive(statusEl, statusName);
             } else if (mode === 'priority') {
-                if (prioEl && Array.from(prioEl.options).some(o => isSameText(o.value, value))) {
-                    const matchedOpt = Array.from(prioEl.options).find(o => isSameText(o.value, value));
-                    if (matchedOpt) prioEl.value = matchedOpt.value;
-                } else {
+                if (!setSelectCaseInsensitive(prioEl, value)) {
                     tasksSpecialFilter = `priority:${value}`;
                 }
             }
@@ -2162,10 +2378,10 @@
         function renderDashboard() {
             const tasks = getScopedTasks();
             const today = getTodayOffset(0);
-            const total = tasks.length;
-            const doneCount = tasks.filter(t => isTaskCompleted(t)).length;
-            const inProgressCount = tasks.filter(t => !isTaskCompleted(t)).length;
-            const overdueTasks = tasks.filter(t => isTaskOverdue(t, today));
+            const agg = aggregateTasksStats(tasks, today);
+            const total = agg.total;
+            const doneCount = agg.doneCount;
+            const inProgressCount = agg.inProgressCount;
 
             const kpiTotal = document.getElementById('kpi-total');
             if (!kpiTotal) return;
@@ -2173,13 +2389,13 @@
             document.getElementById('kpi-done').textContent = doneCount;
             document.getElementById('kpi-done-pct').textContent = total ? `${Math.round((doneCount / total) * 100)}% selesai` : '0% selesai';
             document.getElementById('kpi-progress').textContent = inProgressCount;
-            document.getElementById('kpi-overdue').textContent = overdueTasks.length;
+            document.getElementById('kpi-overdue').textContent = agg.overdueCount;
 
             const statusList = (db.Status && db.Status.length > 0)
                 ? db.Status
                 : Array.from(new Set(tasks.map(t => String(t.Status || '').trim()).filter(Boolean))).map(name => getStatusConfig(name));
 
-            // 1. Chart Beban Kerja per PIC
+            // 1. Chart Beban Kerja per PIC (Single-Pass O(N))
             const picCanvas = document.getElementById('chart-pic');
             if (picCanvas && typeof Chart !== 'undefined') {
                 const picNames = Array.from(new Set([
@@ -2188,10 +2404,10 @@
                 ].filter(Boolean)));
                 const picLabels = picNames.map(name => getPicInitial(name));
 
-                const totalPerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName)).length);
-                const completedPerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && isTaskCompleted(t)).length);
-                const inProgressPerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && !isTaskCompleted(t)).length);
-                const overduePerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && isTaskOverdue(t, today)).length);
+                const totalPerPic = picNames.map(pName => agg.byPic.get(pName.toLowerCase())?.total || 0);
+                const completedPerPic = picNames.map(pName => agg.byPic.get(pName.toLowerCase())?.done || 0);
+                const inProgressPerPic = picNames.map(pName => agg.byPic.get(pName.toLowerCase())?.inProgress || 0);
+                const overduePerPic = picNames.map(pName => agg.byPic.get(pName.toLowerCase())?.overdue || 0);
 
                 const datasets = [
                     {
@@ -2364,7 +2580,7 @@
                     ...(db.Priority || []).map(p => String(p.Nama || '').trim()),
                     ...tasks.map(t => String(t.Priority || '').trim())
                 ].filter(Boolean)));
-                const prioCounts = prioNames.map(pName => tasks.filter(t => isSameText(t.Priority, pName)).length);
+                const prioCounts = prioNames.map(pName => agg.byPriority.get(pName.toLowerCase()) || 0);
                 const prioColorMap = { urgent: '#E11D48', high: '#F59E0B', medium: '#3B82F6', low: '#10B981' };
                 const prioColors = prioNames.map(n => prioColorMap[n.toLowerCase()] || '#6366F1');
 
@@ -2396,7 +2612,7 @@
                 });
             }
 
-            // 4. Matriks Rekapitulasi Task per Kategori & Status
+            // 4. Matriks Rekapitulasi Task per Kategori & Status (Single-Pass + Delegated Click)
             const rekapHead = document.getElementById('rekap-kategori-head');
             const rekapBody = document.getElementById('rekap-kategori-body');
             const rekapFoot = document.getElementById('rekap-kategori-foot');
@@ -2447,14 +2663,13 @@
                 let grandDoneTasks = 0;
 
                 const categoryRows = filteredCategories.map(cat => {
-                    const catTasks = tasks.filter(t => isSameText(t.Kategori, cat));
-                    const catDone = catTasks.filter(t => isTaskCompleted(t)).length;
+                    const cStat = agg.byCategory.get(cat.toLowerCase()) || { total: 0, done: 0, byStatus: new Map() };
                     return {
                         cat,
-                        catTasks,
-                        total: catTasks.length,
-                        done: catDone,
-                        pct: catTasks.length ? Math.round((catDone / catTasks.length) * 100) : 0
+                        cStat,
+                        total: cStat.total,
+                        done: cStat.done,
+                        pct: cStat.total ? Math.round((cStat.done / cStat.total) * 100) : 0
                     };
                 })
                 .filter(row => showEmpty || row.total > 0)
@@ -2466,26 +2681,26 @@
                     rekapBody.innerHTML = `<tr><td colspan="${statusList.length + 3}" class="py-6 text-center text-slate-400">Tidak ada data kategori yang sesuai dengan filter.</td></tr>`;
                     if (rekapFoot) rekapFoot.innerHTML = '';
                 } else {
-                    rekapBody.innerHTML = categoryRows.map(({ cat, catTasks, total, done, pct }) => {
-                        grandTotalTasks += total;
-                        grandDoneTasks += done;
+                    rekapBody.innerHTML = categoryRows.map(({ cat, cStat, total: rowTotal, done: rowDone, pct }) => {
+                        grandTotalTasks += rowTotal;
+                        grandDoneTasks += rowDone;
 
                         const statusCells = statusList.map((st, sIdx) => {
-                            const cnt = catTasks.filter(t => isSameText(t.Status, st.Nama)).length;
+                            const cnt = cStat.byStatus.get(String(st.Nama || '').trim().toLowerCase()) || 0;
                             statusTotals[sIdx] += cnt;
                             const badgeStyle = cnt > 0
                                 ? `background-color:${hexToRgba(st.Warna, 0.14)};color:${normalizeHexColor(st.Warna, '#334155')};`
                                 : '';
                             return `<td class="py-2.5 px-3 text-center">
-                                <button type="button" onclick="drillDownTasks('kategori_status', '${escapeHtml(cat)}|||${escapeHtml(st.Nama)}')" style="${badgeStyle}" class="min-w-[28px] px-2 py-0.5 rounded-md font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
+                                <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(cat)}|||${escapeHtml(st.Nama)}" style="${badgeStyle}" class="min-w-[28px] px-2 py-0.5 rounded-md font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
                             </td>`;
                         }).join('');
 
                         return `<tr class="hover:bg-slate-50">
                             <td class="sticky left-0 z-10 bg-white py-2.5 px-4 font-semibold text-slate-800 whitespace-nowrap border-r border-slate-100">
-                                <button type="button" onclick="drillDownTasks('kategori', '${escapeHtml(cat)}')" class="hover:text-indigo-600 text-left">${escapeHtml(cat)}</button>
+                                <button type="button" data-drill-mode="kategori" data-drill-value="${escapeHtml(cat)}" class="hover:text-indigo-600 text-left">${escapeHtml(cat)}</button>
                             </td>
-                            <td class="py-2.5 px-3 text-center font-bold text-slate-800 bg-slate-50/50">${total}</td>
+                            <td class="py-2.5 px-3 text-center font-bold text-slate-800 bg-slate-50/50">${rowTotal}</td>
                             <td class="py-2.5 px-3 text-center font-bold bg-slate-50/50 border-r border-slate-100 ${pct === 100 ? 'text-emerald-600' : 'text-indigo-600'}">${pct}%</td>
                             ${statusCells}
                         </tr>`;
@@ -2496,13 +2711,13 @@
                         const totalStatusCells = statusList.map((st, sIdx) => {
                             const cnt = statusTotals[sIdx];
                             return `<td class="py-3 px-3 text-center">
-                                <button type="button" onclick="drillDownTasks('status', '${escapeHtml(st.Nama)}')" class="min-w-[28px] px-2 py-0.5 rounded-md font-extrabold text-slate-800 hover:bg-slate-200/70">${cnt}</button>
+                                <button type="button" data-drill-mode="status" data-drill-value="${escapeHtml(st.Nama)}" class="min-w-[28px] px-2 py-0.5 rounded-md font-extrabold text-slate-800 hover:bg-slate-200/70">${cnt}</button>
                             </td>`;
                         }).join('');
 
                         rekapFoot.innerHTML = `<tr>
                             <td class="sticky left-0 z-10 bg-slate-100 py-3 px-4 font-extrabold text-slate-900 whitespace-nowrap border-r border-slate-200">
-                                <button type="button" onclick="drillDownTasks('all')" class="hover:text-indigo-600 text-left">TOTAL</button>
+                                <button type="button" data-drill-mode="all" class="hover:text-indigo-600 text-left">TOTAL</button>
                             </td>
                             <td class="py-3 px-3 text-center font-extrabold text-slate-900">${grandTotalTasks}</td>
                             <td class="py-3 px-3 text-center font-extrabold text-emerald-700 border-r border-slate-200">${grandPct}%</td>
@@ -2547,7 +2762,7 @@
                         const badgeLabel = isOver ? 'Overdue' : (target && target <= threeDaysAhead ? 'Due Soon' : t.Priority);
 
                         return `
-                        <div onclick="openTaskModal('${escapeHtml(t.ID)}')" class="p-3 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-start justify-between gap-3">
+                        <div data-edit-task-id="${escapeHtml(t.ID)}" role="button" tabindex="0" class="p-3 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-start justify-between gap-3">
                             <div class="min-w-0 space-y-1">
                                 <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(t.Task)}</p>
                                 <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
@@ -2563,10 +2778,44 @@
                     }).join('');
                 }
             }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            const dashEl = document.getElementById('view-dashboard');
+            if (typeof lucide !== 'undefined' && dashEl) lucide.createIcons({ root: dashEl });
         }
 
         // ==================== FILTER & DAFTAR PEKERJAAN ====================
+        function toggleMobileTaskFilters() {
+            const wrapper = document.getElementById('tasks-filter-grid-wrapper');
+            if (!wrapper) return;
+            const isCurrentlyHidden = wrapper.classList.contains('hidden');
+            wrapper.classList.toggle('hidden', !isCurrentlyHidden);
+            wrapper.classList.toggle('grid', isCurrentlyHidden);
+            requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
+        }
+
+        function updateMobileFilterBadge() {
+            const lbl = document.getElementById('mobile-filter-toggle-label');
+            if (!lbl) return;
+            const ids = ['filter-kategori', 'filter-priority', 'filter-pic', 'filter-status', 'filter-reference', 'filter-actionplan'];
+            let activeCount = ids.reduce((cnt, id) => cnt + (document.getElementById(id)?.value ? 1 : 0), 0);
+            if (tasksSpecialFilter) activeCount++;
+            lbl.textContent = activeCount > 0 ? `Filter (${activeCount})` : 'Filter';
+        }
+
+        function onTasksSearchInput() {
+            clearTimeout(tasksSearchTimer);
+            tasksSearchTimer = setTimeout(() => {
+                tasksCurrentPage = 1;
+                renderTasksTable();
+            }, 180);
+        }
+
+        function onMasterSearchInput() {
+            clearTimeout(masterSearchTimer);
+            masterSearchTimer = setTimeout(() => {
+                renderMasterTable();
+            }, 180);
+        }
+
         function updateStickyTasksTableHeaderOffset() {
             const filterBar = document.getElementById('tasks-sticky-filter');
             const tableHead = document.getElementById('tasks-table-head');
@@ -2586,13 +2835,11 @@
             }
 
             if (isDesktop) {
-                // Pada desktop, area scroll terisolasi di dalam wadah tabel sehingga thead menempel di top: 0
                 filterBar.style.top = '';
                 filterBar.style.marginTop = '';
                 filterBar.style.paddingTop = '';
                 tableHead.style.top = '0px';
             } else {
-                // Pada mobile/tablet, filter menempel tepat di bawah header utama dan thead di bawah filter
                 const headerEl = document.querySelector('header');
                 const topOffset = headerEl ? headerEl.offsetHeight : 64;
                 filterBar.style.top = `${topOffset}px`;
@@ -2694,6 +2941,8 @@
             const quickLabel = document.getElementById('tasks-active-quickfilter-label');
             if (!tbody) return;
 
+            updateMobileFilterBadge();
+
             if (quickBar && quickLabel) {
                 if (tasksSpecialFilter) {
                     const labelMap = {
@@ -2735,12 +2984,19 @@
                                 : 'bg-slate-100 text-slate-600 border-slate-200';
 
                     const subParts = [t.Kategori, t.Catatan].filter(Boolean).map(v => escapeHtml(v));
+                    const refBadge = t.Reference
+                        ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-medium">Ref: ${escapeHtml(t.Reference)}</span>`
+                        : '';
+                    const actBadge = t.ActionPlan
+                        ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[10px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
+                        : '';
 
                     return `<tr class="hover:bg-slate-50/90 transition-colors">
                         <td class="py-3 px-4 font-mono text-[11px] font-semibold text-slate-500 whitespace-nowrap">${escapeHtml(t.ID)}</td>
                         <td class="py-3 px-4 min-w-[240px]">
                             <p class="font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
                             <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">${subParts.join(' • ') || '-'}</p>
+                            ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5 mt-1">${refBadge}${actBadge}</div>` : ''}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
                             <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
@@ -2767,11 +3023,11 @@
                             </div>
                         </td>
                         <td class="py-3 px-4 text-right whitespace-nowrap">
-                            <button type="button" onclick="openTaskModal('${escapeHtml(t.ID)}')" title="Edit Task" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
-                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" title="Edit Task" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i>
                             </button>
-                            <button type="button" onclick="confirmDeleteTask('${escapeHtml(t.ID)}')" title="Hapus Task" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" title="Hapus Task" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i>
                             </button>
                         </td>
                     </tr>`;
@@ -2790,17 +3046,49 @@
                     </div>`;
             }
 
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: tbody });
             requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
         }
 
         function onTaskStatusChange() {
             const stVal = document.getElementById('task-input-status')?.value || '';
+            const progInp = document.getElementById('task-input-progress');
+            const progLbl = document.getElementById('task-progress-label');
+            if (!progInp || !progLbl) return;
+
             if (getStatusConfig(stVal).Completed === 'Yes') {
-                const progInp = document.getElementById('task-input-progress');
-                const progLbl = document.getElementById('task-progress-label');
-                if (progInp) progInp.value = 100;
-                if (progLbl) progLbl.textContent = '100%';
+                progInp.value = 100;
+                progLbl.textContent = '100%';
+            } else if (Number(progInp.value || 0) === 100) {
+                progInp.value = 95;
+                progLbl.textContent = '95%';
+            }
+        }
+
+        function onTaskProgressInput(val) {
+            const num = Number(val || 0);
+            const progLbl = document.getElementById('task-progress-label');
+            if (progLbl) progLbl.textContent = `${num}%`;
+        }
+
+        // Pencocokan nilai dropdown case-insensitive + pertahankan nilai lama jika sudah diarsipkan dari Master
+        function setSelectValueSafe(selectId, rawVal) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            const target = String(rawVal ?? '').trim();
+            if (!target) {
+                sel.value = '';
+                return;
+            }
+            const matchedOpt = Array.from(sel.options).find(o => isSameText(o.value, target));
+            if (matchedOpt) {
+                sel.value = matchedOpt.value;
+            } else {
+                const archiveOpt = document.createElement('option');
+                archiveOpt.value = target;
+                archiveOpt.textContent = `${target} (Arsip)`;
+                sel.appendChild(archiveOpt);
+                sel.value = target;
             }
         }
 
@@ -2821,15 +3109,15 @@
                 document.getElementById('task-input-tanggal').value = normalizeDateISO(existing.Tanggal) || getTodayOffset(0);
                 document.getElementById('task-input-targetdate').value = normalizeDateISO(existing.TargetDate) || getTodayOffset(3);
                 document.getElementById('task-input-task').value = existing.Task || '';
-                document.getElementById('task-input-kategori').value = existing.Kategori || '';
-                document.getElementById('task-input-priority').value = existing.Priority || '';
-                if (picSelect) picSelect.value = existing.PIC || '';
-                document.getElementById('task-input-status').value = existing.Status || '';
+                setSelectValueSafe('task-input-kategori', existing.Kategori);
+                setSelectValueSafe('task-input-priority', existing.Priority);
+                setSelectValueSafe('task-input-pic', existing.PIC);
+                setSelectValueSafe('task-input-status', existing.Status);
                 const prog = Number(existing.Progress || 0);
                 document.getElementById('task-input-progress').value = prog;
                 document.getElementById('task-progress-label').textContent = `${prog}%`;
-                document.getElementById('task-input-reference').value = existing.Reference || '';
-                document.getElementById('task-input-actionplan').value = existing.ActionPlan || '';
+                setSelectValueSafe('task-input-reference', existing.Reference);
+                setSelectValueSafe('task-input-actionplan', existing.ActionPlan);
                 document.getElementById('task-input-catatan').value = existing.Catatan || '';
             } else {
                 form.reset();
@@ -2839,14 +3127,14 @@
                 document.getElementById('task-input-targetdate').value = getTodayOffset(3);
                 document.getElementById('task-input-progress').value = 0;
                 document.getElementById('task-progress-label').textContent = '0%';
-                if (isStaff && picSelect && currentUser?.Nama) {
-                    picSelect.value = currentUser.Nama;
+                if (isStaff && currentUser?.Nama) {
+                    setSelectValueSafe('task-input-pic', currentUser.Nama);
                 }
             }
 
             if (picSelect) picSelect.disabled = Boolean(isStaff);
             modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
 
         function closeTaskModal() {
@@ -2860,22 +3148,45 @@
             const taskId = existingId || `TSK-${Date.now().toString().slice(-6)}`;
             const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
 
+            const tglInput = document.getElementById('task-input-tanggal').value;
+            const targetDate = document.getElementById('task-input-targetdate').value;
+            if (tglInput && targetDate && targetDate < tglInput) {
+                showToast('Target Date tidak boleh lebih awal dari Tanggal Input.', 'error');
+                return;
+            }
+
+            const statusVal = document.getElementById('task-input-status').value;
+            const isDoneStatus = getStatusConfig(statusVal).Completed === 'Yes';
+            let progressVal = Number(document.getElementById('task-input-progress').value || 0);
+
+            if (isDoneStatus) {
+                progressVal = 100;
+            } else if (progressVal >= 100) {
+                progressVal = 95;
+            }
+
+            const idx = (db.Tasks || []).findIndex(t => String(t.ID) === String(taskId));
+            const prevTask = idx !== -1 ? db.Tasks[idx] : null;
+            const completedDateVal = isDoneStatus
+                ? (normalizeDateISO(prevTask?.CompletedDate) || getTodayOffset(0))
+                : '';
+
             const taskObj = {
                 ID: taskId,
-                Tanggal: document.getElementById('task-input-tanggal').value,
+                Tanggal: tglInput,
                 Kategori: document.getElementById('task-input-kategori').value,
                 Task: document.getElementById('task-input-task').value.trim(),
                 Priority: document.getElementById('task-input-priority').value,
                 PIC: isStaff ? currentUser.Nama : document.getElementById('task-input-pic').value,
-                TargetDate: document.getElementById('task-input-targetdate').value,
-                Status: document.getElementById('task-input-status').value,
-                Progress: Number(document.getElementById('task-input-progress').value || 0),
+                TargetDate: targetDate,
+                Status: statusVal,
+                Progress: progressVal,
                 Reference: document.getElementById('task-input-reference').value,
                 ActionPlan: document.getElementById('task-input-actionplan').value,
-                Catatan: document.getElementById('task-input-catatan').value.trim()
+                Catatan: document.getElementById('task-input-catatan').value.trim(),
+                CompletedDate: completedDateVal
             };
 
-            const idx = (db.Tasks || []).findIndex(t => String(t.ID) === String(taskId));
             if (idx !== -1) {
                 db.Tasks[idx] = taskObj;
             } else {
@@ -2901,10 +3212,12 @@
                         refreshAuthSessionExpiry();
                         showToast(existingId ? 'Perubahan task tersimpan di Spreadsheet!' : 'Task baru tersimpan di Spreadsheet!', 'success');
                     } else {
+                        enqueueUnsyncedOp({ type: 'SAVE_TASK', key: taskId, payload: taskObj });
                         showToast(result.message || 'Gagal menyinkronkan task ke Spreadsheet.', 'error');
                     }
                 } catch (err) {
-                    showToast('Task tersimpan lokal, namun gagal terhubung ke Spreadsheet.', 'error');
+                    enqueueUnsyncedOp({ type: 'SAVE_TASK', key: taskId, payload: taskObj });
+                    showToast('Task tersimpan lokal (antrean sync aktif), namun gagal terhubung ke Spreadsheet.', 'error');
                 } finally {
                     setPendingSync(-1);
                 }
@@ -2942,10 +3255,12 @@
                             refreshAuthSessionExpiry();
                             showToast('Task berhasil dihapus permanen di Spreadsheet!', 'success');
                         } else {
+                            enqueueUnsyncedOp({ type: 'DELETE_TASK', key: targetId });
                             showToast(result.message || 'Gagal menghapus task di Spreadsheet.', 'error');
                         }
                     } catch (err) {
-                        showToast('Gagal menghapus task di Google Spreadsheet.', 'error');
+                        enqueueUnsyncedOp({ type: 'DELETE_TASK', key: targetId });
+                        showToast('Gagal menghapus task di Google Spreadsheet (antrean sync aktif).', 'error');
                     } finally {
                         setPendingSync(-1);
                     }
@@ -2954,7 +3269,7 @@
                 }
             };
             modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
 
         function closeConfirmModal() {
@@ -3063,8 +3378,8 @@
             bodyEl.innerHTML = indexed.map(({ item, idx }) => {
                 const actions = `
                     <td class="py-2.5 px-4 text-right whitespace-nowrap">
-                        <button type="button" onclick="openMasterModal(${idx})" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-                        <button type="button" onclick="deleteMasterItem(${idx})" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        <button type="button" data-master-edit-idx="${idx}" title="Edit Item" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i></button>
+                        <button type="button" data-master-delete-idx="${idx}" title="Hapus Item" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"><i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i></button>
                     </td>`;
 
                 if (currentMasterTab === 'Kategori') {
@@ -3113,7 +3428,7 @@
                     ${actions}
                 </tr>`;
             }).join('');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: bodyEl });
         }
 
         function syncColorPickerFromHex(val) {
@@ -3121,6 +3436,18 @@
             if (clean) {
                 const picker = document.getElementById('master-input-colorpicker');
                 if (picker) picker.value = clean;
+            }
+        }
+
+        function toggleMasterPasswordVisibility() {
+            const inp = document.getElementById('master-input-password');
+            const icon = document.getElementById('master-password-eye-icon');
+            if (!inp) return;
+            const isHidden = inp.type === 'password';
+            inp.type = isHidden ? 'text' : 'password';
+            if (icon) {
+                icon.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: inp.parentElement });
             }
         }
 
@@ -3135,6 +3462,16 @@
             document.getElementById('master-status-fields').classList.toggle('hidden', currentMasterTab !== 'Status');
             document.getElementById('master-extra-container').classList.toggle('hidden', currentMasterTab === 'Status');
             document.getElementById('master-label-extra').textContent = meta.extraLabel || 'Keterangan';
+
+            const passInp = document.getElementById('master-input-password');
+            const passReqMark = document.getElementById('master-password-required-mark');
+            if (passInp) {
+                passInp.type = 'password';
+                passInp.placeholder = editIdx >= 0 ? 'Kosongkan jika tidak diubah' : 'Password...';
+            }
+            if (passReqMark) {
+                passReqMark.classList.toggle('hidden', editIdx >= 0);
+            }
 
             if (currentMasterTab === 'Kategori') {
                 const dl = document.getElementById('master-group-datalist');
@@ -3173,7 +3510,7 @@
             }
 
             modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
 
         function closeMasterModal() {
@@ -3187,6 +3524,14 @@
             const nama = document.getElementById('master-input-name').value.trim();
             const extra = document.getElementById('master-input-extra').value.trim();
             const list = db[currentMasterTab] || [];
+
+            // Validasi duplikasi nama item pada Master Data yang sama
+            const isDuplicateName = list.some((it, idx) => idx !== editIdx && isSameText(it.Nama, nama));
+            if (isDuplicateName) {
+                showToast(`Nama "${nama}" sudah terdaftar pada Master ${currentMasterTab}.`, 'error');
+                return;
+            }
+
             const existing = editIdx >= 0 ? list[editIdx] : null;
             const kode = existing?.Kode || `${currentMasterTab.slice(0, 3).toUpperCase()}-${String(list.length + 1).padStart(2, '0')}`;
 
@@ -3197,11 +3542,27 @@
             } else if (currentMasterTab === 'Priority') {
                 newObj.SLA_Hari = extra || '1';
             } else if (currentMasterTab === 'PIC') {
+                const usernameVal = document.getElementById('master-input-username').value.trim();
+                const passVal = document.getElementById('master-input-password').value.trim();
+
+                if (!usernameVal) {
+                    showToast('Username login wajib diisi.', 'error');
+                    return;
+                }
+                const isDupUser = list.some((it, idx) => idx !== editIdx && isSameText(it.Username, usernameVal));
+                if (isDupUser) {
+                    showToast(`Username "${usernameVal}" sudah digunakan oleh PIC lain.`, 'error');
+                    return;
+                }
+                if (editIdx < 0 && !passVal) {
+                    showToast('Password login wajib diisi untuk PIC baru.', 'error');
+                    return;
+                }
+
                 newObj.Initial = document.getElementById('master-input-initial').value.trim().toUpperCase();
                 newObj.Divisi = extra;
                 newObj.Role = document.getElementById('master-input-role').value;
-                newObj.Username = document.getElementById('master-input-username').value.trim();
-                const passVal = document.getElementById('master-input-password').value.trim();
+                newObj.Username = usernameVal;
                 if (passVal) newObj.Password = passVal;
             } else if (currentMasterTab === 'Status') {
                 newObj.Warna = normalizeHexColor(document.getElementById('master-input-color-hex').value, '#3B82F6');
@@ -3245,7 +3606,7 @@
                 await pushMasterDataToSheet(targetTab);
             };
             modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
 
         async function pushMasterDataToSheet(sheetName = currentMasterTab) {
@@ -3269,13 +3630,63 @@
                     refreshAuthSessionExpiry();
                     showToast(`Master ${sheetName} berhasil disinkronkan ke Google Sheet!`, 'success');
                 } else {
+                    enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: db[sheetName] || [] });
                     showToast(result.message || 'Gagal menyinkronkan Master Data.', 'error');
                 }
             } catch (err) {
-                showToast('Perubahan tersimpan lokal, gagal menyinkronkan ke Spreadsheet.', 'error');
+                enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: db[sheetName] || [] });
+                showToast('Perubahan tersimpan lokal (antrean sync aktif), gagal menyinkronkan ke Spreadsheet.', 'error');
             } finally {
                 setPendingSync(-1);
             }
+        }
+
+        // ==================== EVENT DELEGATION UNTUK SECURITY & AKSESIBILITAS ====================
+        function bindDelegatedInteractions() {
+            const handleInteractiveEvent = (e) => {
+                const drillEl = e.target.closest('[data-drill-mode]');
+                if (drillEl) {
+                    const mode = drillEl.dataset.drillMode || 'all';
+                    const val = drillEl.dataset.drillValue || '';
+                    drillDownTasks(mode, val);
+                    return;
+                }
+
+                const editTaskEl = e.target.closest('[data-edit-task-id]');
+                if (editTaskEl) {
+                    openTaskModal(editTaskEl.dataset.editTaskId || '');
+                    return;
+                }
+
+                const deleteTaskEl = e.target.closest('[data-delete-task-id]');
+                if (deleteTaskEl) {
+                    confirmDeleteTask(deleteTaskEl.dataset.deleteTaskId || '');
+                    return;
+                }
+
+                const editMasterEl = e.target.closest('[data-master-edit-idx]');
+                if (editMasterEl) {
+                    openMasterModal(Number(editMasterEl.dataset.masterEditIdx));
+                    return;
+                }
+
+                const deleteMasterEl = e.target.closest('[data-master-delete-idx]');
+                if (deleteMasterEl) {
+                    deleteMasterItem(Number(deleteMasterEl.dataset.masterDeleteIdx));
+                    return;
+                }
+            };
+
+            document.addEventListener('click', handleInteractiveEvent);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    const activeEl = document.activeElement;
+                    if (activeEl && (activeEl.hasAttribute('data-drill-mode') || activeEl.hasAttribute('data-edit-task-id'))) {
+                        e.preventDefault();
+                        handleInteractiveEvent({ target: activeEl });
+                    }
+                }
+            });
         }
 
         // ==================== INTEGRASI & SINKRONISASI SHEET ====================
@@ -3283,6 +3694,9 @@
             if (!gasUrl || !sessionToken) {
                 showToast('Sesi belum aktif atau URL Web App belum terhubung.', 'error');
                 return;
+            }
+            if (unsyncedQueue.length > 0) {
+                await retryUnsyncedOperations();
             }
             showToast('Menyinkronkan data dari Google Spreadsheet...', 'info');
             const ok = await fetchAuthorizedData(sessionToken, false);
@@ -3320,13 +3734,16 @@
         window.addEventListener('resize', updateStickyTasksTableHeaderOffset);
 
         window.addEventListener('beforeunload', (e) => {
-            if (pendingSyncCount > 0) {
+            if (pendingSyncCount > 0 || unsyncedQueue.length > 0) {
                 e.preventDefault();
                 e.returnValue = '';
             }
         });
 
         window.addEventListener('DOMContentLoaded', async () => {
+            SafeStorage._scrubLegacyUnsafeStorage();
+            bindDelegatedInteractions();
+
             const verEl = document.getElementById('login-app-version');
             if (verEl) verEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
 
@@ -3336,7 +3753,8 @@
                 'taskflow_last_mutation_ts',
                 SESSION_STORAGE_KEYS.TOKEN,
                 SESSION_STORAGE_KEYS.USER_PROFILE,
-                SESSION_STORAGE_KEYS.EXPIRES_AT
+                SESSION_STORAGE_KEYS.EXPIRES_AT,
+                SESSION_STORAGE_KEYS.UNSYNCED_QUEUE
             ]);
 
             const initialUrl = resolveInitialGasUrl();

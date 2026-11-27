@@ -12,6 +12,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Chart.js untuk Dashboard & Laporan -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         html, body {
             width: 100%;
@@ -568,21 +569,9 @@
                         </div>
                     </div>
 
-                    <!-- Charts Grid (PIC Workload, Status Composition, Priority Breakdown) -->
+                    <!-- Charts Grid (Status Composition, PIC Workload, Priority Breakdown) -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-5 flex flex-col">
-                            <div class="flex items-center justify-between mb-3">
-                                <div>
-                                    <h3 class="text-sm font-bold text-slate-800">Beban Kerja per PIC</h3>
-                                    <p class="text-[11px] text-slate-400">Klik batang PIC untuk melihat daftar tugasnya</p>
-                                </div>
-                            </div>
-                            <div class="h-64 relative">
-                                <canvas id="chart-pic"></canvas>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-4 flex flex-col">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-800">Komposisi Status</h3>
@@ -591,6 +580,18 @@
                             </div>
                             <div class="h-64 relative">
                                 <canvas id="chart-status"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-6 flex flex-col">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800">Beban Kerja per PIC</h3>
+                                    <p class="text-[11px] text-slate-400">Klik batang PIC untuk melihat daftar tugasnya</p>
+                                </div>
+                            </div>
+                            <div class="h-64 relative">
+                                <canvas id="chart-pic"></canvas>
                             </div>
                         </div>
 
@@ -611,12 +612,21 @@
                     <div class="space-y-4">
                         <!-- Rekapitulasi Task per Kategori & Status -->
                         <div class="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
-                            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
+                            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
                                     <p class="text-[11px] text-slate-400 mt-0.5">Distribusi pekerjaan berdasarkan kategori dan progres penyelesaian</p>
                                 </div>
-                                <span id="rekap-kategori-count" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-semibold shrink-0">0 Kategori</span>
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    <select id="rekap-filter-group" onchange="renderDashboard()" class="text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua Group</option>
+                                    </select>
+                                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer text-xs font-medium text-slate-700 select-none">
+                                        <input type="checkbox" id="rekap-show-empty" checked onchange="renderDashboard()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                                        <span>Tampilkan Data kosong</span>
+                                    </label>
+                                    <span id="rekap-kategori-count" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-semibold shrink-0">0 Kategori</span>
+                                </div>
                             </div>
                             <div class="overflow-x-auto flex-1">
                                 <table class="w-full text-left border-collapse">
@@ -1448,7 +1458,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
             // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.1.2',
+            APP_VERSION: 'v1.1.8',
             // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
@@ -2596,7 +2606,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 ? db.Status
                 : Array.from(new Set(tasks.map(t => String(t.Status || '').trim()).filter(Boolean))).map(name => getStatusConfig(name));
 
-            // 1. Chart Beban Kerja per PIC (Stacked by Status)
+            // 1. Chart Beban Kerja per PIC (Combo: Bar Total Task + Line Completed, In Progress, Overdue)
             const picCanvas = document.getElementById('chart-pic');
             if (picCanvas && typeof Chart !== 'undefined') {
                 const picNames = Array.from(new Set([
@@ -2605,17 +2615,72 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 ].filter(Boolean)));
                 const picLabels = picNames.map(name => getPicInitial(name));
 
-                const datasets = statusList.map(st => ({
-                    label: st.Nama,
-                    data: picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && isSameText(t.Status, st.Nama)).length),
-                    backgroundColor: normalizeHexColor(st.Warna, '#64748B'),
-                    borderRadius: 4
-                }));
+                const totalPerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName)).length);
+                const completedPerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && isTaskCompleted(t)).length);
+                const inProgressPerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && !isTaskCompleted(t)).length);
+                const overduePerPic = picNames.map(pName => tasks.filter(t => isSameText(t.PIC, pName) && isTaskOverdue(t, today)).length);
+
+                const datasets = [
+                    {
+                        type: 'line',
+                        label: 'Completed',
+                        data: completedPerPic,
+                        borderColor: '#059669',
+                        backgroundColor: '#059669',
+                        borderWidth: 2.5,
+                        pointRadius: 3.5,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        order: 1
+                    },
+                    {
+                        type: 'line',
+                        label: 'In Progress',
+                        data: inProgressPerPic,
+                        borderColor: '#2563EB',
+                        backgroundColor: '#2563EB',
+                        borderWidth: 2.5,
+                        pointRadius: 3.5,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        order: 2
+                    },
+                    {
+                        type: 'line',
+                        label: 'Overdue',
+                        data: overduePerPic,
+                        borderColor: '#E11D48',
+                        backgroundColor: '#E11D48',
+                        borderWidth: 2.5,
+                        pointRadius: 3.5,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        order: 3
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Total Task',
+                        data: totalPerPic,
+                        backgroundColor: 'rgba(99, 102, 241, 0.22)',
+                        borderColor: '#6366F1',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        order: 4
+                    }
+                ];
 
                 if (picChart) picChart.destroy();
                 picChart = new Chart(picCanvas, {
                     type: 'bar',
-                    data: { labels: picLabels, datasets },
+                    data: {
+                        labels: picLabels.length ? picLabels : ['Belum ada data'],
+                        datasets: picLabels.length ? datasets : [{
+                            type: 'bar',
+                            label: 'Total Task',
+                            data: [0],
+                            backgroundColor: '#CBD5E1'
+                        }]
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
@@ -2628,29 +2693,43 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                         plugins: {
                             legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
                             tooltip: {
+                                mode: 'index',
+                                intersect: false,
                                 callbacks: {
-                                    title: items => picNames[items[0].dataIndex] || items[0].label
+                                    title: items => {
+                                        const idx = items?.[0]?.dataIndex ?? -1;
+                                        return picNames[idx] ? `${picNames[idx]} (${picLabels[idx]})` : (items?.[0]?.label || '');
+                                    }
                                 }
                             }
                         },
                         scales: {
-                            x: { stacked: true },
-                            y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+                            x: { grid: { display: false } },
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
                         }
                     }
                 });
             }
 
-            // 2. Chart Komposisi Status (Doughnut)
+            // 2. Chart Komposisi Status (Doughnut: Completed vs In Progress dengan Data Label "Nilai (Percent%)")
             const statusCanvas = document.getElementById('chart-status');
             if (statusCanvas && typeof Chart !== 'undefined') {
-                const stLabels = statusList.map(s => s.Nama);
-                const stCounts = statusList.map(s => tasks.filter(t => isSameText(t.Status, s.Nama)).length);
-                const stColors = statusList.map(s => normalizeHexColor(s.Warna, '#64748B'));
+                const stLabels = ['Completed', 'In Progress'];
+                const stCounts = [doneCount, inProgressCount];
+                const stColors = ['#059669', '#2563EB'];
+                const stTotal = doneCount + inProgressCount;
+
+                const formatValuePct = (val) => {
+                    const pct = stTotal > 0 ? Math.round((val / stTotal) * 100) : 0;
+                    return `${val} (${pct}%)`;
+                };
+
+                const dlPlugin = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
 
                 if (statusChart) statusChart.destroy();
                 statusChart = new Chart(statusCanvas, {
                     type: 'doughnut',
+                    plugins: dlPlugin,
                     data: {
                         labels: stLabels,
                         datasets: [{
@@ -2663,15 +2742,43 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '62%',
+                        cutout: '56%',
                         onClick: (evt, elements) => {
                             if (elements && elements.length > 0) {
                                 const idx = elements[0].index;
-                                if (stLabels[idx]) drillDownTasks('status', stLabels[idx]);
+                                drillDownTasks(idx === 0 ? 'completed' : 'inprogress');
                             }
                         },
                         plugins: {
-                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+                            datalabels: {
+                                color: '#ffffff',
+                                font: { weight: 'bold', size: 11 },
+                                display: ctx => Number(ctx.dataset.data[ctx.dataIndex] || 0) > 0,
+                                formatter: val => formatValuePct(Number(val || 0))
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.label}: ${formatValuePct(Number(ctx.raw || 0))}`
+                                }
+                            },
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 10,
+                                    font: { size: 11 },
+                                    generateLabels: chart => {
+                                        const ds = chart.data.datasets[0];
+                                        return chart.data.labels.map((lbl, i) => ({
+                                            text: `${lbl}: ${formatValuePct(Number(ds.data[i] || 0))}`,
+                                            fillStyle: ds.backgroundColor[i],
+                                            strokeStyle: ds.borderColor,
+                                            lineWidth: 1,
+                                            hidden: !chart.getDataVisibility(i),
+                                            index: i
+                                        }));
+                                    }
+                                }
+                            }
                         }
                     }
                 });
@@ -2721,36 +2828,74 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             const rekapBody = document.getElementById('rekap-kategori-body');
             const rekapFoot = document.getElementById('rekap-kategori-foot');
             const rekapCountEl = document.getElementById('rekap-kategori-count');
+            const rekapGroupSel = document.getElementById('rekap-filter-group');
+            const rekapShowEmptyEl = document.getElementById('rekap-show-empty');
             if (rekapHead && rekapBody) {
-                const categories = Array.from(new Set([
+                if (rekapGroupSel) {
+                    const prevGrp = rekapGroupSel.value;
+                    const groups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
+                    rekapGroupSel.innerHTML = '<option value="">Semua Group</option>' +
+                        groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+                    if (prevGrp && groups.includes(prevGrp)) rekapGroupSel.value = prevGrp;
+                }
+
+                const selectedGroup = rekapGroupSel ? rekapGroupSel.value : '';
+                const showEmpty = rekapShowEmptyEl ? rekapShowEmptyEl.checked : true;
+
+                const catGroupMap = {};
+                (db.Kategori || []).forEach(k => {
+                    const cName = String(k.Nama || '').trim();
+                    if (cName) catGroupMap[cName.toLowerCase()] = String(k.Group || '').trim();
+                });
+
+                const allCategories = Array.from(new Set([
                     ...(db.Kategori || []).map(k => String(k.Nama || '').trim()),
                     ...tasks.map(t => String(t.Kategori || '').trim())
                 ].filter(Boolean)));
 
-                if (rekapCountEl) rekapCountEl.textContent = `${categories.length} Kategori`;
+                const filteredCategories = allCategories.filter(cat => {
+                    if (!selectedGroup) return true;
+                    const grp = catGroupMap[cat.toLowerCase()] || '';
+                    return isSameText(grp, selectedGroup);
+                });
 
                 rekapHead.innerHTML = `
-                    <th class="sticky left-0 z-10 bg-slate-50 py-3 px-4 font-semibold">Kategori</th>
-                    ${statusList.map(st => `<th class="py-3 px-3 text-center font-semibold whitespace-nowrap">${escapeHtml(st.Nama)}</th>`).join('')}
-                    <th class="py-3 px-3 text-center font-semibold">Total</th>
-                    <th class="py-3 px-4 text-right font-semibold">Selesai</th>
+                    <th class="sticky left-0 z-10 bg-slate-50 py-3 px-4 font-semibold border-r border-slate-200/70">Kategori</th>
+                    <th class="py-3 px-3 text-center font-semibold whitespace-nowrap bg-slate-100/80 text-slate-700">Total</th>
+                    <th class="py-3 px-3 text-center font-semibold whitespace-nowrap bg-slate-100/80 text-slate-700 border-r border-slate-200/70">Selesai</th>
+                    ${statusList.map(st => {
+                        const stHex = normalizeHexColor(st.Warna, '#64748B');
+                        return `<th style="background-color:${hexToRgba(stHex, 0.16)};color:${stHex};" class="py-3 px-3 text-center font-bold whitespace-nowrap">${escapeHtml(st.Nama)}</th>`;
+                    }).join('')}
                 `;
 
-                if (categories.length === 0) {
-                    rekapBody.innerHTML = `<tr><td colspan="${statusList.length + 3}" class="py-6 text-center text-slate-400">Belum ada data kategori atau task.</td></tr>`;
+                const statusTotals = statusList.map(() => 0);
+                let grandTotalTasks = 0;
+                let grandDoneTasks = 0;
+
+                const categoryRows = filteredCategories.map(cat => {
+                    const catTasks = tasks.filter(t => isSameText(t.Kategori, cat));
+                    const catDone = catTasks.filter(t => isTaskCompleted(t)).length;
+                    return {
+                        cat,
+                        catTasks,
+                        total: catTasks.length,
+                        done: catDone,
+                        pct: catTasks.length ? Math.round((catDone / catTasks.length) * 100) : 0
+                    };
+                })
+                .filter(row => showEmpty || row.total > 0)
+                .sort((a, b) => b.total - a.total || b.done - a.done || a.cat.localeCompare(b.cat));
+
+                if (rekapCountEl) rekapCountEl.textContent = `${categoryRows.length} Kategori`;
+
+                if (categoryRows.length === 0) {
+                    rekapBody.innerHTML = `<tr><td colspan="${statusList.length + 3}" class="py-6 text-center text-slate-400">Tidak ada data kategori yang sesuai dengan filter.</td></tr>`;
                     if (rekapFoot) rekapFoot.innerHTML = '';
                 } else {
-                    const statusTotals = statusList.map(() => 0);
-                    let grandTotalTasks = 0;
-                    let grandDoneTasks = 0;
-
-                    rekapBody.innerHTML = categories.map(cat => {
-                        const catTasks = tasks.filter(t => isSameText(t.Kategori, cat));
-                        const catDone = catTasks.filter(t => isTaskCompleted(t)).length;
-                        const pct = catTasks.length ? Math.round((catDone / catTasks.length) * 100) : 0;
-
-                        grandTotalTasks += catTasks.length;
-                        grandDoneTasks += catDone;
+                    rekapBody.innerHTML = categoryRows.map(({ cat, catTasks, total, done, pct }) => {
+                        grandTotalTasks += total;
+                        grandDoneTasks += done;
 
                         const statusCells = statusList.map((st, sIdx) => {
                             const cnt = catTasks.filter(t => isSameText(t.Status, st.Nama)).length;
@@ -2767,9 +2912,9 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                             <td class="sticky left-0 z-10 bg-white py-2.5 px-4 font-semibold text-slate-800 whitespace-nowrap border-r border-slate-100">
                                 <button type="button" onclick="drillDownTasks('kategori', '${escapeHtml(cat)}')" class="hover:text-indigo-600 text-left">${escapeHtml(cat)}</button>
                             </td>
+                            <td class="py-2.5 px-3 text-center font-bold text-slate-800 bg-slate-50/50">${total}</td>
+                            <td class="py-2.5 px-3 text-center font-bold bg-slate-50/50 border-r border-slate-100 ${pct === 100 ? 'text-emerald-600' : 'text-indigo-600'}">${pct}%</td>
                             ${statusCells}
-                            <td class="py-2.5 px-3 text-center font-bold text-slate-800">${catTasks.length}</td>
-                            <td class="py-2.5 px-4 text-right font-bold ${pct === 100 ? 'text-emerald-600' : 'text-indigo-600'}">${pct}%</td>
                         </tr>`;
                     }).join('');
 
@@ -2786,9 +2931,9 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                             <td class="sticky left-0 z-10 bg-slate-100 py-3 px-4 font-extrabold text-slate-900 whitespace-nowrap border-r border-slate-200">
                                 <button type="button" onclick="drillDownTasks('all')" class="hover:text-indigo-600 text-left">TOTAL</button>
                             </td>
-                            ${totalStatusCells}
                             <td class="py-3 px-3 text-center font-extrabold text-slate-900">${grandTotalTasks}</td>
-                            <td class="py-3 px-4 text-right font-extrabold text-emerald-700">${grandPct}%</td>
+                            <td class="py-3 px-3 text-center font-extrabold text-emerald-700 border-r border-slate-200">${grandPct}%</td>
+                            ${totalStatusCells}
                         </tr>`;
                     }
                 }

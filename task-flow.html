@@ -1,0 +1,3225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Flow - Enterprise Task Management</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js untuk Dashboard & Laporan -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .fade-in {
+            animation: fadeIn 0.22s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- Connection Lock Screen / Gatekeeper -->
+    <div id="connection-gatekeeper" class="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden fade-in">
+            <div class="px-6 py-5 bg-[#131524] text-white flex items-center gap-3.5 border-b border-slate-800/80">
+                <div class="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
+                    <i data-lucide="file-spreadsheet" class="w-6 h-6 text-white"></i>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold tracking-tight text-white">Koneksi Database</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Silahkan masukkan link Google Spreadsheet</p>
+                </div>
+            </div>
+
+            <div class="p-6 sm:p-7 space-y-5">
+                <!-- Loading State -->
+                <div id="gatekeeper-loading" class="hidden py-8 text-center space-y-3">
+                    <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+                    <p class="text-sm font-semibold text-slate-700">Menghubungkan ke Google Spreadsheet...</p>
+                    <p class="text-xs text-slate-500">Memverifikasi struktur sheet dan sinkronisasi data</p>
+                </div>
+
+                <!-- Form & Error State -->
+                <div id="gatekeeper-form-area" class="space-y-4">
+                    <div id="gatekeeper-error-box" class="hidden p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5">
+                        <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i>
+                        <p id="gatekeeper-error-msg" class="text-xs text-rose-700 leading-relaxed">URL Google Apps Script belum dikonfigurasi atau tidak merespons.</p>
+                    </div>
+
+                    <div>
+                        <label for="gatekeeper-url-input" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            URL GOOGLE APPS SCRIPT WEB APP <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="url" id="gatekeeper-url-input" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+
+                    <button type="button" onclick="connectFromGatekeeper()" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
+                        <i data-lucide="plug-zap" class="w-4 h-4"></i>
+                        <span>Hubungkan &amp; Buka Aplikasi</span>
+                    </button>
+
+                    <div id="gatekeeper-script-help" class="hidden pt-3 border-t border-slate-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700">Google Apps Script (Code.gs)</span>
+                            <button type="button" onclick="copyGasCode()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Kode
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                            Tempel di <b>Extensions &gt; Apps Script</b> pada Google Sheet Anda, lalu <b>Deploy &gt; Web App</b> dengan akses <b>Anyone</b>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen (Membaca dari Tabel PIC di Google Spreadsheet) -->
+    <div id="login-screen" class="fixed inset-0 z-[90] hidden bg-[#090C18] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-[400px] overflow-hidden fade-in">
+            <div class="px-6 pt-8 pb-7 bg-[#090B16] text-white text-center border-b border-slate-800/80">
+                <div class="w-12 h-12 rounded-xl bg-[#4F46E5] flex items-center justify-center text-white shadow-lg shadow-indigo-600/35 mx-auto mb-3.5">
+                    <i data-lucide="check-square" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold tracking-tight text-white">Task <span class="text-[#6366F1]">Flow</span></h2>
+                <p class="text-xs text-slate-400 mt-1.5">Silahkan masuk untuk menggunakan aplikasi</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
+                <div id="login-error-box" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                    <span id="login-error-msg">Username atau Password salah!</span>
+                </div>
+
+                <div>
+                    <label for="login-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="login-username" required placeholder="Masukkan Username" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="login-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="password" id="login-password" required placeholder="Masukkan Password" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full mt-1 py-3 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    <span>Masuk ke Aplikasi</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-20 sm:bottom-5 right-4 sm:right-5 z-[110] flex flex-col gap-2 max-w-[calc(100vw-2rem)]"></div>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 z-20 bg-slate-950/60 backdrop-blur-[2px] hidden lg:hidden transition-opacity"></div>
+
+    <!-- Main App Wrapper -->
+    <div id="main-app-container" class="flex h-[100dvh] overflow-hidden hidden">
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 transition-transform duration-300 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 flex flex-col shrink-0">
+            <div class="flex items-center justify-between h-16 px-6 bg-slate-950 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
+                        <i data-lucide="check-square" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-white font-bold text-lg tracking-tight">Task <span class="text-indigo-400">Flow</span></span>
+                </div>
+                <button id="close-sidebar" type="button" onclick="closeMobileSidebar()" aria-label="Tutup menu" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- User Profile & Role Info -->
+            <div class="p-4 border-b border-slate-800 bg-slate-900/50">
+                <div class="flex items-center gap-3">
+                    <div id="sidebar-user-avatar" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                        U
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p id="sidebar-user-name" class="text-sm font-bold text-white truncate">Nama User</p>
+                        <p id="sidebar-user-divisi" class="text-xs text-slate-400 truncate">Divisi</p>
+                    </div>
+                </div>
+                <div id="user-role-badge" class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                    <span id="role-text">Role</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <button type="button" onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-indigo-600 text-white">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
+                    <span>Dashboard Task</span>
+                </button>
+                <button type="button" onclick="navigate('tasks')" data-nav="tasks" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="list-todo" class="w-4 h-4 shrink-0"></i>
+                    <span>Daftar Pekerjaan (Task)</span>
+                </button>
+                <button type="button" onclick="navigate('monitor')" data-nav="monitor" id="nav-monitor" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
+                    <span>Monitor Tim</span>
+                </button>
+                <button type="button" onclick="navigate('reports')" data-nav="reports" id="nav-reports" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0"></i>
+                    <span>Laporan &amp; Analitik</span>
+                </button>
+
+                <div id="nav-settings-header" class="pt-4 pb-1 px-3">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Pengaturan Database</p>
+                </div>
+                <button type="button" onclick="navigate('master')" data-nav="master" id="nav-master" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="database" class="w-4 h-4 shrink-0"></i>
+                    <span>Master Data</span>
+                </button>
+                <button type="button" onclick="navigate('integration')" data-nav="integration" id="nav-integration" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 shrink-0 text-emerald-400"></i>
+                    <span>Integrasi Google Sheet</span>
+                </button>
+            </nav>
+
+            <!-- Connection Status & Logout Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50 space-y-3">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Status Database:</span>
+                    <span id="db-status-badge" class="flex items-center gap-1.5 text-rose-400 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                        Terputus
+                    </span>
+                </div>
+                <button type="button" onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    <span>Logout / Keluar</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <button id="open-sidebar" type="button" onclick="openMobileSidebar()" aria-label="Buka menu" class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                    <div class="min-w-0">
+                        <h1 id="page-title" class="text-base sm:text-lg font-bold text-slate-800 truncate">Dashboard Task</h1>
+                        <p id="page-subtitle" class="text-xs text-slate-500 hidden sm:block truncate">Ringkasan aktivitas dan progres pekerjaan harian</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="syncWithGoogleSheets()" id="btn-sync" title="Sinkronkan dengan Google Sheet" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span class="hidden md:inline">Sync Sheet</span>
+                    </button>
+                    <button type="button" onclick="openTaskModal()" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm shadow-indigo-500/20 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Tambah Task</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable View Container -->
+            <main class="flex-1 overflow-y-auto p-3.5 sm:p-6 lg:p-8 pb-24 sm:pb-8">
+
+                <!-- ==================== VIEW 1: DASHBOARD ==================== -->
+                <section id="view-dashboard" class="view-section space-y-5 sm:space-y-6 fade-in">
+                    <!-- KPI Cards (2x2 di HP, 4 kolom di Desktop, klik untuk drill-down) -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <button type="button" onclick="drillDownTasks({})" class="text-left bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-indigo-300 shadow-sm transition-all">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs sm:text-sm font-medium text-slate-500">Total Task</span>
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="layers" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2.5 sm:mt-3 flex items-baseline gap-1.5">
+                                <span id="kpi-total" class="text-xl sm:text-2xl font-bold text-slate-800">0</span>
+                                <span class="text-[11px] sm:text-xs text-slate-400">tugas</span>
+                            </div>
+                        </button>
+
+                        <button type="button" onclick="drillDownTasks({ kondisi: 'inprogress' })" class="text-left bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-blue-300 shadow-sm transition-all">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs sm:text-sm font-medium text-slate-500">In Progress</span>
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="clock" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2.5 sm:mt-3 flex items-baseline gap-1.5">
+                                <span id="kpi-progress" class="text-xl sm:text-2xl font-bold text-blue-600">0</span>
+                                <span class="text-[11px] sm:text-xs text-slate-400">aktif</span>
+                            </div>
+                        </button>
+
+                        <button type="button" onclick="drillDownTasks({ kondisi: 'completed' })" class="text-left bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-emerald-300 shadow-sm transition-all">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs sm:text-sm font-medium text-slate-500">Completed</span>
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2.5 sm:mt-3 flex items-baseline gap-1.5 flex-wrap">
+                                <span id="kpi-done" class="text-xl sm:text-2xl font-bold text-emerald-600">0</span>
+                                <span id="kpi-done-pct" class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">0%</span>
+                            </div>
+                        </button>
+
+                        <button type="button" onclick="drillDownTasks({ kondisi: 'overdue' })" class="text-left bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-rose-300 shadow-sm transition-all">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs sm:text-sm font-medium text-slate-500">Terlambat</span>
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                                </div>
+                            </div>
+                            <div class="mt-2.5 sm:mt-3 flex items-baseline gap-1.5">
+                                <span id="kpi-overdue" class="text-xl sm:text-2xl font-bold text-rose-600">0</span>
+                                <span class="text-[11px] sm:text-xs text-slate-400">overdue</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                            <div class="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+                                <h3 class="text-sm font-semibold text-slate-800">Distribusi Task Berdasarkan PIC (Initial)</h3>
+                                <span class="text-[11px] text-slate-400">Hover untuk nama lengkap</span>
+                            </div>
+                            <div class="h-56 sm:h-64">
+                                <canvas id="chart-pic"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-sm font-semibold text-slate-800 mb-3 sm:mb-4">Proporsi Status</h3>
+                            <div class="h-56 sm:h-64 flex items-center justify-center">
+                                <canvas id="chart-status"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-sm font-semibold text-slate-800 mb-3 sm:mb-4">Proporsi Priority</h3>
+                            <div class="h-56 sm:h-64 flex items-center justify-center">
+                                <canvas id="chart-priority"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rekapitulasi Kategori vs Status (Matriks Dinamis) -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-4 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Matriks jumlah pekerjaan berdasarkan Master Kategori dan Master Status</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap text-sm">
+                                <thead id="dashboard-category-status-head"></thead>
+                                <tbody id="dashboard-category-status-body" class="divide-y divide-slate-200"></tbody>
+                                <tfoot id="dashboard-category-status-foot" class="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent / Urgent Tasks -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-4 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-800">Task Prioritas Tinggi &amp; Mendekati Deadline</h3>
+                            <button type="button" onclick="navigate('tasks')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">Lihat Semua &rarr;</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                        <th class="py-3 px-4 font-semibold">ID</th>
+                                        <th class="py-3 px-4 font-semibold">Deskripsi Task</th>
+                                        <th class="py-3 px-4 font-semibold">PIC</th>
+                                        <th class="py-3 px-4 font-semibold">Priority</th>
+                                        <th class="py-3 px-4 font-semibold">Target</th>
+                                        <th class="py-3 px-4 font-semibold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-urgent-table" class="divide-y divide-slate-100 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== VIEW 2: DAFTAR TASK (CRUD) ==================== -->
+                <section id="view-tasks" class="view-section hidden space-y-4 fade-in">
+                    <!-- Sticky Filter Bar (Collapsible on Mobile + Proportional CSS Grid) -->
+                    <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-md space-y-3 transition-all">
+                        <!-- Mobile Filter Toggle Header -->
+                        <div class="flex md:hidden items-center justify-between gap-2">
+                            <button type="button" onclick="toggleMobileTaskFilters()" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors">
+                                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-600"></i>
+                                <span>Filter &amp; Pencarian</span>
+                                <span id="mobile-active-filter-badge" class="hidden px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-indigo-600 text-white">0</span>
+                            </button>
+                            <div class="flex items-center gap-2 text-xs text-slate-500">
+                                <select aria-label="Jumlah baris per halaman" onchange="changeTasksPageSize(this.value)" id="tasks-page-size-mobile" class="text-base sm:text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:border-indigo-500">
+                                    <option value="10" selected>10 / hal</option>
+                                    <option value="25">25 / hal</option>
+                                    <option value="50">50 / hal</option>
+                                </select>
+                                <span><span id="task-count-label-mobile" class="font-bold text-slate-800">0</span> task</span>
+                            </div>
+                        </div>
+
+                        <!-- Filter Controls Container (Proporsional CSS Grid) -->
+                        <div id="tasks-filter-panel" class="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 w-full">
+                            <div class="relative w-full">
+                                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                <input type="text" id="filter-search" oninput="onTaskFilterChange()" placeholder="Cari task, action plan..." class="w-full h-10 md:h-9 pl-9 pr-3 text-base md:text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <select id="filter-pic" aria-label="Filter PIC" onchange="onTaskFilterChange()" class="w-full h-10 md:h-9 text-base md:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="">Semua PIC</option>
+                            </select>
+                            <select id="filter-kategori" aria-label="Filter Kategori" onchange="onTaskFilterChange()" class="w-full h-10 md:h-9 text-base md:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="">Semua Kategori</option>
+                            </select>
+                            <select id="filter-status" aria-label="Filter Status" onchange="onTaskFilterChange()" class="w-full h-10 md:h-9 text-base md:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="">Semua Status</option>
+                            </select>
+                            <select id="filter-kondisi" aria-label="Filter Kondisi" onchange="onTaskFilterChange()" class="w-full h-10 md:h-9 text-base md:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="">Semua Kondisi</option>
+                                <option value="completed">Completed (Yes)</option>
+                                <option value="inprogress">In Progress (No)</option>
+                                <option value="overdue">Terlambat (Overdue)</option>
+                            </select>
+                            <select id="filter-priority" aria-label="Filter Priority" onchange="onTaskFilterChange()" class="w-full h-10 md:h-9 text-base md:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="">Semua Priority</option>
+                            </select>
+                        </div>
+
+                        <!-- Sub-Bar Kontrol Bawah (Reset Filter + Pengaturan Baris & Total Task) -->
+                        <div class="pt-2.5 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                            <button type="button" onclick="resetTaskFilters()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                <span>Reset Filter</span>
+                            </button>
+
+                            <div class="hidden md:flex items-center gap-3">
+                                <div class="flex items-center gap-1.5">
+                                    <span>Baris:</span>
+                                    <select id="tasks-page-size" aria-label="Jumlah baris per halaman" onchange="changeTasksPageSize(this.value)" class="h-8 border border-slate-200 rounded-lg px-2 bg-white text-slate-700 font-medium focus:outline-none focus:border-indigo-500">
+                                        <option value="10" selected>10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                                <span>Total <span id="task-count-label" class="font-semibold text-slate-800">0</span> task</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Card List View (< 768px) -->
+                    <div id="tasks-mobile-cards" class="grid grid-cols-1 gap-3 md:hidden"></div>
+
+                    <!-- Desktop Table View (>= 768px) -->
+                    <div class="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                                        <th class="py-3 px-4 font-semibold">ID</th>
+                                        <th class="py-3 px-4 font-semibold">Tanggal</th>
+                                        <th class="py-3 px-4 font-semibold">Kategori</th>
+                                        <th class="py-3 px-4 font-semibold">Task / Pekerjaan</th>
+                                        <th class="py-3 px-4 font-semibold">Priority</th>
+                                        <th class="py-3 px-4 font-semibold">PIC</th>
+                                        <th class="py-3 px-4 font-semibold">Target</th>
+                                        <th class="py-3 px-4 font-semibold">Status</th>
+                                        <th class="py-3 px-4 font-semibold">Progres</th>
+                                        <th class="py-3 px-4 font-semibold text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div id="tasks-pagination-bar" class="px-4 py-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                        <div id="tasks-pagination-info">Menampilkan 0 - 0 dari 0 task</div>
+                        <div id="tasks-pagination-buttons" class="flex items-center gap-1 flex-wrap justify-center"></div>
+                    </div>
+                </section>
+
+                <!-- ==================== VIEW 3: MONITOR TIM ==================== -->
+                <section id="view-monitor" class="view-section hidden space-y-5 sm:space-y-6 fade-in">
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-start gap-3">
+                        <i data-lucide="info" class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-semibold text-indigo-900">Mode Monitoring Atasan / Manager</h4>
+                            <p class="text-xs text-indigo-700 mt-0.5">Pantau beban kerja, tingkat penyelesaian (berdasarkan kolom <b>Completed: Yes/No</b>), dan kendala anggota tim secara real-time.</p>
+                        </div>
+                    </div>
+
+                    <div id="team-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"></div>
+                </section>
+
+                <!-- ==================== VIEW 4: LAPORAN & ANALITIK ==================== -->
+                <section id="view-reports" class="view-section hidden space-y-5 sm:space-y-6 fade-in">
+                    <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+                            <div>
+                                <label for="report-date-start" class="block text-xs text-slate-500 mb-1">Dari Tanggal</label>
+                                <input type="date" id="report-date-start" onchange="renderReports()" class="w-full text-base sm:text-sm border border-slate-200 rounded-lg px-3 py-2 sm:py-1.5">
+                            </div>
+                            <div>
+                                <label for="report-date-end" class="block text-xs text-slate-500 mb-1">Sampai Tanggal</label>
+                                <input type="date" id="report-date-end" onchange="renderReports()" class="w-full text-base sm:text-sm border border-slate-200 rounded-lg px-3 py-2 sm:py-1.5">
+                            </div>
+                            <div>
+                                <label for="report-pic" class="block text-xs text-slate-500 mb-1">Filter PIC</label>
+                                <select id="report-pic" onchange="renderReports()" class="w-full text-base sm:text-sm border border-slate-200 rounded-lg px-3 py-2 sm:py-1.5 bg-white">
+                                    <option value="">Semua Karyawan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" onclick="exportToCSV()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors shrink-0">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Export CSV</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-4 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-2">
+                            <h3 class="text-sm font-semibold text-slate-800">Rekapitulasi Kinerja Karyawan (PIC)</h3>
+                            <span id="report-total-badge" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg shrink-0">Total: 0 Task</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                                        <th class="py-3 px-4 font-semibold sticky left-0 z-10 bg-slate-50">Nama PIC</th>
+                                        <th class="py-3 px-4 font-semibold">Initial</th>
+                                        <th class="py-3 px-4 font-semibold">Jabatan / Divisi</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Total Task</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Completed (Yes)</th>
+                                        <th class="py-3 px-4 font-semibold text-center">In Progress (No)</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Overdue</th>
+                                        <th class="py-3 px-4 font-semibold">Completion Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-summary-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                                <tfoot id="report-summary-foot" class="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300 text-sm"></tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== VIEW 5: MASTER DATA ==================== -->
+                <section id="view-master" class="view-section hidden space-y-5 sm:space-y-6 fade-in">
+                    <div class="flex overflow-x-auto border-b border-slate-200 gap-1 sm:gap-2 pb-px">
+                        <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
+                        <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">Priority</button>
+                        <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">PIC (User &amp; Role)</button>
+                        <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">Status</button>
+                        <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">Reference</button>
+                        <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap">Action Plan</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                            <div>
+                                <h3 id="master-title" class="text-base font-bold text-slate-800">Master Data: Kategori</h3>
+                                <p id="master-desc" class="text-xs text-slate-500 mt-0.5">Kelola daftar referensi kategori pekerjaan, group, dan keterangan pada pilihan dropdown.</p>
+                            </div>
+                            <button type="button" onclick="openMasterModal()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm shadow-indigo-500/20 transition-all shrink-0">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span id="master-add-btn-label">Tambah Kategori</span>
+                            </button>
+                        </div>
+
+                        <!-- Filter Bar Master Data Presisi (Grid Menyesuaikan Lebar Halaman) -->
+                        <div class="mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-3">
+                            <div id="master-filter-grid" class="grid grid-cols-1 gap-2.5 w-full">
+                                <div class="relative w-full">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    <input type="text" id="master-filter-search" oninput="renderMasterTable()" placeholder="Cari kode, nama, atau keterangan..." class="w-full h-10 sm:h-9 pl-9 pr-3 text-base sm:text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <select id="master-filter-role" aria-label="Filter Role PIC" onchange="renderMasterTable()" class="hidden w-full h-10 sm:h-9 text-base sm:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Role</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Staff">Staff</option>
+                                </select>
+                                <select id="master-filter-completed" aria-label="Filter Completed Status" onchange="renderMasterTable()" class="hidden w-full h-10 sm:h-9 text-base sm:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Kondisi (Completed)</option>
+                                    <option value="Yes">Yes (Completed)</option>
+                                    <option value="No">No (In Progress)</option>
+                                </select>
+                                <select id="master-filter-group" aria-label="Filter Group Kategori" onchange="renderMasterTable()" class="hidden w-full h-10 sm:h-9 text-base sm:text-sm border border-slate-200 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Group</option>
+                                </select>
+                            </div>
+                            <div class="pt-2.5 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                                <button type="button" onclick="resetMasterFilters()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium transition-colors">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                    <span>Reset</span>
+                                </button>
+                                <span>Menampilkan <span id="master-count-label" class="font-semibold text-slate-800">0</span> data</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr id="master-table-head" class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200"></tr>
+                                </thead>
+                                <tbody id="master-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== VIEW 6: INTEGRASI GOOGLE SPREADSHEET ==================== -->
+                <section id="view-integration" class="view-section hidden space-y-5 sm:space-y-6 fade-in">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
+                        <div class="border-b border-slate-200 pb-4">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600"></i>
+                                Koneksi Database Google Spreadsheet
+                            </h3>
+                            <p class="text-sm text-slate-600 mt-1">Hubungkan aplikasi web ini langsung dengan file Google Spreadsheet Anda menggunakan Google Apps Script Web App API.</p>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                            <label for="gas-url-input" class="block text-sm font-semibold text-slate-800">URL Google Apps Script Web App (Wajib Aktif)</label>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="flex-1 text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                                <button type="button" onclick="saveGasUrl()" class="px-4 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                    Update &amp; Uji Koneksi
+                                </button>
+                                <button type="button" onclick="disconnectGasUrl()" class="px-4 py-2.5 sm:py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-sm font-medium rounded-lg transition-colors">
+                                    Putuskan Koneksi
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="text-sm font-bold text-slate-800">Kode Backend Google Apps Script (Code.gs)</h4>
+                                <button type="button" onclick="copyGasCode()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-lg transition-colors">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                    <span>Salin Kode Script</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Tempel di <b>Extensions &gt; Apps Script</b> pada Google Sheet Anda &rarr; <b>Deploy &gt; Manage deployments &gt; New version</b> (Akses: <i>Anyone</i>).
+                            </p>
+                            <pre id="gas-code-block" class="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs overflow-x-auto max-h-96 font-mono leading-relaxed select-all">// ============================================================================
+// GOOGLE APPS SCRIPT BACKEND UNTUK TASK FLOW (VERSI 2.4 - FULL SCHEMA SYNC)
+// ============================================================================
+
+const SHEET_NAMES = {
+  TASKS: 'Tasks',
+  KATEGORI: 'Kategori',
+  PRIORITY: 'Priority',
+  PIC: 'PIC',
+  STATUS: 'Status',
+  REFERENCE: 'Reference',
+  ACTION_PLAN: 'ActionPlan'
+};
+
+const SCHEMAS = {
+  [SHEET_NAMES.TASKS]: ['ID', 'Tanggal', 'Kategori', 'Task', 'Priority', 'PIC', 'TargetDate', 'Status', 'Progress', 'Reference', 'ActionPlan', 'Catatan'],
+  [SHEET_NAMES.KATEGORI]: ['Kode', 'Nama', 'Group', 'Keterangan'],
+  [SHEET_NAMES.PRIORITY]: ['Kode', 'Nama', 'SLA_Hari'],
+  [SHEET_NAMES.PIC]: ['Kode', 'Nama', 'Initial', 'Divisi', 'Role', 'Username', 'Password'],
+  [SHEET_NAMES.STATUS]: ['Kode', 'Nama', 'Warna', 'Completed'],
+  [SHEET_NAMES.REFERENCE]: ['Kode', 'Nama', 'Keterangan'],
+  [SHEET_NAMES.ACTION_PLAN]: ['Kode', 'Nama', 'KategoriTerkait']
+};
+
+function setupSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  Object.keys(SCHEMAS).forEach(sheetName => {
+    const expectedHeaders = SCHEMAS[sheetName];
+    let sheet = ss.getSheetByName(sheetName);
+
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(expectedHeaders);
+      formatHeaderRow(sheet, expectedHeaders.length);
+    } else {
+      const lastCol = sheet.getLastColumn();
+      if (lastCol === 0) {
+        sheet.appendRow(expectedHeaders);
+        formatHeaderRow(sheet, expectedHeaders.length);
+      } else {
+        const existingHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h).trim());
+        expectedHeaders.forEach(colName => {
+          const exists = existingHeaders.some(eh => eh.toLowerCase() === colName.toLowerCase());
+          if (!exists) {
+            const newColIdx = sheet.getLastColumn() + 1;
+            sheet.getRange(1, newColIdx).setValue(colName);
+            existingHeaders.push(colName);
+          }
+        });
+        formatHeaderRow(sheet, sheet.getLastColumn());
+      }
+    }
+  });
+}
+
+function formatHeaderRow(sheet, numCols) {
+  const headerRange = sheet.getRange(1, 1, 1, numCols);
+  headerRange.setFontWeight('bold')
+             .setBackground('#1e293b')
+             .setFontColor('#ffffff')
+             .setVerticalAlignment('middle');
+  sheet.setFrozenRows(1);
+}
+
+function doGet(e) {
+  setupSheets();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const result = {};
+
+  Object.keys(SCHEMAS).forEach(name => {
+    const sheet = ss.getSheetByName(name);
+    const expectedHeaders = SCHEMAS[name];
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      result[name] = [];
+      return;
+    }
+
+    const actualHeaders = data[0].map(h => String(h).trim());
+    result[name] = data.slice(1)
+      .filter(row => row.some(cell => cell !== '' && cell !== null))
+      .map(row => {
+        let obj = {};
+        actualHeaders.forEach((h, idx) => {
+          if (!h) return;
+          let val = row[idx];
+          if (val instanceof Date) {
+            val = Utilities.formatDate(val, 'GMT+7', 'yyyy-MM-dd');
+          }
+          obj[h] = val;
+        });
+        expectedHeaders.forEach(stdKey => {
+          const matchedKey = Object.keys(obj).find(k => k.toLowerCase() === stdKey.toLowerCase());
+          let val = matchedKey !== undefined ? obj[matchedKey] : '';
+          if (val instanceof Date) {
+            val = Utilities.formatDate(val, 'GMT+7', 'yyyy-MM-dd');
+          }
+          obj[stdKey] = val;
+        });
+        return obj;
+      });
+  });
+
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: result }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(15000);
+
+  try {
+    setupSheets();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const payload = JSON.parse(e.postData.contents);
+    const action = payload.action;
+
+    if (action === 'SAVE_TASK') {
+      const sheet = ss.getSheetByName(SHEET_NAMES.TASKS);
+      const task = payload.data;
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+      const rows = sheet.getDataRange().getValues();
+
+      const rowValues = headers.map(h => {
+        const key = Object.keys(task).find(k => k.toLowerCase() === h.toLowerCase());
+        let val = key !== undefined ? task[key] : '';
+        if ((h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') && /^\d{4}-\d{2}-\d{2}$/.test(String(val))) {
+          const parts = String(val).split('-');
+          val = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        }
+        return val;
+      });
+
+      const idColIdx = headers.findIndex(h => h.toLowerCase() === 'id');
+      let foundRow = -1;
+      if (idColIdx !== -1) {
+        for (let i = 1; i < rows.length; i++) {
+          if (String(rows[i][idColIdx]) === String(task.ID)) {
+            foundRow = i + 1;
+            break;
+          }
+        }
+      }
+
+      if (foundRow > 0) {
+        sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+        applyDateFormatting(sheet, headers, foundRow, 1);
+      } else {
+        sheet.appendRow(rowValues);
+        applyDateFormatting(sheet, headers, sheet.getLastRow(), 1);
+      }
+    }
+    else if (action === 'DELETE_TASK') {
+      const sheet = ss.getSheetByName(SHEET_NAMES.TASKS);
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+      const idColIdx = headers.findIndex(h => h.toLowerCase() === 'id');
+      const rows = sheet.getDataRange().getValues();
+
+      if (idColIdx !== -1) {
+        for (let i = 1; i < rows.length; i++) {
+          if (String(rows[i][idColIdx]) === String(payload.id)) {
+            sheet.deleteRow(i + 1);
+            break;
+          }
+        }
+      }
+    }
+    else if (action === 'SYNC_ALL') {
+      const db = payload.database;
+      Object.keys(db).forEach(sheetName => {
+        const sheet = ss.getSheetByName(sheetName);
+        if (!sheet) return;
+        const items = db[sheetName];
+        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+
+        if (sheet.getLastRow() > 1) {
+          sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent();
+        }
+        if (items && items.length > 0) {
+          const rows = items.map(item => headers.map(h => {
+            const key = Object.keys(item).find(k => k.toLowerCase() === h.toLowerCase());
+            let val = key !== undefined && item[key] !== undefined ? item[key] : '';
+            if (sheetName === SHEET_NAMES.TASKS && (h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') && /^\d{4}-\d{2}-\d{2}$/.test(String(val))) {
+              const parts = String(val).split('-');
+              val = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            }
+            return val;
+          }));
+          sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+          if (sheetName === SHEET_NAMES.TASKS) {
+            applyDateFormatting(sheet, headers, 2, rows.length);
+          }
+        }
+      });
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ status: 'success' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function applyDateFormatting(sheet, headers, startRow, numRows) {
+  headers.forEach((h, idx) => {
+    if (h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') {
+      sheet.getRange(startRow, idx + 1, numRows, 1).setNumberFormat('dd/MM/yyyy');
+    }
+  });
+}</pre>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- Floating Action Button (FAB) Tambah Task khusus Smartphone -->
+        <button type="button" onclick="openTaskModal()" aria-label="Tambah Task Baru" class="sm:hidden fixed bottom-5 right-5 z-20 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white shadow-xl shadow-indigo-600/35 flex items-center justify-center transition-all">
+            <i data-lucide="plus" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- ==================== MODAL: TAMBAH / EDIT TASK ==================== -->
+    <div id="task-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden fade-in">
+            <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 id="modal-title" class="text-base font-bold text-slate-800">Tambah Task Baru</h3>
+                <button type="button" onclick="closeTaskModal()" aria-label="Tutup modal task" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="task-form" onsubmit="saveTask(event)" class="p-5 sm:p-6 overflow-y-auto space-y-4">
+                <input type="hidden" id="task-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="task-date" class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Input</label>
+                        <input type="date" id="task-date" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="task-target" class="block text-xs font-semibold text-slate-700 mb-1">Target Selesai (Deadline)</label>
+                        <input type="date" id="task-target" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="task-kategori" class="block text-xs font-semibold text-slate-700 mb-1">Kategori Pekerjaan</label>
+                        <select id="task-kategori" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                    <div>
+                        <label for="task-priority" class="block text-xs font-semibold text-slate-700 mb-1">Priority</label>
+                        <select id="task-priority" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="task-desc" class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Task / Pekerjaan <span class="text-rose-500">*</span></label>
+                    <textarea id="task-desc" rows="2" required placeholder="Tuliskan detail pekerjaan yang harus diselesaikan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="task-pic" class="block text-xs font-semibold text-slate-700 mb-1">PIC (Penanggung Jawab)</label>
+                        <select id="task-pic" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                    <div>
+                        <label for="task-status" class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                        <select id="task-status" onchange="autoAdjustProgress()" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="task-reference" class="block text-xs font-semibold text-slate-700 mb-1">Reference</label>
+                        <select id="task-reference" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                    <div>
+                        <label for="task-actionplan" class="block text-xs font-semibold text-slate-700 mb-1">Action Plan</label>
+                        <select id="task-actionplan" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="task-progress" class="block text-xs font-semibold text-slate-700">Progress Penyelesaian</label>
+                        <span id="progress-val-label" class="text-xs font-bold text-indigo-600">0%</span>
+                    </div>
+                    <input type="range" id="task-progress" min="0" max="100" step="5" value="0" oninput="document.getElementById('progress-val-label').textContent = this.value + '%'" class="w-full accent-indigo-600 cursor-pointer">
+                </div>
+
+                <div>
+                    <label for="task-notes" class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Kendala</label>
+                    <input type="text" id="task-notes" placeholder="Catatan tambahan atau kendala..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
+                    <button type="button" onclick="closeTaskModal()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 sm:py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: TAMBAH / EDIT MASTER DATA ==================== -->
+    <div id="master-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden fade-in">
+            <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 id="master-modal-title" class="text-base font-bold text-slate-800">Tambah Master Data</h3>
+                <button type="button" onclick="closeMasterModal()" aria-label="Tutup modal master data" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="master-form" onsubmit="saveMasterItem(event)" class="p-5 sm:p-6 overflow-y-auto space-y-4">
+                <input type="hidden" id="master-edit-index" value="-1">
+
+                <div>
+                    <label id="master-label-name" for="master-input-name" class="block text-xs font-semibold text-slate-700 mb-1">Nama Item <span class="text-rose-500">*</span></label>
+                    <input type="text" id="master-input-name" required placeholder="Masukkan nama..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <!-- Field Khusus Master KATEGORI (Group) -->
+                <div id="master-kategori-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label for="master-input-group" class="block text-xs font-semibold text-slate-700 mb-1">Group Kategori <span class="text-rose-500">*</span></label>
+                        <input type="text" id="master-input-group" list="master-group-datalist" placeholder="Contoh: Internal / Eksternal / Operasional..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                        <datalist id="master-group-datalist"></datalist>
+                    </div>
+                </div>
+
+                <!-- Field Khusus Master PIC (Initial + Role + Username + Password) -->
+                <div id="master-pic-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="master-input-initial" class="block text-xs font-semibold text-slate-700 mb-1">Initial (Untuk Chart) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="master-input-initial" maxlength="8" placeholder="Contoh: BS / AND" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="master-input-role" class="block text-xs font-semibold text-slate-700 mb-1">Hak Akses (Role) <span class="text-rose-500">*</span></label>
+                            <select id="master-input-role" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="Staff">Staff (Terbatas)</option>
+                                <option value="Manager">Manager (Kelola Master &amp; Monitor Tim)</option>
+                                <option value="Admin">Admin (Full Akses &amp; Database)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1">Username Login <span class="text-rose-500">*</span></label>
+                            <input type="text" id="master-input-username" placeholder="Username..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1">Password Login <span class="text-rose-500">*</span></label>
+                            <input type="text" id="master-input-password" placeholder="Password..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Field Khusus Master STATUS (Warna HEXA + Completed Yes/No) -->
+                <div id="master-status-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="master-input-color-hex" class="block text-xs font-semibold text-slate-700 mb-1">Warna HEXA <span class="text-rose-500">*</span></label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="master-input-colorpicker" value="#3b82f6" onchange="document.getElementById('master-input-color-hex').value = this.value.toUpperCase()" class="h-10 w-12 rounded-lg border border-slate-300 cursor-pointer p-0.5 bg-white shrink-0">
+                                <input type="text" id="master-input-color-hex" value="#3B82F6" maxlength="9" oninput="syncColorPickerFromHex(this.value)" placeholder="#3B82F6" class="w-full text-base sm:text-sm font-mono uppercase border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="master-input-completed" class="block text-xs font-semibold text-slate-700 mb-1">Completed <span class="text-rose-500">*</span></label>
+                            <select id="master-input-completed" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="No">No (In Progress)</option>
+                                <option value="Yes">Yes (Completed)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="master-extra-container">
+                    <label id="master-label-extra" for="master-input-extra" class="block text-xs font-semibold text-slate-700 mb-1">Keterangan</label>
+                    <input type="text" id="master-input-extra" placeholder="Keterangan tambahan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
+                    <button type="button" onclick="closeMasterModal()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" id="master-submit-btn" class="w-full sm:w-auto px-5 py-2.5 sm:py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: KONFIRMASI HAPUS ==================== -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm p-6 text-center space-y-4 fade-in">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h4 class="text-base font-bold text-slate-800">Konfirmasi Hapus</h4>
+                <p id="confirm-message" class="text-xs text-slate-500 mt-1">Apakah Anda yakin ingin menghapus data ini?</p>
+            </div>
+            <div class="flex gap-2 justify-center pt-2">
+                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 sm:py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Batal</button>
+                <button type="button" id="confirm-yes-btn" class="flex-1 py-2.5 sm:py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== APPLICATION LOGIC (JAVASCRIPT) ==================== -->
+    <script>
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getTodayOffset(days) {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const wib = new Date(utc + (7 * 3600000));
+            wib.setDate(wib.getDate() + days);
+            const yyyy = wib.getFullYear();
+            const mm = String(wib.getMonth() + 1).padStart(2, '0');
+            const dd = String(wib.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function formatDateDisplay(dateStr) {
+            if (!dateStr) return '-';
+            const str = String(dateStr).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                const [y, m, d] = str.substring(0, 10).split('-');
+                return `${d}/${m}/${y}`;
+            }
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+                return str;
+            }
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime())) {
+                const utc = parsed.getTime() + (parsed.getTimezoneOffset() * 60000);
+                const wib = new Date(utc + (7 * 3600000));
+                const dd = String(wib.getDate()).padStart(2, '0');
+                const mm = String(wib.getMonth() + 1).padStart(2, '0');
+                const yyyy = wib.getFullYear();
+                return `${dd}/${mm}/${yyyy}`;
+            }
+            return str;
+        }
+
+        function normalizeDateISO(dateStr) {
+            if (!dateStr) return '';
+            const str = String(dateStr).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                return str.substring(0, 10);
+            }
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+                const [d, m, y] = str.split('/');
+                return `${y}-${m}-${d}`;
+            }
+            return str;
+        }
+
+        function normalizeHexColor(rawColor, fallbackHex = '#64748B') {
+            if (!rawColor) return fallbackHex;
+            const val = String(rawColor).trim();
+            if (/^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?([0-9A-Fa-f]{2})?$/.test(val)) {
+                if (val.length === 4) {
+                    return '#' + val[1] + val[1] + val[2] + val[2] + val[3] + val[3];
+                }
+                return val.substring(0, 7).toUpperCase();
+            }
+            if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+                return '#' + val.toUpperCase();
+            }
+            const legacyMap = {
+                slate: '#64748B',
+                blue: '#2563EB',
+                amber: '#D97706',
+                emerald: '#059669',
+                green: '#059669',
+                rose: '#E11D48',
+                red: '#DC2626',
+                indigo: '#4F46E5',
+                purple: '#7C3AED'
+            };
+            return legacyMap[val.toLowerCase()] || fallbackHex;
+        }
+
+        function hexToRgba(hex, alpha = 0.14) {
+            const clean = normalizeHexColor(hex, '#64748B');
+            const r = parseInt(clean.slice(1, 3), 16);
+            const g = parseInt(clean.slice(3, 5), 16);
+            const b = parseInt(clean.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // 1. DEFAULT MASTER DATA & INITIAL SEED
+        const DEFAULT_DB = {
+            Kategori: [
+                { Kode: 'KAT-01', Nama: 'Operasional Harian', Group: 'Internal', Keterangan: 'Tugas rutin operasional kantor' },
+                { Kode: 'KAT-02', Nama: 'Pengembangan Sistem / IT', Group: 'Internal', Keterangan: 'Perbaikan aplikasi, jaringan, dan infrastruktur' },
+                { Kode: 'KAT-03', Nama: 'Administrasi & Keuangan', Group: 'Internal', Keterangan: 'Laporan keuangan, invoice, dokumen legal' },
+                { Kode: 'KAT-04', Nama: 'Koordinasi Klien / Vendor', Group: 'Eksternal', Keterangan: 'Meeting eksternal dan tindak lanjut mitra' },
+                { Kode: 'KAT-05', Nama: 'Audit & Compliance', Group: 'Internal', Keterangan: 'Pemeriksaan SOP dan kepatuhan internal' }
+            ],
+            Priority: [
+                { Kode: 'PRI-01', Nama: 'Urgent', SLA_Hari: '1 Hari' },
+                { Kode: 'PRI-02', Nama: 'High', SLA_Hari: '2 Hari' },
+                { Kode: 'PRI-03', Nama: 'Medium', SLA_Hari: '5 Hari' },
+                { Kode: 'PRI-04', Nama: 'Low', SLA_Hari: '7 Hari' }
+            ],
+            PIC: [
+                { Kode: 'PIC-00', Nama: 'Super Admin', Initial: 'SA', Divisi: 'IT Administrator', Role: 'Admin', Username: 'admin', Password: '123456' },
+                { Kode: 'PIC-01', Nama: 'Budi Santoso', Initial: 'BS', Divisi: 'Head of Operations', Role: 'Manager', Username: 'budi', Password: '123456' },
+                { Kode: 'PIC-02', Nama: 'Siti Aminah', Initial: 'SAH', Divisi: 'Finance & Admin', Role: 'Staff', Username: 'siti', Password: '123456' },
+                { Kode: 'PIC-03', Nama: 'Andi Wijaya', Initial: 'AW', Divisi: 'IT & System', Role: 'Staff', Username: 'andi', Password: '123456' },
+                { Kode: 'PIC-04', Nama: 'Rina Marlina', Initial: 'RM', Divisi: 'Customer Relations', Role: 'Staff', Username: 'rina', Password: '123456' }
+            ],
+            Status: [
+                { Kode: 'STS-01', Nama: 'Open', Warna: '#64748B', Completed: 'No' },
+                { Kode: 'STS-02', Nama: 'In Progress', Warna: '#2563EB', Completed: 'No' },
+                { Kode: 'STS-03', Nama: 'Review', Warna: '#D97706', Completed: 'No' },
+                { Kode: 'STS-04', Nama: 'Done', Warna: '#059669', Completed: 'Yes' },
+                { Kode: 'STS-05', Nama: 'Pending', Warna: '#E11D48', Completed: 'No' }
+            ],
+            Reference: [
+                { Kode: 'REF-01', Nama: 'Meeting Mingguan', Keterangan: 'Arahan rapat koordinasi Senin' },
+                { Kode: 'REF-02', Nama: 'Email Manajemen', Keterangan: 'Instruksi langsung Direksi/Manager' },
+                { Kode: 'REF-03', Nama: 'Tiket Support / Keluhan', Keterangan: 'Laporan kendala operasional' },
+                { Kode: 'REF-04', Nama: 'RKAP / Target Bulanan', Keterangan: 'Program kerja tahunan' }
+            ],
+            ActionPlan: [
+                { Kode: 'ACT-01', Nama: 'Analisa & Pengumpulan Data', KategoriTerkait: 'Semua' },
+                { Kode: 'ACT-02', Nama: 'Eksekusi & Implementasi', KategoriTerkait: 'Operasional' },
+                { Kode: 'ACT-03', Nama: 'Koordinasi Lintas Divisi', KategoriTerkait: 'Koordinasi' },
+                { Kode: 'ACT-04', Nama: 'Verifikasi & Finalisasi Dokumen', KategoriTerkait: 'Administrasi' }
+            ],
+            Tasks: [
+                {
+                    ID: 'TSK-1001',
+                    Tanggal: getTodayOffset(-4),
+                    Kategori: 'Administrasi & Keuangan',
+                    Task: 'Rekonsiliasi Laporan Pengeluaran Operasional Bulan Berjalan',
+                    Priority: 'High',
+                    PIC: 'Siti Aminah',
+                    TargetDate: getTodayOffset(1),
+                    Status: 'In Progress',
+                    Progress: 75,
+                    Reference: 'RKAP / Target Bulanan',
+                    ActionPlan: 'Verifikasi & Finalisasi Dokumen',
+                    Catatan: 'Menunggu bukti transaksi divisi logistik'
+                },
+                {
+                    ID: 'TSK-1002',
+                    Tanggal: getTodayOffset(-3),
+                    Kategori: 'Pengembangan Sistem / IT',
+                    Task: 'Integrasi Database Task List ke Google Spreadsheet Kantor',
+                    Priority: 'Urgent',
+                    PIC: 'Andi Wijaya',
+                    TargetDate: getTodayOffset(5),
+                    Status: 'Open',
+                    Progress: 15,
+                    Reference: 'Tiket Support / Keluhan',
+                    ActionPlan: 'Analisa & Pengumpulan Data',
+                    Catatan: 'Baru mendata lantai 1'
+                }
+            ]
+        };
+        // 1. EMPTY SCHEMA DATABASE (Murni dari Google Spreadsheet)
+        const EMPTY_DB = {
+            Kategori: [],
+            Priority: [],
+            PIC: [],
+            Status: [],
+            Reference: [],
+            ActionPlan: [],
+            Tasks: []
+        };
+
+        // Parameter Default URL Spreadsheet & Google Apps Script Web App
+        const APP_DEFAULT_CONFIG = {
+            // Opsional: isi dengan link Google Spreadsheet referensi/dokumen Anda jika ingin disematkan sebagai parameter default
+            DEFAULT_SPREADSHEET_URL: '',
+            // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
+            DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec'
+        };
+
+        function resolveInitialGasUrl() {
+            const savedUrl = (localStorage.getItem('taskflow_gas_url') || '').trim();
+            if (savedUrl) return savedUrl;
+
+            const defaultWebAppUrl = (APP_DEFAULT_CONFIG.DEFAULT_GAS_WEB_APP_URL || '').trim();
+            if (defaultWebAppUrl) return defaultWebAppUrl;
+
+            const defaultSheetUrl = (APP_DEFAULT_CONFIG.DEFAULT_SPREADSHEET_URL || '').trim();
+            if (defaultSheetUrl.includes('script.google.com/macros/s/')) {
+                return defaultSheetUrl;
+            }
+            return '';
+        }
+
+        let db = JSON.parse(JSON.stringify(EMPTY_DB));
+        let gasUrl = resolveInitialGasUrl();
+        let isConnected = false;
+        let isConnecting = false;
+        let currentUser = null;
+        let currentMasterTab = 'Kategori';
+        let tasksCurrentPage = 1;
+        let tasksPageSize = 10;
+        let picChart = null;
+        let statusChart = null;
+        let priorityChart = null;
+        let pendingDeleteTaskId = null;
+
+        function normalizeCompletedFlag(rawVal) {
+            const val = String(rawVal ?? '').trim().toLowerCase();
+            if (val === 'yes' || val === 'ya' || val === 'y' || val === 'true' || val === '1' || val === 'completed') {
+                return 'Yes';
+            }
+            return 'No';
+        }
+
+        function normalizeIncomingDatabase(rawData) {
+            const normalized = { ...EMPTY_DB, ...(rawData || {}) };
+            if (Array.isArray(normalized.Kategori)) {
+                normalized.Kategori = normalized.Kategori.map(k => {
+                    const rawGroup = k.Group ?? k.group ?? k.Grup ?? k.grup ?? k.CategoryGroup ?? '';
+                    return {
+                        Kode: k.Kode || '',
+                        Nama: k.Nama || '',
+                        Group: String(rawGroup).trim(),
+                        Keterangan: k.Keterangan || ''
+                    };
+                });
+            }
+            if (Array.isArray(normalized.PIC)) {
+                normalized.PIC = normalized.PIC.map(p => {
+                    const rawInit = p.Initial ?? p.initial ?? p.Inisial ?? p.inisial ?? p.Initials ?? '';
+                    const cleanInit = String(rawInit).trim();
+                    return {
+                        Kode: p.Kode || '',
+                        Nama: p.Nama || '',
+                        Initial: cleanInit,
+                        Divisi: p.Divisi || '',
+                        Role: p.Role || 'Staff',
+                        Username: p.Username || '',
+                        Password: p.Password || ''
+                    };
+                });
+            }
+            if (Array.isArray(normalized.Status)) {
+                normalized.Status = normalized.Status.map(s => {
+                    const rawCompleted = s.Completed ?? s.completed ?? s.IsCompleted ?? '';
+                    const isYes = rawCompleted !== ''
+                        ? normalizeCompletedFlag(rawCompleted) === 'Yes'
+                        : ['done', 'completed', 'selesai'].includes(String(s.Nama || '').trim().toLowerCase());
+                    return {
+                        Kode: s.Kode || '',
+                        Nama: s.Nama || '',
+                        Warna: normalizeHexColor(s.Warna || s.warna || '#64748B', '#64748B'),
+                        Completed: isYes ? 'Yes' : 'No'
+                    };
+                });
+            }
+            return normalized;
+        }
+
+        function getPicInitial(picObjOrName) {
+            if (!picObjOrName) return '?';
+            if (typeof picObjOrName === 'object') {
+                const initVal = String(picObjOrName.Initial ?? picObjOrName.initial ?? picObjOrName.Inisial ?? '').trim();
+                if (initVal) return initVal;
+                const namaVal = String(picObjOrName.Nama || '').trim();
+                return namaVal ? namaVal.split(/\s+/).map(n => n[0]).join('').substring(0, 3).toUpperCase() : '?';
+            }
+            const found = (db.PIC || []).find(p => isSameText(p.Nama, picObjOrName) || isSameText(p.Initial, picObjOrName));
+            if (found) {
+                const foundInit = String(found.Initial ?? found.initial ?? found.Inisial ?? '').trim();
+                if (foundInit) return foundInit;
+            }
+            return String(picObjOrName).trim().split(/\s+/).map(n => n[0]).join('').substring(0, 3).toUpperCase();
+        }
+
+        function getStatusConfig(statusName) {
+            const found = (db.Status || []).find(s => isSameText(s.Nama, statusName));
+            if (found) {
+                return {
+                    Nama: found.Nama,
+                    Warna: normalizeHexColor(found.Warna, '#64748B'),
+                    Completed: normalizeCompletedFlag(found.Completed)
+                };
+            }
+            const lower = String(statusName || '').trim().toLowerCase();
+            const isDoneLegacy = ['done', 'completed', 'selesai'].includes(lower);
+            return {
+                Nama: statusName || 'Open',
+                Warna: isDoneLegacy ? '#059669' : '#64748B',
+                Completed: isDoneLegacy ? 'Yes' : 'No'
+            };
+        }
+
+        // 2. INISIALISASI APLIKASI & GATEKEEPER KONEKSI
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setupKeyboardAndBackdrop();
+
+            const initialDisplayUrl = gasUrl || (APP_DEFAULT_CONFIG.DEFAULT_SPREADSHEET_URL || '').trim();
+            if (initialDisplayUrl) {
+                document.getElementById('gatekeeper-url-input').value = initialDisplayUrl;
+                document.getElementById('gas-url-input').value = initialDisplayUrl;
+            }
+
+            if (gasUrl) {
+                verifyAndConnect(gasUrl);
+            } else {
+                lockApplication('');
+            }
+        });
+
+        function setupKeyboardAndBackdrop() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeMobileSidebar();
+                    closeTaskModal();
+                    closeMasterModal();
+                    closeConfirmModal();
+                }
+            });
+
+            ['task-modal', 'master-modal', 'confirm-modal'].forEach(modalId => {
+                const el = document.getElementById(modalId);
+                if (!el) return;
+                el.addEventListener('click', (e) => {
+                    if (e.target === el) {
+                        if (modalId === 'task-modal') closeTaskModal();
+                        if (modalId === 'master-modal') closeMasterModal();
+                        if (modalId === 'confirm-modal') closeConfirmModal();
+                    }
+                });
+            });
+        }
+
+        function openMobileSidebar() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.remove('hidden');
+        }
+
+        function closeMobileSidebar() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.add('hidden');
+        }
+
+        function lockApplication(errorMessage = '') {
+            isConnected = false;
+            isConnecting = false;
+            closeMobileSidebar();
+            updateConnectionBadge();
+            document.getElementById('main-app-container').classList.add('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('connection-gatekeeper').classList.remove('hidden');
+            document.getElementById('gatekeeper-loading').classList.add('hidden');
+            document.getElementById('gatekeeper-form-area').classList.remove('hidden');
+
+            const errorBox = document.getElementById('gatekeeper-error-box');
+            const errorMsg = document.getElementById('gatekeeper-error-msg');
+            if (errorMessage) {
+                errorBox.classList.remove('hidden');
+                errorMsg.textContent = errorMessage;
+            } else {
+                errorBox.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function unlockApplication() {
+            isConnected = true;
+            isConnecting = false;
+            updateConnectionBadge();
+            document.getElementById('connection-gatekeeper').classList.add('hidden');
+
+            const savedUsername = sessionStorage.getItem('taskflow_logged_user');
+            if (savedUsername) {
+                const matchedUser = (db.PIC || []).find(p => {
+                    const rawUser = p.Username !== undefined ? p.Username : (p.username !== undefined ? p.username : '');
+                    return String(rawUser).trim().toLowerCase() === savedUsername.trim().toLowerCase();
+                });
+                if (matchedUser) {
+                    currentUser = matchedUser;
+                    enterMainApp();
+                    return;
+                }
+                sessionStorage.removeItem('taskflow_logged_user');
+            }
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            closeMobileSidebar();
+            document.getElementById('main-app-container').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('login-error-box').classList.add('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            const submitBtn = document.querySelector('#login-screen button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = false;
+            lucide.createIcons();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const uname = document.getElementById('login-username').value.trim();
+            const pwd = document.getElementById('login-password').value.trim();
+            const errBox = document.getElementById('login-error-box');
+            const errMsg = document.getElementById('login-error-msg');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            if (!uname || !pwd) {
+                errBox.classList.remove('hidden');
+                errMsg.textContent = 'Username dan Password wajib diisi!';
+                return;
+            }
+
+            if (!gasUrl) {
+                errBox.classList.remove('hidden');
+                errMsg.textContent = 'Koneksi database Google Spreadsheet belum aktif.';
+                return;
+            }
+
+            errBox.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'LOGIN',
+                        username: uname,
+                        password: pwd
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.status !== 'success' || !result.user) {
+                    errBox.classList.remove('hidden');
+                    errMsg.textContent = result.message || 'Username atau Password tidak valid!';
+                    return;
+                }
+
+                currentUser = result.user;
+                const validUsername = String(currentUser.Username || uname).trim();
+                sessionStorage.setItem('taskflow_logged_user', validUsername);
+                enterMainApp();
+                showToast(`Selamat datang, ${currentUser.Nama} (${currentUser.Role || 'Staff'})!`, 'success');
+            } catch (err) {
+                console.error('Login error:', err);
+                errBox.classList.remove('hidden');
+                errMsg.textContent = 'Gagal memverifikasi login ke Google Apps Script. Periksa koneksi dan deployment Web App.';
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+
+        function enterMainApp() {
+            closeMobileSidebar();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app-container').classList.remove('hidden');
+            applyUserSession();
+            navigate('dashboard');
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('taskflow_logged_user');
+            currentUser = null;
+            showLoginScreen();
+            showToast('Anda telah berhasil logout.', 'info');
+        }
+
+        function connectFromGatekeeper() {
+            const inputEl = document.getElementById('gatekeeper-url-input');
+            const url = (inputEl ? inputEl.value : '').trim();
+            if (!url || !url.startsWith('https://script.google.com/')) {
+                lockApplication('Format URL tidak valid! Pastikan URL diawali dengan https://script.google.com/macros/s/...');
+                return;
+            }
+            verifyAndConnect(url);
+        }
+
+        async function verifyAndConnect(targetUrl) {
+            if (isConnecting) return;
+            isConnecting = true;
+
+            const gatekeeper = document.getElementById('connection-gatekeeper');
+            const formArea = document.getElementById('gatekeeper-form-area');
+            const loadingArea = document.getElementById('gatekeeper-loading');
+
+            if (gatekeeper) gatekeeper.classList.remove('hidden');
+            if (formArea) formArea.classList.add('hidden');
+            if (loadingArea) loadingArea.classList.remove('hidden');
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort(new Error('Waktu koneksi habis (timeout setelah 30 detik).'));
+                }, 30000);
+
+                const response = await fetch(targetUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error ${response.status}`);
+                }
+
+                const json = await response.json();
+                if (json.status === 'success' && json.data) {
+                    gasUrl = targetUrl;
+                    localStorage.setItem('taskflow_gas_url', gasUrl);
+                    const gasInput = document.getElementById('gas-url-input');
+                    if (gasInput) gasInput.value = gasUrl;
+
+                    db = normalizeIncomingDatabase(json.data);
+                    saveToLocal();
+                    unlockApplication();
+                    showToast('Berhasil terhubung ke database Google Spreadsheet!', 'success');
+                } else {
+                    throw new Error(json.message || 'Format respons dari Google Apps Script tidak sesuai.');
+                }
+            } catch (err) {
+                console.error('Connection failed:', err);
+                const reason = err?.name === 'AbortError'
+                    ? 'Koneksi timeout saat menghubungi Google Apps Script. Coba lagi beberapa saat.'
+                    : (err?.message || 'Network Error');
+                lockApplication(`Gagal terhubung ke Google Spreadsheet (${reason}). Pastikan URL benar dan deployment Web App diatur ke "Anyone".`);
+            } finally {
+                isConnecting = false;
+            }
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('taskflow_db', JSON.stringify(db));
+        }
+
+        // 3. NAVIGASI
+        function navigate(viewId) {
+            const role = currentUser ? currentUser.Role : 'Staff';
+            if (viewId === 'integration' && role !== 'Admin') {
+                showToast('Akses ditolak! Hanya Admin yang dapat mengatur koneksi Google Spreadsheet.', 'error');
+                return;
+            }
+            if (viewId === 'master' && role !== 'Admin' && role !== 'Manager') {
+                showToast('Akses ditolak! Hanya Admin & Manager yang dapat mengelola Master Data.', 'error');
+                return;
+            }
+            if ((viewId === 'monitor' || viewId === 'reports') && role === 'Staff') {
+                showToast('Akses ditolak! Menu ini khusus untuk Manager & Admin.', 'error');
+                return;
+            }
+
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.nav === viewId) {
+                    btn.classList.add('bg-indigo-600', 'text-white');
+                    btn.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                } else {
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                    btn.classList.add('text-slate-300', 'hover:bg-slate-800');
+                }
+            });
+
+            const titles = {
+                dashboard: ['Dashboard Task', 'Ringkasan aktivitas dan progres pekerjaan harian'],
+                tasks: ['Daftar Pekerjaan (Task)', 'Input dan kelola rincian tugas harian karyawan'],
+                monitor: ['Monitor Tim', 'Pengawasan beban kerja dan progres anggota tim oleh atasan'],
+                reports: ['Laporan & Analitik', 'Rekapitulasi kinerja dan export laporan ke Excel/CSV'],
+                master: ['Master Data', 'Pengaturan referensi Kategori, Priority, PIC, Status, Reference, dan Action Plan'],
+                integration: ['Integrasi Google Spreadsheet', 'Hubungkan aplikasi dengan database Google Sheets']
+            };
+            document.getElementById('page-title').textContent = titles[viewId][0];
+            document.getElementById('page-subtitle').textContent = titles[viewId][1];
+
+            closeMobileSidebar();
+
+            if (viewId === 'dashboard') renderDashboard();
+            if (viewId === 'tasks') renderTasksTable();
+            if (viewId === 'monitor') renderMonitorTim();
+            if (viewId === 'reports') renderReports();
+            if (viewId === 'master') renderMasterTable();
+
+            lucide.createIcons();
+        }
+
+        // 4. USER ROLE & ACCESS CONTROL
+        function applyUserSession() {
+            if (!currentUser) {
+                showLoginScreen();
+                return;
+            }
+
+            const latestProfile = db.PIC.find(p => p.Kode === currentUser.Kode || isSameText(p.Nama, currentUser.Nama));
+            if (latestProfile) currentUser = latestProfile;
+
+            const avatarEl = document.getElementById('sidebar-user-avatar');
+            avatarEl.textContent = getPicInitial(currentUser);
+            document.getElementById('sidebar-user-name').textContent = currentUser.Nama;
+            document.getElementById('sidebar-user-divisi').textContent = currentUser.Divisi;
+
+            const role = currentUser.Role;
+            const badge = document.getElementById('user-role-badge');
+            const roleText = document.getElementById('role-text');
+            const navMonitor = document.getElementById('nav-monitor');
+            const navReports = document.getElementById('nav-reports');
+            const navSettingsHeader = document.getElementById('nav-settings-header');
+            const navMaster = document.getElementById('nav-master');
+            const navIntegration = document.getElementById('nav-integration');
+
+            if (role === 'Admin') {
+                badge.className = 'mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                roleText.textContent = 'Admin (Full Akses)';
+                navMonitor.classList.remove('hidden');
+                navReports.classList.remove('hidden');
+                navSettingsHeader.classList.remove('hidden');
+                navMaster.classList.remove('hidden');
+                navIntegration.classList.remove('hidden');
+            } else if (role === 'Manager') {
+                badge.className = 'mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+                roleText.textContent = 'Manager';
+                navMonitor.classList.remove('hidden');
+                navReports.classList.remove('hidden');
+                navSettingsHeader.classList.remove('hidden');
+                navMaster.classList.remove('hidden');
+                navIntegration.classList.add('hidden');
+            } else {
+                badge.className = 'mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                roleText.textContent = 'Staff (Terbatas)';
+                navMonitor.classList.add('hidden');
+                navReports.classList.add('hidden');
+                navSettingsHeader.classList.add('hidden');
+                navMaster.classList.add('hidden');
+                navIntegration.classList.add('hidden');
+            }
+
+            const activeSection = document.querySelector('.view-section:not(.hidden)');
+            if (activeSection) {
+                const currentViewId = activeSection.id.replace('view-', '');
+                if ((currentViewId === 'integration' && role !== 'Admin') ||
+                    (currentViewId === 'master' && role !== 'Admin' && role !== 'Manager') ||
+                    ((currentViewId === 'monitor' || currentViewId === 'reports') && role === 'Staff')) {
+                    navigate('dashboard');
+                }
+            }
+
+            populateFilterDropdowns();
+            refreshAllViews();
+        }
+
+        function getAccessibleTasks() {
+            if (currentUser && currentUser.Role === 'Staff') {
+                const userName = String(currentUser.Nama || '').trim().toLowerCase();
+                return db.Tasks.filter(t => String(t.PIC || '').trim().toLowerCase() === userName);
+            }
+            return db.Tasks;
+        }
+
+        // Helper status berbasis kolom Completed (Yes = Completed, No = In Progress)
+        function isTaskCompleted(t) {
+            const cfg = getStatusConfig(t.Status);
+            return cfg.Completed === 'Yes';
+        }
+
+        function isTaskInProgress(t) {
+            return !isTaskCompleted(t);
+        }
+
+        function isSameText(a, b) {
+            return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+        }
+
+        function calculateTaskMetrics(taskList) {
+            const today = getTodayOffset(0);
+            const total = taskList.length;
+            const done = taskList.filter(t => isTaskCompleted(t)).length;
+            const inProgress = taskList.filter(t => isTaskInProgress(t)).length;
+            const overdue = taskList.filter(t => {
+                const targetIso = normalizeDateISO(t.TargetDate);
+                return !isTaskCompleted(t) && targetIso !== '' && targetIso < today;
+            }).length;
+            const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            return { total, done, inProgress, open: inProgress, active: inProgress, overdue, rate };
+        }
+
+        function refreshAllViews() {
+            populateFilterDropdowns();
+            renderDashboard();
+            renderTasksTable();
+            renderMonitorTim();
+            renderReports();
+            renderMasterTable();
+        }
+
+        function drillDownTasks({ kondisi = '' }) {
+            navigate('tasks');
+            resetTaskFilters(false);
+            if (kondisi) {
+                document.getElementById('filter-kondisi').value = kondisi;
+            }
+            onTaskFilterChange();
+        }
+
+        // 5. DASHBOARD RENDERING & CHARTS
+        function renderDashboard() {
+            const tasks = getAccessibleTasks();
+            const today = getTodayOffset(0);
+            const metrics = calculateTaskMetrics(tasks);
+
+            document.getElementById('kpi-total').textContent = metrics.total;
+            document.getElementById('kpi-progress').textContent = metrics.inProgress;
+            document.getElementById('kpi-done').textContent = metrics.done;
+            document.getElementById('kpi-done-pct').textContent = `${metrics.rate}%`;
+            document.getElementById('kpi-overdue').textContent = metrics.overdue;
+
+            renderCategoryStatusMatrix(tasks);
+
+            const priorityWeight = { 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4 };
+            const urgentTasks = tasks
+                .filter(t => !isTaskCompleted(t))
+                .sort((a, b) => {
+                    const pA = priorityWeight[String(a.Priority || '').trim().toLowerCase()] || 99;
+                    const pB = priorityWeight[String(b.Priority || '').trim().toLowerCase()] || 99;
+                    if (pA !== pB) return pA - pB;
+                    return normalizeDateISO(a.TargetDate).localeCompare(normalizeDateISO(b.TargetDate));
+                })
+                .slice(0, 5);
+
+            const tbody = document.getElementById('dashboard-urgent-table');
+            if (urgentTasks.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 text-sm">Tidak ada task aktif yang mendesak. Kerja bagus!</td></tr>`;
+            } else {
+                tbody.innerHTML = urgentTasks.map(t => {
+                    const targetIso = normalizeDateISO(t.TargetDate);
+                    const isOverdue = targetIso !== '' && targetIso < today;
+                    return `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(t.ID)}</td>
+                            <td class="py-3 px-4 font-medium text-slate-800 max-w-xs truncate">${escapeHtml(t.Task)}</td>
+                            <td class="py-3 px-4 text-slate-600">${escapeHtml(t.PIC)}</td>
+                            <td class="py-3 px-4">${getPriorityBadge(t.Priority)}</td>
+                            <td class="py-3 px-4 text-xs font-medium ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-600'}">
+                                ${formatDateDisplay(t.TargetDate)} ${isOverdue ? '(Terlambat)' : ''}
+                            </td>
+                            <td class="py-3 px-4">${getStatusBadge(t.Status)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            renderCharts(tasks);
+        }
+
+        function renderCategoryStatusMatrix(tasks) {
+            const thead = document.getElementById('dashboard-category-status-head');
+            const tbody = document.getElementById('dashboard-category-status-body');
+            const tfoot = document.getElementById('dashboard-category-status-foot');
+            if (!thead || !tbody || !tfoot) return;
+
+            const statusSet = new Set((db.Status || []).map(s => String(s.Nama || '').trim()).filter(Boolean));
+            tasks.forEach(t => { if (t.Status) statusSet.add(String(t.Status).trim()); });
+            const statusList = Array.from(statusSet);
+
+            const categorySet = new Set((db.Kategori || []).map(k => String(k.Nama || '').trim()).filter(Boolean));
+            tasks.forEach(t => { if (t.Kategori) categorySet.add(String(t.Kategori).trim()); });
+            const categoryList = Array.from(categorySet);
+
+            thead.innerHTML = `
+                <tr class="border-b border-slate-300 text-xs font-bold">
+                    <th class="py-3 px-4 bg-blue-600 text-white border-r border-blue-500 min-w-[180px] sticky left-0 z-10">Category</th>
+                    <th class="py-3 px-4 bg-blue-500 text-white text-center border-r border-blue-400">Task</th>
+                    ${statusList.map(st => {
+                        const hex = getStatusConfig(st).Warna;
+                        return `<th class="py-3 px-4 bg-slate-200 text-slate-800 text-center border-r border-slate-300 last:border-r-0">
+                            <span class="inline-flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${escapeHtml(hex)}"></span>
+                                <span>${escapeHtml(st)}</span>
+                            </span>
+                        </th>`;
+                    }).join('')}
+                </tr>
+            `;
+
+            const rowsData = categoryList.map(cat => {
+                const catTasks = tasks.filter(t => isSameText(t.Kategori, cat));
+                const countsByStatus = {};
+                statusList.forEach(st => {
+                    countsByStatus[st] = catTasks.filter(t => isSameText(t.Status, st)).length;
+                });
+                return {
+                    category: cat,
+                    total: catTasks.length,
+                    counts: countsByStatus
+                };
+            }).sort((a, b) => b.total - a.total);
+
+            if (rowsData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${statusList.length + 2}" class="py-6 text-center text-slate-400">Belum ada data Kategori.</td></tr>`;
+                tfoot.innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = rowsData.map((row, idx) => {
+                const stickyBg = idx % 2 === 1 ? 'bg-slate-50' : 'bg-white';
+                return `
+                    <tr class="${idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} hover:bg-indigo-50/40 transition-colors">
+                        <td class="py-2.5 px-4 font-medium text-slate-800 border-r border-slate-200 sticky left-0 z-10 ${stickyBg}">${escapeHtml(row.category)}</td>
+                        <td class="py-2.5 px-4 text-center font-bold text-slate-800 bg-blue-50/40 border-r border-slate-200">${row.total}</td>
+                        ${statusList.map(st => {
+                            const val = row.counts[st] || 0;
+                            return `<td class="py-2.5 px-4 text-center border-r border-slate-200 last:border-r-0 ${val > 0 ? 'font-semibold text-slate-800' : 'text-slate-400'}">${val}</td>`;
+                        }).join('')}
+                    </tr>
+                `;
+            }).join('');
+
+            const grandTotal = tasks.length;
+            const statusTotals = statusList.map(st => tasks.filter(t => isSameText(t.Status, st)).length);
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="py-2.5 px-4 border-r border-slate-300 sticky left-0 z-10 bg-slate-100">Total Keseluruhan</td>
+                    <td class="py-2.5 px-4 text-center bg-blue-100 text-blue-900 border-r border-slate-300">${grandTotal}</td>
+                    ${statusTotals.map(tot => `<td class="py-2.5 px-4 text-center border-r border-slate-300 last:border-r-0">${tot}</td>`).join('')}
+                </tr>
+            `;
+        }
+
+        function renderCharts(tasks) {
+            // 1. Bar Chart: Berdasarkan Initial PIC (tidak melebar, tooltip menampilkan nama lengkap)
+            const picList = (currentUser && currentUser.Role === 'Staff')
+                ? (db.PIC || []).filter(p => isSameText(p.Nama, currentUser.Nama))
+                : (db.PIC || []);
+            const picFullNames = picList.map(p => p.Nama);
+            const picInitialLabels = picList.map(p => getPicInitial(p));
+            const picData = picFullNames.map(fullName => tasks.filter(t => isSameText(t.PIC, fullName)).length);
+
+            const ctxPic = document.getElementById('chart-pic').getContext('2d');
+            if (picChart) picChart.destroy();
+            picChart = new Chart(ctxPic, {
+                type: 'bar',
+                data: {
+                    labels: picInitialLabels,
+                    datasets: [{
+                        label: 'Jumlah Task',
+                        data: picData,
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 6,
+                        maxBarThickness: 36
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const idx = items[0]?.dataIndex ?? 0;
+                                    const fullName = picFullNames[idx] || '';
+                                    const initLabel = picInitialLabels[idx] || '';
+                                    return fullName ? `${fullName} (${initLabel})` : initLabel;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Pie Chart: Berdasarkan Status (menggunakan kode warna HEXA dari sheet Status)
+            const stsSet = new Set((db.Status || []).map(s => String(s.Nama || '').trim()).filter(Boolean));
+            tasks.forEach(t => { if (t.Status) stsSet.add(String(t.Status).trim()); });
+            const stsLabels = Array.from(stsSet);
+            const stsData = stsLabels.map(label => tasks.filter(t => isSameText(t.Status, label)).length);
+            const stsColors = stsLabels.map(label => getStatusConfig(label).Warna);
+
+            const ctxSts = document.getElementById('chart-status').getContext('2d');
+            if (statusChart) statusChart.destroy();
+            statusChart = new Chart(ctxSts, {
+                type: 'pie',
+                data: {
+                    labels: stsLabels,
+                    datasets: [{
+                        data: stsData,
+                        backgroundColor: stsColors,
+                        borderWidth: 1.5,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // 3. Pie Chart: Berdasarkan Priority
+            const priSet = new Set((db.Priority || []).map(p => String(p.Nama || '').trim()).filter(Boolean));
+            tasks.forEach(t => { if (t.Priority) priSet.add(String(t.Priority).trim()); });
+            const priLabels = Array.from(priSet);
+            const priData = priLabels.map(label => tasks.filter(t => isSameText(t.Priority, label)).length);
+            const priColorMap = {
+                'urgent': '#e11d48',
+                'high': '#f59e0b',
+                'medium': '#3b82f6',
+                'low': '#94a3b8'
+            };
+            const chartPalette = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+            const priColors = priLabels.map((label, idx) => priColorMap[label.toLowerCase()] || chartPalette[idx % chartPalette.length]);
+
+            const ctxPri = document.getElementById('chart-priority').getContext('2d');
+            if (priorityChart) priorityChart.destroy();
+            priorityChart = new Chart(ctxPri, {
+                type: 'pie',
+                data: {
+                    labels: priLabels,
+                    datasets: [{
+                        data: priData,
+                        backgroundColor: priColors,
+                        borderWidth: 1.5,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // 6. DAFTAR TASK, FILTER & PAGINATION
+        function populateFilterDropdowns() {
+            const picFilter = document.getElementById('filter-pic');
+            const katFilter = document.getElementById('filter-kategori');
+            const stsFilter = document.getElementById('filter-status');
+            const priFilter = document.getElementById('filter-priority');
+            const repPic = document.getElementById('report-pic');
+
+            const currentPicVal = picFilter.value;
+            const currentKatVal = katFilter.value;
+            const currentStsVal = stsFilter.value;
+            const currentPriVal = priFilter.value;
+
+            if (currentUser && currentUser.Role === 'Staff') {
+                picFilter.innerHTML = `<option value="${escapeHtml(currentUser.Nama)}">${escapeHtml(currentUser.Nama)}</option>`;
+                picFilter.disabled = true;
+            } else {
+                picFilter.disabled = false;
+                picFilter.innerHTML = '<option value="">Semua PIC</option>' + (db.PIC || []).map(p => `<option value="${escapeHtml(p.Nama)}">${escapeHtml(p.Nama)}</option>`).join('');
+                picFilter.value = currentPicVal;
+            }
+
+            katFilter.innerHTML = '<option value="">Semua Kategori</option>' + (db.Kategori || []).map(k => `<option value="${escapeHtml(k.Nama)}">${escapeHtml(k.Nama)}</option>`).join('');
+            katFilter.value = currentKatVal;
+
+            stsFilter.innerHTML = '<option value="">Semua Status</option>' + (db.Status || []).map(s => `<option value="${escapeHtml(s.Nama)}">${escapeHtml(s.Nama)}</option>`).join('');
+            stsFilter.value = currentStsVal;
+
+            priFilter.innerHTML = '<option value="">Semua Priority</option>' + (db.Priority || []).map(p => `<option value="${escapeHtml(p.Nama)}">${escapeHtml(p.Nama)}</option>`).join('');
+            priFilter.value = currentPriVal;
+
+            if (repPic) {
+                const currentRepPic = repPic.value;
+                repPic.innerHTML = '<option value="">Semua Karyawan</option>' + (db.PIC || []).map(p => `<option value="${escapeHtml(p.Nama)}">${escapeHtml(p.Nama)}</option>`).join('');
+                repPic.value = currentRepPic;
+            }
+        }
+
+        function toggleMobileTaskFilters() {
+            const panel = document.getElementById('tasks-filter-panel');
+            if (!panel) return;
+            const willOpen = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !willOpen);
+            panel.classList.toggle('grid', willOpen);
+        }
+
+        function updateMobileFilterBadge() {
+            const badge = document.getElementById('mobile-active-filter-badge');
+            if (!badge) return;
+            const search = (document.getElementById('filter-search')?.value || '').trim();
+            const fPic = currentUser && currentUser.Role === 'Staff' ? '' : (document.getElementById('filter-pic')?.value || '');
+            const fKat = document.getElementById('filter-kategori')?.value || '';
+            const fSts = document.getElementById('filter-status')?.value || '';
+            const fKondisi = document.getElementById('filter-kondisi')?.value || '';
+            const fPri = document.getElementById('filter-priority')?.value || '';
+
+            const count = [search, fPic, fKat, fSts, fKondisi, fPri].filter(Boolean).length;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function resetTaskFilters(shouldRender = true) {
+            document.getElementById('filter-search').value = '';
+            if (!(currentUser && currentUser.Role === 'Staff')) {
+                document.getElementById('filter-pic').value = '';
+            }
+            document.getElementById('filter-kategori').value = '';
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-kondisi').value = '';
+            document.getElementById('filter-priority').value = '';
+            tasksCurrentPage = 1;
+            if (shouldRender) renderTasksTable();
+        }
+
+        function onTaskFilterChange() {
+            tasksCurrentPage = 1;
+            renderTasksTable();
+        }
+
+        function changeTasksPageSize(newSize) {
+            tasksPageSize = parseInt(newSize, 10) || 10;
+            const desktopSel = document.getElementById('tasks-page-size');
+            const mobileSel = document.getElementById('tasks-page-size-mobile');
+            if (desktopSel) desktopSel.value = String(tasksPageSize);
+            if (mobileSel) mobileSel.value = String(tasksPageSize);
+            tasksCurrentPage = 1;
+            renderTasksTable();
+        }
+
+        function goToTasksPage(page) {
+            tasksCurrentPage = page;
+            renderTasksTable();
+            const viewEl = document.getElementById('view-tasks');
+            if (viewEl) viewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderTasksTable() {
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const fPic = document.getElementById('filter-pic').value;
+            const fKat = document.getElementById('filter-kategori').value;
+            const fSts = document.getElementById('filter-status').value;
+            const fKondisi = document.getElementById('filter-kondisi').value;
+            const fPri = document.getElementById('filter-priority').value;
+            const today = getTodayOffset(0);
+
+            updateMobileFilterBadge();
+
+            const filteredTasks = getAccessibleTasks().filter(t => {
+                const matchSearch = !search ||
+                    String(t.Task || '').toLowerCase().includes(search) ||
+                    String(t.ID || '').toLowerCase().includes(search) ||
+                    String(t.ActionPlan || '').toLowerCase().includes(search) ||
+                    String(t.Catatan || '').toLowerCase().includes(search) ||
+                    String(t.PIC || '').toLowerCase().includes(search);
+                const matchPic = !fPic || isSameText(t.PIC, fPic);
+                const matchKat = !fKat || isSameText(t.Kategori, fKat);
+                const matchSts = !fSts || isSameText(t.Status, fSts);
+                const matchPri = !fPri || isSameText(t.Priority, fPri);
+
+                const completed = isTaskCompleted(t);
+                const targetIso = normalizeDateISO(t.TargetDate);
+                const overdue = !completed && targetIso !== '' && targetIso < today;
+
+                let matchKondisi = true;
+                if (fKondisi === 'completed') matchKondisi = completed;
+                else if (fKondisi === 'inprogress') matchKondisi = !completed;
+                else if (fKondisi === 'overdue') matchKondisi = overdue;
+
+                return matchSearch && matchPic && matchKat && matchSts && matchPri && matchKondisi;
+            });
+
+            const totalItems = filteredTasks.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / tasksPageSize));
+            if (tasksCurrentPage > totalPages) tasksCurrentPage = totalPages;
+            if (tasksCurrentPage < 1) tasksCurrentPage = 1;
+
+            const startIdx = (tasksCurrentPage - 1) * tasksPageSize;
+            const endIdx = Math.min(startIdx + tasksPageSize, totalItems);
+            const paginatedTasks = filteredTasks.slice(startIdx, endIdx);
+
+            document.getElementById('task-count-label').textContent = totalItems;
+            const mobileCountLabel = document.getElementById('task-count-label-mobile');
+            if (mobileCountLabel) mobileCountLabel.textContent = totalItems;
+
+            const tbody = document.getElementById('tasks-table-body');
+            const mobileCards = document.getElementById('tasks-mobile-cards');
+            const pageInfo = document.getElementById('tasks-pagination-info');
+            const pageBtns = document.getElementById('tasks-pagination-buttons');
+
+            if (totalItems === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400">Tidak ada data task yang sesuai dengan filter.</td></tr>`;
+                if (mobileCards) {
+                    mobileCards.innerHTML = `<div class="bg-white rounded-xl border border-slate-200 p-6 text-center text-sm text-slate-400">Tidak ada data task yang sesuai dengan filter.</div>`;
+                }
+                if (pageInfo) pageInfo.textContent = 'Menampilkan 0 - 0 dari 0 task';
+                if (pageBtns) pageBtns.innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = paginatedTasks.map(t => {
+                const targetIso = normalizeDateISO(t.TargetDate);
+                const isOverdue = !isTaskCompleted(t) && targetIso !== '' && targetIso < today;
+                const progressVal = Math.max(0, Math.min(100, Number(t.Progress) || 0));
+                const statusHex = getStatusConfig(t.Status).Warna;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(t.ID)}</td>
+                        <td class="py-3 px-4 text-xs text-slate-600">${formatDateDisplay(t.Tanggal)}</td>
+                        <td class="py-3 px-4 text-xs font-medium text-slate-700">${escapeHtml(t.Kategori)}</td>
+                        <td class="py-3 px-4 max-w-xs whitespace-normal">
+                            <div class="font-medium text-slate-800">${escapeHtml(t.Task)}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${t.ActionPlan ? 'Plan: ' + escapeHtml(t.ActionPlan) : ''} ${t.Catatan ? '• ' + escapeHtml(t.Catatan) : ''}</div>
+                        </td>
+                        <td class="py-3 px-4">${getPriorityBadge(t.Priority)}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[11px] font-bold shrink-0" title="${escapeHtml(t.PIC)}">
+                                    ${escapeHtml(getPicInitial(t.PIC))}
+                                </div>
+                                <span class="text-slate-700 text-xs font-medium">${escapeHtml(t.PIC)}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-xs ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-600'}">
+                            ${formatDateDisplay(t.TargetDate)}
+                        </td>
+                        <td class="py-3 px-4">${getStatusBadge(t.Status)}</td>
+                        <td class="py-3 px-4 w-32">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                    <div class="h-1.5 rounded-full transition-all" style="width: ${progressVal}%; background-color: ${escapeHtml(statusHex)}"></div>
+                                </div>
+                                <span class="text-xs font-medium text-slate-600 w-8 text-right">${progressVal}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <button type="button" onclick="openTaskModal('${escapeHtml(t.ID)}')" title="Edit Task" aria-label="Edit Task ${escapeHtml(t.ID)}" class="p-2 sm:p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button" onclick="confirmDeleteTask('${escapeHtml(t.ID)}')" title="Hapus Task" aria-label="Hapus Task ${escapeHtml(t.ID)}" class="p-2 sm:p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (mobileCards) {
+                mobileCards.innerHTML = paginatedTasks.map(t => {
+                    const targetIso = normalizeDateISO(t.TargetDate);
+                    const isOverdue = !isTaskCompleted(t) && targetIso !== '' && targetIso < today;
+                    const progressVal = Math.max(0, Math.min(100, Number(t.Progress) || 0));
+                    const statusHex = getStatusConfig(t.Status).Warna;
+
+                    return `
+                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-mono text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${escapeHtml(t.ID)}</span>
+                                <div class="flex items-center gap-1.5">
+                                    ${getPriorityBadge(t.Priority)}
+                                    ${getStatusBadge(t.Status)}
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-[11px] font-medium text-indigo-600">${escapeHtml(t.Kategori || '-')}</p>
+                                <h4 class="text-sm font-bold text-slate-800 mt-0.5 leading-snug">${escapeHtml(t.Task)}</h4>
+                                ${t.ActionPlan ? `<p class="text-xs text-slate-500 mt-1">Plan: ${escapeHtml(t.ActionPlan)}</p>` : ''}
+                                ${t.Catatan ? `<p class="text-xs text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.Catatan)}</p>` : ''}
+                            </div>
+
+                            <div class="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
+                                    <span class="font-medium truncate">${escapeHtml(t.PIC)}</span>
+                                </div>
+                                <span class="${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-600'} shrink-0">
+                                    Target: ${formatDateDisplay(t.TargetDate)}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                    <div class="h-2 rounded-full transition-all" style="width: ${progressVal}%; background-color: ${escapeHtml(statusHex)}"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700 w-9 text-right">${progressVal}%</span>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                <button type="button" onclick="openTaskModal('${escapeHtml(t.ID)}')" class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <button type="button" onclick="confirmDeleteTask('${escapeHtml(t.ID)}')" class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    <span>Hapus</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (pageInfo) {
+                pageInfo.innerHTML = `Menampilkan <span class="font-semibold text-slate-800">${startIdx + 1}</span> - <span class="font-semibold text-slate-800">${endIdx}</span> dari <span class="font-semibold text-slate-800">${totalItems}</span> task`;
+            }
+
+            if (pageBtns) {
+                let buttonsHtml = `
+                    <button type="button" onclick="goToTasksPage(${tasksCurrentPage - 1})" ${tasksCurrentPage === 1 ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+                        &laquo; Prev
+                    </button>
+                `;
+
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, tasksCurrentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                if (startPage > 1) {
+                    buttonsHtml += `<button type="button" onclick="goToTasksPage(1)" class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100">1</button>`;
+                    if (startPage > 2) buttonsHtml += `<span class="px-1 text-slate-400">...</span>`;
+                }
+
+                for (let p = startPage; p <= endPage; p++) {
+                    const isActive = p === tasksCurrentPage;
+                    buttonsHtml += `
+                        <button type="button" onclick="goToTasksPage(${p})" class="px-3 py-1.5 rounded-lg border font-semibold transition-colors ${isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}">
+                            ${p}
+                        </button>
+                    `;
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) buttonsHtml += `<span class="px-1 text-slate-400">...</span>`;
+                    buttonsHtml += `<button type="button" onclick="goToTasksPage(${totalPages})" class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100">${totalPages}</button>`;
+                }
+
+                buttonsHtml += `
+                    <button type="button" onclick="goToTasksPage(${tasksCurrentPage + 1})" ${tasksCurrentPage === totalPages ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+                        Next &raquo;
+                    </button>
+                `;
+                pageBtns.innerHTML = buttonsHtml;
+            }
+
+            lucide.createIcons();
+        }
+
+        // 7. MONITOR TIM
+        function renderMonitorTim() {
+            const grid = document.getElementById('team-cards-grid');
+            const accessibleTasks = getAccessibleTasks();
+
+            grid.innerHTML = (db.PIC || []).map(member => {
+                const mTasks = accessibleTasks.filter(t => isSameText(t.PIC, member.Nama));
+                const metrics = calculateTaskMetrics(mTasks);
+                const activeList = mTasks.filter(t => !isTaskCompleted(t)).slice(0, 2);
+                const initBadge = getPicInitial(member);
+
+                return `
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col justify-between hover:border-indigo-300 transition-all">
+                        <div>
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                                        ${escapeHtml(initBadge)}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-slate-800 text-sm truncate">${escapeHtml(member.Nama)}</h4>
+                                        <p class="text-xs text-slate-500 truncate">${escapeHtml(member.Divisi)}</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 text-[11px] font-semibold rounded-md shrink-0 ${member.Role === 'Admin' ? 'bg-amber-50 text-amber-700' : (member.Role === 'Manager' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600')}">
+                                    ${escapeHtml(member.Role)}
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 my-4 p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                                <div>
+                                    <div class="text-[11px] text-slate-400">In Progress</div>
+                                    <div class="text-base font-bold text-blue-600">${metrics.inProgress}</div>
+                                </div>
+                                <div class="border-x border-slate-200">
+                                    <div class="text-[11px] text-slate-400">Completed</div>
+                                    <div class="text-base font-bold text-emerald-600">${metrics.done}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] text-slate-400">Overdue</div>
+                                    <div class="text-base font-bold ${metrics.overdue > 0 ? 'text-rose-600' : 'text-slate-600'}">${metrics.overdue}</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-500 font-medium">Completion Rate</span>
+                                    <span class="font-bold text-slate-700">${metrics.rate}% (${metrics.done}/${metrics.total})</span>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-2">
+                                    <div class="bg-emerald-500 h-2 rounded-full transition-all" style="width: ${metrics.rate}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pekerjaan Aktif:</p>
+                                ${activeList.length === 0 ? '<p class="text-xs text-slate-400 italic">Tidak ada tanggungan task aktif.</p>' :
+                                    activeList.map(t => `
+                                        <div class="text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                                            <span class="truncate text-slate-700 font-medium">${escapeHtml(t.Task)}</span>
+                                            <span class="shrink-0 font-semibold text-indigo-600">${Number(t.Progress) || 0}%</span>
+                                        </div>
+                                    `).join('')
+                                }
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="inspectMemberTasks('${escapeHtml(member.Nama)}')" class="mt-5 w-full py-2.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+                            Lihat Semua Task ${escapeHtml(member.Nama.split(' ')[0])} &rarr;
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function inspectMemberTasks(picName) {
+            navigate('tasks');
+            resetTaskFilters(false);
+            const picFilter = document.getElementById('filter-pic');
+            picFilter.value = picName;
+            renderTasksTable();
+        }
+
+        // 8. LAPORAN & EXPORT CSV
+        function renderReports() {
+            const start = document.getElementById('report-date-start').value;
+            const end = document.getElementById('report-date-end').value;
+            const filterPic = document.getElementById('report-pic').value;
+
+            const filteredTasks = getAccessibleTasks().filter(t => {
+                const tDate = normalizeDateISO(t.Tanggal);
+                const inDate = (!start || tDate >= start) && (!end || tDate <= end);
+                const inPic = !filterPic || isSameText(t.PIC, filterPic);
+                return inDate && inPic;
+            });
+
+            const picsToShow = filterPic ? (db.PIC || []).filter(p => isSameText(p.Nama, filterPic)) : (db.PIC || []);
+            const tbody = document.getElementById('report-summary-body');
+            const tfoot = document.getElementById('report-summary-foot');
+            const totalBadge = document.getElementById('report-total-badge');
+
+            const overall = calculateTaskMetrics(filteredTasks);
+            if (totalBadge) totalBadge.textContent = `Total: ${overall.total} Task`;
+
+            tbody.innerHTML = picsToShow.map(p => {
+                const pTasks = filteredTasks.filter(t => isSameText(t.PIC, p.Nama));
+                const m = calculateTaskMetrics(pTasks);
+
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 font-semibold text-slate-800 sticky left-0 z-10 bg-white">${escapeHtml(p.Nama)}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold text-xs">${escapeHtml(getPicInitial(p))}</span></td>
+                        <td class="py-3 px-4 text-slate-500 text-xs">${escapeHtml(p.Divisi)}</td>
+                        <td class="py-3 px-4 text-center font-bold text-slate-700">${m.total}</td>
+                        <td class="py-3 px-4 text-center font-semibold text-emerald-600">${m.done}</td>
+                        <td class="py-3 px-4 text-center font-semibold text-blue-600">${m.inProgress}</td>
+                        <td class="py-3 px-4 text-center font-semibold text-rose-600">${m.overdue}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24 bg-slate-200 rounded-full h-2">
+                                    <div class="bg-emerald-500 h-2 rounded-full" style="width: ${m.rate}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">${m.rate}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (tfoot) {
+                tfoot.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="py-3 px-4 sticky left-0 z-10 bg-slate-100">Total Keseluruhan</td>
+                        <td class="py-3 px-4 text-center">${overall.total}</td>
+                        <td class="py-3 px-4 text-center text-emerald-700">${overall.done}</td>
+                        <td class="py-3 px-4 text-center text-blue-700">${overall.inProgress}</td>
+                        <td class="py-3 px-4 text-center text-rose-700">${overall.overdue}</td>
+                        <td class="py-3 px-4">${overall.rate}%</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function exportToCSV() {
+            const start = document.getElementById('report-date-start').value;
+            const end = document.getElementById('report-date-end').value;
+            const filterPic = document.getElementById('report-pic').value;
+
+            const filteredTasks = getAccessibleTasks().filter(t => {
+                const tDate = normalizeDateISO(t.Tanggal);
+                const inDate = (!start || tDate >= start) && (!end || tDate <= end);
+                const inPic = !filterPic || isSameText(t.PIC, filterPic);
+                return inDate && inPic;
+            });
+
+            if (filteredTasks.length === 0) {
+                showToast('Tidak ada data task untuk diekspor.', 'error');
+                return;
+            }
+
+            const headers = ['ID', 'Tanggal', 'Kategori', 'Task', 'Priority', 'PIC', 'TargetDate', 'Status', 'Completed', 'Progress', 'Reference', 'ActionPlan', 'Catatan'];
+            const csvRows = [
+                headers.join(','),
+                ...filteredTasks.map(t => headers.map(h => {
+                    let val = h === 'Completed' ? (isTaskCompleted(t) ? 'Yes' : 'No') : (t[h] !== undefined ? String(t[h]) : '');
+                    if (h === 'Tanggal' || h === 'TargetDate') val = formatDateDisplay(val);
+                    return `"${val.replace(/"/g, '""')}"`;
+                }).join(','))
+            ];
+
+            const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_TaskFlow_${formatDateDisplay(getTodayOffset(0)).replace(/\//g, '-')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Laporan CSV berhasil diunduh!', 'success');
+        }
+
+        // 9. MODAL TAMBAH / EDIT TASK
+        function openTaskModal(taskId = null) {
+            const modal = document.getElementById('task-modal');
+            const form = document.getElementById('task-form');
+            form.reset();
+
+            document.getElementById('task-kategori').innerHTML = (db.Kategori || []).map(k => `<option value="${escapeHtml(k.Nama)}">${escapeHtml(k.Nama)}</option>`).join('');
+            document.getElementById('task-priority').innerHTML = (db.Priority || []).map(p => `<option value="${escapeHtml(p.Nama)}">${escapeHtml(p.Nama)}</option>`).join('');
+            document.getElementById('task-status').innerHTML = (db.Status || []).map(s => `<option value="${escapeHtml(s.Nama)}">${escapeHtml(s.Nama)}</option>`).join('');
+            document.getElementById('task-reference').innerHTML = '<option value="">- Pilih Reference -</option>' + (db.Reference || []).map(r => `<option value="${escapeHtml(r.Nama)}">${escapeHtml(r.Nama)}</option>`).join('');
+            document.getElementById('task-actionplan').innerHTML = '<option value="">- Pilih Action Plan -</option>' + (db.ActionPlan || []).map(a => `<option value="${escapeHtml(a.Nama)}">${escapeHtml(a.Nama)}</option>`).join('');
+
+            const picSelect = document.getElementById('task-pic');
+            if (currentUser && currentUser.Role === 'Staff') {
+                picSelect.innerHTML = `<option value="${escapeHtml(currentUser.Nama)}">${escapeHtml(currentUser.Nama)}</option>`;
+                picSelect.disabled = true;
+            } else {
+                picSelect.disabled = false;
+                picSelect.innerHTML = (db.PIC || []).map(p => `<option value="${escapeHtml(p.Nama)}">${escapeHtml(p.Nama)}</option>`).join('');
+            }
+
+            if (taskId) {
+                const task = db.Tasks.find(t => t.ID === taskId);
+                if (!task) return;
+                document.getElementById('modal-title').textContent = `Edit Task (${task.ID})`;
+                document.getElementById('task-id').value = task.ID;
+                document.getElementById('task-date').value = normalizeDateISO(task.Tanggal);
+                document.getElementById('task-target').value = normalizeDateISO(task.TargetDate);
+                document.getElementById('task-kategori').value = task.Kategori || '';
+                document.getElementById('task-priority').value = task.Priority || '';
+                document.getElementById('task-desc').value = task.Task || '';
+                document.getElementById('task-pic').value = task.PIC || '';
+                document.getElementById('task-reference').value = task.Reference || '';
+                document.getElementById('task-actionplan').value = task.ActionPlan || '';
+                document.getElementById('task-status').value = task.Status || '';
+                document.getElementById('task-progress').value = task.Progress || 0;
+                document.getElementById('progress-val-label').textContent = `${task.Progress || 0}%`;
+                document.getElementById('task-notes').value = task.Catatan || '';
+            } else {
+                document.getElementById('modal-title').textContent = 'Tambah Task Baru';
+                document.getElementById('task-id').value = '';
+                document.getElementById('task-date').value = getTodayOffset(0);
+                document.getElementById('task-target').value = getTodayOffset(2);
+                if (currentUser) picSelect.value = currentUser.Nama;
+                document.getElementById('task-progress').value = 0;
+                document.getElementById('progress-val-label').textContent = '0%';
+                autoAdjustProgress();
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeTaskModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+        }
+
+        function autoAdjustProgress() {
+            const stName = document.getElementById('task-status').value;
+            const cfg = getStatusConfig(stName);
+            const progInput = document.getElementById('task-progress');
+            const progLabel = document.getElementById('progress-val-label');
+
+            if (cfg.Completed === 'Yes') {
+                progInput.value = 100;
+                progLabel.textContent = '100%';
+            } else if (Number(progInput.value) === 100) {
+                progInput.value = 50;
+                progLabel.textContent = '50%';
+            }
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            const existingId = document.getElementById('task-id').value;
+            const isEdit = Boolean(existingId);
+
+            let newId = existingId;
+            if (!isEdit) {
+                const maxNum = db.Tasks.reduce((max, t) => {
+                    const match = String(t.ID || '').match(/\d+/);
+                    const num = match ? parseInt(match[0], 10) : 1000;
+                    return num > max ? num : max;
+                }, 1000);
+                newId = `TSK-${maxNum + 1}`;
+            }
+
+            const taskObj = {
+                ID: newId,
+                Tanggal: document.getElementById('task-date').value,
+                Kategori: document.getElementById('task-kategori').value,
+                Task: document.getElementById('task-desc').value.trim(),
+                Priority: document.getElementById('task-priority').value,
+                PIC: document.getElementById('task-pic').value,
+                TargetDate: document.getElementById('task-target').value,
+                Status: document.getElementById('task-status').value,
+                Progress: Number(document.getElementById('task-progress').value),
+                Reference: document.getElementById('task-reference').value,
+                ActionPlan: document.getElementById('task-actionplan').value,
+                Catatan: document.getElementById('task-notes').value.trim()
+            };
+
+            if (isEdit) {
+                const idx = db.Tasks.findIndex(t => t.ID === existingId);
+                if (idx !== -1) db.Tasks[idx] = taskObj;
+                showToast(`Task ${newId} berhasil diperbarui!`, 'success');
+            } else {
+                db.Tasks.unshift(taskObj);
+                showToast(`Task baru ${newId} berhasil ditambahkan!`, 'success');
+            }
+
+            saveToLocal();
+            closeTaskModal();
+            refreshAllViews();
+
+            if (gasUrl) {
+                postToGoogleSheets({ action: 'SAVE_TASK', data: taskObj });
+            }
+        }
+
+        function confirmDeleteTask(taskId) {
+            pendingDeleteTaskId = taskId;
+            const modal = document.getElementById('confirm-modal');
+            const msg = document.getElementById('confirm-message');
+            const yesBtn = document.getElementById('confirm-yes-btn');
+
+            if (msg) {
+                msg.textContent = `Apakah Anda yakin ingin menghapus task ${taskId}? Tindakan ini tidak dapat dibatalkan.`;
+            }
+            if (yesBtn) {
+                yesBtn.onclick = () => executeDeleteTask();
+            }
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function closeConfirmModal() {
+            pendingDeleteTaskId = null;
+            const modal = document.getElementById('confirm-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function executeDeleteTask() {
+            if (!pendingDeleteTaskId) return;
+            const targetId = pendingDeleteTaskId;
+            db.Tasks = db.Tasks.filter(t => t.ID !== targetId);
+            saveToLocal();
+            closeConfirmModal();
+            refreshAllViews();
+            showToast(`Task ${targetId} berhasil dihapus.`, 'info');
+
+            if (gasUrl) {
+                postToGoogleSheets({ action: 'DELETE_TASK', id: targetId });
+            }
+        }
+
+        // 10. MASTER DATA MANAGEMENT
+        function switchMasterTab(tabName) {
+            currentMasterTab = tabName;
+            closeMasterModal();
+            document.querySelectorAll('.master-tab-btn').forEach(btn => {
+                if (btn.dataset.mtab === tabName) {
+                    btn.classList.add('border-indigo-600', 'text-indigo-600');
+                    btn.classList.remove('border-transparent', 'text-slate-500');
+                } else {
+                    btn.classList.remove('border-indigo-600', 'text-indigo-600');
+                    btn.classList.add('border-transparent', 'text-slate-500');
+                }
+            });
+
+            const tabDescriptions = {
+                Kategori: 'Kelola daftar referensi kategori pekerjaan, group, dan keterangan pada pilihan dropdown.',
+                Priority: 'Kelola tingkat prioritas pekerjaan beserta target SLA penyelesaiannya.',
+                PIC: 'Kelola daftar karyawan, initial, divisi, hak akses (Role), serta akun Username & Password login.',
+                Status: 'Kelola status pengerjaan, kode warna HEXA badge & chart, serta indikator Completed (Yes/No).',
+                Reference: 'Kelola sumber rujukan atau dasar instruksi pekerjaan.',
+                ActionPlan: 'Kelola daftar rencana tindakan standar untuk penyelesaian tugas.'
+            };
+
+            document.getElementById('master-title').textContent = `Master Data: ${tabName}`;
+            document.getElementById('master-desc').textContent = tabDescriptions[tabName] || '';
+            document.getElementById('master-add-btn-label').textContent = `Tambah ${tabName}`;
+
+            const filterGrid = document.getElementById('master-filter-grid');
+            const searchInput = document.getElementById('master-filter-search');
+            const roleSelect = document.getElementById('master-filter-role');
+            const completedSelect = document.getElementById('master-filter-completed');
+            const groupSelect = document.getElementById('master-filter-group');
+            if (searchInput) searchInput.value = '';
+
+            let activeFilterCols = 1;
+            if (roleSelect) {
+                roleSelect.value = '';
+                if (tabName === 'PIC') {
+                    roleSelect.classList.remove('hidden');
+                    activeFilterCols++;
+                } else {
+                    roleSelect.classList.add('hidden');
+                }
+            }
+            if (completedSelect) {
+                completedSelect.value = '';
+                if (tabName === 'Status') {
+                    completedSelect.classList.remove('hidden');
+                    activeFilterCols++;
+                } else {
+                    completedSelect.classList.add('hidden');
+                }
+            }
+            if (groupSelect) {
+                groupSelect.value = '';
+                if (tabName === 'Kategori') {
+                    const groups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
+                    groupSelect.innerHTML = '<option value="">Semua Group</option>' + groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+                    groupSelect.classList.remove('hidden');
+                    activeFilterCols++;
+                } else {
+                    groupSelect.classList.add('hidden');
+                }
+            }
+
+            if (filterGrid) {
+                if (activeFilterCols >= 2) {
+                    filterGrid.classList.remove('grid-cols-1');
+                    filterGrid.classList.add('grid-cols-1', 'sm:grid-cols-2');
+                } else {
+                    filterGrid.classList.remove('sm:grid-cols-2');
+                    filterGrid.classList.add('grid-cols-1');
+                }
+            }
+
+            renderMasterTable();
+            lucide.createIcons();
+        }
+
+        function resetMasterFilters() {
+            const searchInput = document.getElementById('master-filter-search');
+            const roleSelect = document.getElementById('master-filter-role');
+            const completedSelect = document.getElementById('master-filter-completed');
+            const groupSelect = document.getElementById('master-filter-group');
+            if (searchInput) searchInput.value = '';
+            if (roleSelect) roleSelect.value = '';
+            if (completedSelect) completedSelect.value = '';
+            if (groupSelect) groupSelect.value = '';
+            renderMasterTable();
+        }
+
+        function syncColorPickerFromHex(val) {
+            const clean = String(val || '').trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+                document.getElementById('master-input-colorpicker').value = clean;
+            }
+        }
+
+        function configureMasterModalFields() {
+            const kategoriFields = document.getElementById('master-kategori-fields');
+            const picFields = document.getElementById('master-pic-fields');
+            const statusFields = document.getElementById('master-status-fields');
+            const extraContainer = document.getElementById('master-extra-container');
+            const labelName = document.getElementById('master-label-name');
+            const inputName = document.getElementById('master-input-name');
+            const labelExtra = document.getElementById('master-label-extra');
+            const inputExtra = document.getElementById('master-input-extra');
+
+            kategoriFields.classList.add('hidden');
+            picFields.classList.add('hidden');
+            statusFields.classList.add('hidden');
+            extraContainer.classList.remove('hidden');
+
+            if (currentMasterTab === 'Kategori') {
+                kategoriFields.classList.remove('hidden');
+                const datalist = document.getElementById('master-group-datalist');
+                if (datalist) {
+                    const groups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
+                    datalist.innerHTML = groups.map(g => `<option value="${escapeHtml(g)}"></option>`).join('');
+                }
+                labelName.innerHTML = 'Nama Kategori <span class="text-rose-500">*</span>';
+                inputName.placeholder = 'Masukkan nama kategori...';
+                labelExtra.textContent = 'Keterangan';
+                inputExtra.placeholder = 'Keterangan tambahan...';
+            } else if (currentMasterTab === 'PIC') {
+                picFields.classList.remove('hidden');
+                labelName.innerHTML = 'Nama Lengkap Karyawan (PIC) <span class="text-rose-500">*</span>';
+                inputName.placeholder = 'Contoh: Budi Santoso';
+                labelExtra.textContent = 'Divisi / Jabatan';
+                inputExtra.placeholder = 'Contoh: Finance & Admin';
+            } else if (currentMasterTab === 'Status') {
+                statusFields.classList.remove('hidden');
+                extraContainer.classList.add('hidden');
+                labelName.innerHTML = 'Nama Status <span class="text-rose-500">*</span>';
+                inputName.placeholder = 'Contoh: In Progress / Done';
+            } else if (currentMasterTab === 'Priority') {
+                labelName.innerHTML = 'Nama Priority <span class="text-rose-500">*</span>';
+                inputName.placeholder = 'Contoh: High / Urgent';
+                labelExtra.textContent = 'Target SLA (Hari)';
+                inputExtra.placeholder = 'Contoh: 2 Hari';
+            } else if (currentMasterTab === 'ActionPlan') {
+                labelName.innerHTML = 'Nama Action Plan <span class="text-rose-500">*</span>';
+                inputName.placeholder = 'Contoh: Koordinasi Lintas Divisi';
+                labelExtra.textContent = 'Kategori Terkait';
+                inputExtra.placeholder = 'Contoh: Operasional / Semua';
+            } else {
+                labelName.innerHTML = `Nama ${escapeHtml(currentMasterTab)} <span class="text-rose-500">*</span>`;
+                inputName.placeholder = `Masukkan nama ${currentMasterTab.toLowerCase()}...`;
+                labelExtra.textContent = 'Keterangan';
+                inputExtra.placeholder = 'Keterangan tambahan...';
+            }
+        }
+
+        function openMasterModal(editIndex = -1) {
+            const modal = document.getElementById('master-modal');
+            const form = document.getElementById('master-form');
+            form.reset();
+            configureMasterModalFields();
+
+            const submitBtn = document.getElementById('master-submit-btn');
+
+            if (editIndex >= 0 && db[currentMasterTab][editIndex]) {
+                const item = db[currentMasterTab][editIndex];
+                document.getElementById('master-edit-index').value = editIndex;
+                document.getElementById('master-modal-title').textContent = `Edit ${currentMasterTab} (${item.Kode})`;
+                document.getElementById('master-input-name').value = item.Nama || '';
+
+                if (currentMasterTab === 'Kategori') {
+                    document.getElementById('master-input-group').value = String(item.Group || '').trim();
+                    document.getElementById('master-input-extra').value = item.Keterangan || '';
+                } else if (currentMasterTab === 'PIC') {
+                    document.getElementById('master-input-extra').value = item.Divisi || '';
+                    document.getElementById('master-input-initial').value = String(item.Initial || '').trim();
+                    document.getElementById('master-input-role').value = item.Role || 'Staff';
+                    document.getElementById('master-input-username').value = item.Username || '';
+                    document.getElementById('master-input-password').value = item.Password || '';
+                } else if (currentMasterTab === 'Status') {
+                    const hex = normalizeHexColor(item.Warna, '#3B82F6');
+                    document.getElementById('master-input-color-hex').value = hex;
+                    document.getElementById('master-input-colorpicker').value = hex.length === 7 ? hex : '#3B82F6';
+                    document.getElementById('master-input-completed').value = normalizeCompletedFlag(item.Completed);
+                } else if (currentMasterTab === 'Priority') {
+                    document.getElementById('master-input-extra').value = item.SLA_Hari || '';
+                } else if (currentMasterTab === 'ActionPlan') {
+                    document.getElementById('master-input-extra').value = item.KategoriTerkait || '';
+                } else {
+                    document.getElementById('master-input-extra').value = item.Keterangan || '';
+                }
+
+                submitBtn.textContent = 'Simpan Perubahan';
+                submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                submitBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            } else {
+                document.getElementById('master-edit-index').value = '-1';
+                document.getElementById('master-modal-title').textContent = `Tambah ${currentMasterTab} Baru`;
+                document.getElementById('master-input-group').value = '';
+                document.getElementById('master-input-initial').value = '';
+                document.getElementById('master-input-role').value = 'Staff';
+                document.getElementById('master-input-color-hex').value = '#3B82F6';
+                document.getElementById('master-input-colorpicker').value = '#3B82F6';
+                document.getElementById('master-input-completed').value = 'No';
+
+                submitBtn.textContent = 'Simpan Data';
+                submitBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+            setTimeout(() => document.getElementById('master-input-name').focus(), 50);
+        }
+
+        function closeMasterModal() {
+            const modal = document.getElementById('master-modal');
+            if (modal) modal.classList.add('hidden');
+            const editIdxInput = document.getElementById('master-edit-index');
+            if (editIdxInput) editIdxInput.value = '-1';
+        }
+
+        function renderMasterTable() {
+            const list = db[currentMasterTab] || [];
+            const thead = document.getElementById('master-table-head');
+            const tbody = document.getElementById('master-table-body');
+            const countLabel = document.getElementById('master-count-label');
+
+            const searchVal = (document.getElementById('master-filter-search')?.value || '').trim().toLowerCase();
+            const roleVal = currentMasterTab === 'PIC' ? (document.getElementById('master-filter-role')?.value || '') : '';
+            const completedVal = currentMasterTab === 'Status' ? (document.getElementById('master-filter-completed')?.value || '') : '';
+            const groupVal = currentMasterTab === 'Kategori' ? (document.getElementById('master-filter-group')?.value || '') : '';
+
+            const filteredEntries = list
+                .map((item, idx) => ({ item, idx }))
+                .filter(({ item }) => {
+                    if (roleVal && !isSameText(item.Role, roleVal)) return false;
+                    if (completedVal && !isSameText(normalizeCompletedFlag(item.Completed), completedVal)) return false;
+                    if (groupVal && !isSameText(item.Group, groupVal)) return false;
+                    if (!searchVal) return true;
+                    return Object.entries(item).some(([k, v]) => {
+                        if (k === 'Password') return false;
+                        return String(v || '').toLowerCase().includes(searchVal);
+                    });
+                });
+
+            if (countLabel) countLabel.textContent = filteredEntries.length;
+
+            if (list.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Belum ada data master.</td></tr>`;
+                return;
+            }
+
+            const keys = Object.keys(list[0]);
+            thead.innerHTML = keys.map(k => `<th class="py-3 px-4 font-semibold">${escapeHtml(k)}</th>`).join('') + `<th class="py-3 px-4 text-right font-semibold">Aksi</th>`;
+
+            if (filteredEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${keys.length + 1}" class="py-6 text-center text-slate-400">Tidak ada data ${escapeHtml(currentMasterTab)} yang sesuai dengan pencarian/filter.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredEntries.map(({ item, idx }) => `
+                <tr class="hover:bg-slate-50">
+                    ${keys.map(k => {
+                        if (k === 'Password') {
+                            return `<td class="py-3 px-4 text-slate-400">••••••</td>`;
+                        }
+                        if (currentMasterTab === 'Kategori' && k === 'Group') {
+                            const grpDisplay = String(item[k] || '').trim() || '-';
+                            return `<td class="py-3 px-4"><span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(grpDisplay)}</span></td>`;
+                        }
+                        if (currentMasterTab === 'PIC' && k === 'Initial') {
+                            return `<td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold text-xs">${escapeHtml(String(item[k] || '').trim() || '-')}</span></td>`;
+                        }
+                        if (currentMasterTab === 'Status' && k === 'Warna') {
+                            const hex = normalizeHexColor(item[k], '#64748B');
+                            return `<td class="py-3 px-4 font-mono text-xs">
+                                <span class="inline-flex items-center gap-2 px-2 py-0.5 rounded border border-slate-200 bg-white">
+                                    <span class="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" style="background-color: ${escapeHtml(hex)}"></span>
+                                    <span class="text-slate-700 font-semibold">${escapeHtml(hex)}</span>
+                                </span>
+                            </td>`;
+                        }
+                        if (currentMasterTab === 'Status' && k === 'Completed') {
+                            const compVal = normalizeCompletedFlag(item[k]);
+                            const compClass = compVal === 'Yes'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200';
+                            return `<td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${compClass}">${compVal}</span></td>`;
+                        }
+                        return `<td class="py-3 px-4 ${k === 'Nama' ? 'font-semibold text-slate-800' : 'text-slate-600'}">${escapeHtml(item[k])}</td>`;
+                    }).join('')}
+                    <td class="py-3 px-4 text-right">
+                        <div class="inline-flex items-center gap-1">
+                            <button type="button" onclick="openMasterModal(${idx})" title="Edit Master" aria-label="Edit ${escapeHtml(currentMasterTab)}" class="p-2 sm:p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button type="button" onclick="confirmDeleteMasterItem(${idx})" title="Hapus Master" aria-label="Hapus ${escapeHtml(currentMasterTab)}" class="p-2 sm:p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function saveMasterItem(e) {
+            e.preventDefault();
+            const editIndex = parseInt(document.getElementById('master-edit-index').value, 10);
+            const name = document.getElementById('master-input-name').value.trim();
+            const extra = document.getElementById('master-input-extra').value.trim() || '-';
+            const groupVal = document.getElementById('master-input-group').value.trim() || '-';
+            const initialInput = document.getElementById('master-input-initial').value.trim();
+            const initialVal = initialInput || name.split(/\s+/).map(n => n[0]).join('').substring(0, 3).toUpperCase();
+            const role = document.getElementById('master-input-role').value;
+            const username = document.getElementById('master-input-username').value.trim() || name.toLowerCase().replace(/\s+/g, '');
+            const password = document.getElementById('master-input-password').value.trim() || '123456';
+            const hexColor = normalizeHexColor(document.getElementById('master-input-color-hex').value, '#3B82F6');
+            const completedVal = normalizeCompletedFlag(document.getElementById('master-input-completed').value);
+            if (!name) return;
+
+            const isEdit = editIndex >= 0 && db[currentMasterTab][editIndex];
+            const existingItem = isEdit ? db[currentMasterTab][editIndex] : null;
+            const prefix = currentMasterTab.substring(0, 3).toUpperCase();
+            const maxCodeNum = (db[currentMasterTab] || []).reduce((max, item) => {
+                const match = String(item.Kode || '').match(/\d+/);
+                const num = match ? parseInt(match[0], 10) : 0;
+                return num > max ? num : max;
+            }, 0);
+            const kode = isEdit ? existingItem.Kode : `${prefix}-${String(maxCodeNum + 1).padStart(2, '0')}`;
+            let itemObj = {};
+
+            if (currentMasterTab === 'Kategori') {
+                itemObj = { Kode: kode, Nama: name, Group: groupVal, Keterangan: extra };
+            } else if (currentMasterTab === 'PIC') {
+                itemObj = { Kode: kode, Nama: name, Initial: initialVal, Divisi: extra, Role: role, Username: username, Password: password };
+            } else if (currentMasterTab === 'Priority') {
+                itemObj = { Kode: kode, Nama: name, SLA_Hari: extra };
+            } else if (currentMasterTab === 'Status') {
+                itemObj = { Kode: kode, Nama: name, Warna: hexColor, Completed: completedVal };
+            } else if (currentMasterTab === 'ActionPlan') {
+                itemObj = { Kode: kode, Nama: name, KategoriTerkait: extra };
+            } else {
+                itemObj = { Kode: kode, Nama: name, Keterangan: extra };
+            }
+
+            if (isEdit) {
+                db[currentMasterTab][editIndex] = itemObj;
+                showToast(`Data ${currentMasterTab} (${kode}) berhasil diperbarui!`, 'success');
+            } else {
+                db[currentMasterTab].push(itemObj);
+                showToast(`Data ${currentMasterTab} baru berhasil ditambahkan!`, 'success');
+            }
+
+            saveToLocal();
+            closeMasterModal();
+            if (currentMasterTab === 'PIC') applyUserSession();
+            refreshAllViews();
+
+            if (gasUrl) {
+                postToGoogleSheets({ action: 'SYNC_ALL', database: db });
+            }
+        }
+
+        function confirmDeleteMasterItem(index) {
+            if (db[currentMasterTab].length <= 1) {
+                showToast('Minimal harus menyisakan 1 data master!', 'error');
+                return;
+            }
+            const targetItem = db[currentMasterTab][index];
+            if (!targetItem) return;
+
+            const modal = document.getElementById('confirm-modal');
+            const msg = document.getElementById('confirm-message');
+            const yesBtn = document.getElementById('confirm-yes-btn');
+
+            if (msg) {
+                msg.textContent = `Apakah Anda yakin ingin menghapus data ${currentMasterTab} "${targetItem.Nama}" (${targetItem.Kode})? Tindakan ini tidak dapat dibatalkan.`;
+            }
+            if (yesBtn) {
+                yesBtn.onclick = () => executeDeleteMasterItem(index);
+            }
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function executeDeleteMasterItem(index) {
+            closeConfirmModal();
+            closeMasterModal();
+            if (!db[currentMasterTab][index]) return;
+
+            const deletedName = db[currentMasterTab][index].Nama;
+            db[currentMasterTab].splice(index, 1);
+            saveToLocal();
+            if (currentMasterTab === 'PIC') applyUserSession();
+            refreshAllViews();
+            showToast(`Data ${currentMasterTab} "${deletedName}" berhasil dihapus.`, 'info');
+            if (gasUrl) {
+                postToGoogleSheets({ action: 'SYNC_ALL', database: db });
+            }
+        }
+
+        // 11. INTEGRASI GOOGLE SPREADSHEET API
+        function saveGasUrl() {
+            if (currentUser && currentUser.Role !== 'Admin') {
+                showToast('Hanya Admin yang diizinkan mengubah link Google Spreadsheet!', 'error');
+                return;
+            }
+            const url = document.getElementById('gas-url-input').value.trim();
+            if (!url || !url.startsWith('https://script.google.com/')) {
+                showToast('Masukkan URL Google Apps Script yang valid!', 'error');
+                return;
+            }
+            document.getElementById('gatekeeper-url-input').value = url;
+            verifyAndConnect(url);
+        }
+
+        function disconnectGasUrl() {
+            if (currentUser && currentUser.Role !== 'Admin') {
+                showToast('Hanya Admin yang diizinkan memutus koneksi Google Spreadsheet!', 'error');
+                return;
+            }
+            gasUrl = '';
+            localStorage.removeItem('taskflow_gas_url');
+            document.getElementById('gas-url-input').value = '';
+            document.getElementById('gatekeeper-url-input').value = '';
+            lockApplication('Koneksi ke Google Spreadsheet telah diputus. Hubungkan kembali untuk mengakses aplikasi.');
+        }
+
+        function updateConnectionBadge() {
+            const badge = document.getElementById('db-status-badge');
+            if (isConnected && gasUrl) {
+                badge.className = 'flex items-center gap-1.5 text-emerald-400 font-medium';
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Aktif`;
+            } else {
+                badge.className = 'flex items-center gap-1.5 text-rose-400 font-medium';
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span> Terputus`;
+            }
+        }
+
+        async function syncWithGoogleSheets() {
+            if (!gasUrl) {
+                lockApplication('URL Google Spreadsheet tidak ditemukan.');
+                return;
+            }
+            showToast('Menyinkronkan data dengan Google Spreadsheet...', 'info');
+            try {
+                const response = await fetch(gasUrl);
+                if (!response.ok) throw new Error('Gagal mengambil data dari server');
+                const json = await response.json();
+                if (json.status === 'success' && json.data) {
+                    db = normalizeIncomingDatabase(json.data);
+                    saveToLocal();
+                    applyUserSession();
+                    refreshAllViews();
+                    showToast('Data berhasil disinkronkan dari Google Sheet!', 'success');
+                } else {
+                    throw new Error('Respons server tidak valid');
+                }
+            } catch (err) {
+                console.error(err);
+                lockApplication('Koneksi ke Google Spreadsheet terputus saat sinkronisasi. Periksa jaringan atau izin Apps Script.');
+            }
+        }
+
+        async function postToGoogleSheets(payload, silent = false) {
+            if (!gasUrl) {
+                lockApplication('Koneksi terputus. Tidak dapat menyimpan perubahan tanpa Google Spreadsheet.');
+                return;
+            }
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP Error ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'Gagal menyimpan ke Google Sheet');
+                }
+            } catch (err) {
+                console.error('Error posting to GAS:', err);
+                if (!silent) {
+                    showToast('Perubahan tersimpan lokal, namun gagal menyinkronkan ke Google Sheet. Klik Sync Sheet.', 'error');
+                }
+            }
+        }
+
+        function copyGasCode() {
+            const codeEl = document.getElementById('gas-code-block');
+            const codeText = codeEl ? codeEl.textContent : '';
+            if (!codeText) return;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(codeText)
+                    .then(() => showToast('Kode Google Apps Script berhasil disalin ke clipboard!', 'success'))
+                    .catch(() => fallbackCopyText(codeText));
+            } else {
+                fallbackCopyText(codeText);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Kode Google Apps Script berhasil disalin ke clipboard!', 'success');
+        }
+
+        // 12. UI HELPERS (BADGES & TOAST)
+        function getPriorityBadge(priority) {
+            const map = {
+                'Urgent': 'bg-rose-50 text-rose-700 border-rose-200',
+                'High': 'bg-amber-50 text-amber-700 border-amber-200',
+                'Medium': 'bg-blue-50 text-blue-700 border-blue-200',
+                'Low': 'bg-slate-100 text-slate-600 border-slate-200'
+            };
+            const cls = map[priority] || 'bg-slate-100 text-slate-600 border-slate-200';
+            return `<span class="px-2 py-0.5 rounded-md text-xs font-semibold border ${cls}">${escapeHtml(priority)}</span>`;
+        }
+
+        function getStatusBadge(status) {
+            const cfg = getStatusConfig(status);
+            const hex = cfg.Warna;
+            const bgRgba = hexToRgba(hex, 0.14);
+            const borderRgba = hexToRgba(hex, 0.35);
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border" style="background-color: ${escapeHtml(bgRgba)}; color: ${escapeHtml(hex)}; border-color: ${escapeHtml(borderRgba)};">
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${escapeHtml(hex)}"></span>
+                <span>${escapeHtml(cfg.Nama)}</span>
+            </span>`;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                info: 'bg-slate-800 text-white'
+            };
+            toast.className = `${colors[type]} px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 fade-in`;
+            toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+    </script>
+</body>
+</html>

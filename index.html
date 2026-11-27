@@ -608,9 +608,9 @@
                     </div>
 
                     <!-- Rekapitulasi per Kategori & Status + Task Perlu Ditindaklanjuti -->
-                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+                    <div class="space-y-4">
                         <!-- Rekapitulasi Task per Kategori & Status -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden xl:col-span-7 flex flex-col">
+                        <div class="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
                             <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
@@ -630,7 +630,7 @@
                         </div>
 
                         <!-- Task Perlu Ditindaklanjuti (Overdue / Due Soon / Urgent) -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden xl:col-span-5 flex flex-col">
+                        <div class="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
                             <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
@@ -643,7 +643,7 @@
                                 </div>
                                 <span id="action-required-count" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold shrink-0">0 Task</span>
                             </div>
-                            <div id="action-required-list" class="p-4 space-y-2.5 max-h-[360px] overflow-y-auto flex-1"></div>
+                            <div id="action-required-list" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto flex-1"></div>
                         </div>
                     </div>
                 </section>
@@ -801,46 +801,46 @@
                 </section>
 
                 <!-- ==================== VIEW 5: MASTER DATA ==================== -->
-                <section id="view-master" class="hidden space-y-4">
+                <section id="view-master" class="hidden space-y-3">
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                        <div class="border-b border-slate-200 px-4 sm:px-6 flex items-center gap-1 overflow-x-auto">
-                            <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn py-3.5 px-3 text-xs font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
-                            <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn py-3.5 px-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Priority</button>
-                            <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn py-3.5 px-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">PIC &amp; User</button>
-                            <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn py-3.5 px-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Status</button>
-                            <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn py-3.5 px-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Reference</button>
-                            <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn py-3.5 px-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Action Plan</button>
+                        <div class="border-b border-slate-200 px-3 sm:px-4 flex items-center gap-1 overflow-x-auto">
+                            <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
+                            <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Priority</button>
+                            <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">PIC &amp; User</button>
+                            <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Status</button>
+                            <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Reference</button>
+                            <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Action Plan</button>
                         </div>
 
-                        <div class="p-4 sm:p-6 space-y-4">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="p-3 sm:p-4 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
-                                    <h3 id="master-title" class="text-base font-bold text-slate-800">Master Data: Kategori</h3>
-                                    <p id="master-desc" class="text-xs text-slate-500 mt-0.5">Kelola daftar referensi kategori pekerjaan.</p>
+                                    <h3 id="master-title" class="text-sm sm:text-base font-bold text-slate-800">Master Data: Kategori</h3>
+                                    <p id="master-desc" class="text-xs text-slate-500">Kelola daftar referensi kategori pekerjaan.</p>
                                 </div>
-                                <button type="button" onclick="openMasterModal(-1)" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm shrink-0">
+                                <button type="button" onclick="openMasterModal(-1)" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm shrink-0">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     <span id="master-add-btn-label">Tambah Kategori</span>
                                 </button>
                             </div>
 
-                            <div id="master-filter-grid" class="grid grid-cols-1 gap-3">
+                            <div id="master-filter-grid" class="grid grid-cols-1 gap-2">
                                 <div class="relative">
-                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="master-filter-search" oninput="renderMasterTable()" placeholder="Cari data master..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="master-filter-search" oninput="renderMasterTable()" placeholder="Cari data master..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-indigo-500">
                                 </div>
-                                <select id="master-filter-role" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-role" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Role</option>
                                     <option value="Admin">Admin</option>
                                     <option value="Manager">Manager</option>
                                     <option value="Staff">Staff</option>
                                 </select>
-                                <select id="master-filter-completed" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-completed" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Status Completed</option>
                                     <option value="Yes">Yes (Completed)</option>
                                     <option value="No">No (In Progress)</option>
                                 </select>
-                                <select id="master-filter-group" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-group" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Group</option>
                                 </select>
                             </div>
@@ -854,7 +854,7 @@
                                         <tbody id="master-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
                                     </table>
                                 </div>
-                                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
+                                <div class="px-3 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
                                     Total ditampilkan: <strong id="master-count-label" class="text-slate-700">0</strong> item
                                 </div>
                             </div>
@@ -1437,7 +1437,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
             // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.0.8',
+            APP_VERSION: 'v1.1.0',
             // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
@@ -3216,7 +3216,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             }
             if (grid) {
                 const hasSubFilter = ['PIC', 'Status', 'Kategori'].includes(tabName);
-                grid.className = hasSubFilter ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'grid grid-cols-1 gap-3';
+                grid.className = hasSubFilter ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : 'grid grid-cols-1 gap-2';
             }
 
             renderMasterTable();
@@ -3418,12 +3418,11 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 newObj.KategoriTerkait = extra;
             }
 
-            if (editIdx >= 0) {
-                list[editIdx] = newObj;
+            if (editIdx >= 0 && list[editIdx]) {
+                list[editIdx] = { ...list[editIdx], ...newObj };
             } else {
                 list.push(newObj);
             }
-
             db[currentMasterTab] = list;
             saveToLocal();
             closeMasterModal();
@@ -3431,14 +3430,27 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             await pushMasterDataToSheet();
         }
 
-        async function deleteMasterItem(idx) {
+        function deleteMasterItem(idx) {
             const list = db[currentMasterTab] || [];
-            if (!list[idx]) return;
-            list.splice(idx, 1);
-            db[currentMasterTab] = list;
-            saveToLocal();
-            refreshAllViews();
-            await pushMasterDataToSheet();
+            const targetItem = list[idx];
+            if (!targetItem) return;
+
+            const modal = document.getElementById('confirm-modal');
+            const label = targetItem.Nama || targetItem.Kode || 'item ini';
+            document.getElementById('confirm-message').textContent = `Apakah Anda yakin ingin menghapus data ${currentMasterTab} "${label}"?`;
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            yesBtn.onclick = async () => {
+                closeConfirmModal();
+                const currentList = db[currentMasterTab] || [];
+                if (!currentList[idx]) return;
+                currentList.splice(idx, 1);
+                db[currentMasterTab] = currentList;
+                saveToLocal();
+                refreshAllViews();
+                await pushMasterDataToSheet();
+            };
+            modal.classList.remove('hidden');
+            lucide.createIcons();
         }
 
         async function pushMasterDataToSheet() {

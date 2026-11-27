@@ -141,7 +141,7 @@
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.0.5</span>
+                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.0.6</span>
                 </div>
             </form>
         </div>
@@ -1433,7 +1433,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
             // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.0.5',
+            APP_VERSION: 'v1.0.7',
             // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
@@ -1448,9 +1448,9 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             _cacheName: 'taskflow-session-v1',
             _encodeBase64Url(str) {
                 try {
-                    const bytes = new TextEncoder().encode(str);
+                    const bytes = new TextEncoder().encode(String(str));
                     let bin = '';
-                    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+                    bytes.forEach(b => { bin += String.fromCharCode(b); });
                     return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                 } catch (e) {
                     return '';
@@ -1458,244 +1458,319 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             },
             _decodeBase64Url(b64) {
                 try {
-                    let norm = String(b64 || '').replace(/-/g, '+').replace(/_/g, '/');
+                    let norm = String(b64).replace(/-/g, '+').replace(/_/g, '/');
                     while (norm.length % 4) norm += '=';
                     const bin = atob(norm);
                     const bytes = new Uint8Array(bin.length);
                     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
                     return new TextDecoder().decode(bytes);
                 } catch (e) {
-                    return '';
+                    return null;
                 }
             },
-            _openIDB() {
-                return new Promise((resolve, reject) => {
-                    try {
-                        if (!window.indexedDB) return reject(new Error('No IDB'));
-                        const req = window.indexedDB.open(this._idbName, 1);
-                        req.onupgradeneeded = () => {
-                            const db = req.result;
-                            if (!db.objectStoreNames.contains(this._idbStore)) {
-                                db.createObjectStore(this._idbStore);
-                            }
-                        };
-                        req.onsuccess = () => resolve(req.result);
-                        req.onerror = () => reject(req.error);
-                    } catch (e) {
-                        reject(e);
-                    }
-                });
-            },
-            async _idbGetAll() {
+            _readHashState() {
                 try {
-                    const db = await this._openIDB();
-                    return await new Promise(resolve => {
-                        const tx = db.transaction(this._idbStore, 'readonly');
-                        const store = tx.objectStore(this._idbStore);
-                        const req = store.get('all_state');
-                        req.onsuccess = () => resolve(req.result || {});
-                        req.onerror = () => resolve({});
-                    });
+                    const hash = String(window.location.hash || '');
+                    const match = hash.match(/tf_s=([A-Za-z0-9\-_]+)/);
+                    if (!match) return {};
+                    const decoded = this._decodeBase64Url(match[1]);
+                    if (!decoded) return {};
+                    const parsed = JSON.parse(decoded);
+                    return (parsed && typeof parsed === 'object') ? parsed : {};
                 } catch (e) {
                     return {};
                 }
             },
-            async _idbSaveAll(obj) {
+            _writeHashState(obj) {
                 try {
-                    const db = await this._openIDB();
-                    await new Promise(resolve => {
-                        const tx = db.transaction(this._idbStore, 'readwrite');
-                        const store = tx.objectStore(this._idbStore);
-                        store.put(obj, 'all_state');
-                        tx.oncomplete = () => resolve(true);
-                        tx.onerror = () => resolve(false);
-                    });
-                } catch (e) {}
-            },
-            async _cacheGetAll() {
-                try {
-                    if (!('caches' in window)) return {};
-                    const cache = await window.caches.open(this._cacheName);
-                    const resp = await cache.match('/__tf_session_state__');
-                    if (!resp) return {};
-                    return (await resp.json()) || {};
-                } catch (e) {
-                    return {};
-                }
-            },
-            async _cacheSaveAll(obj) {
-                try {
-                    if (!('caches' in window)) return;
-                    const cache = await window.caches.open(this._cacheName);
-                    await cache.put(
-                        '/__tf_session_state__',
-                        new Response(JSON.stringify(obj), { headers: { 'Content-Type': 'application/json' } })
-                    );
-                } catch (e) {}
-            },
-            async hydrateAsync() {
-                const [idbData, cacheData] = await Promise.all([this._idbGetAll(), this._cacheGetAll()]);
-                const merged = { ...cacheData, ...idbData };
-                Object.keys(merged).forEach(k => {
-                    if (merged[k] !== undefined && merged[k] !== null && !this._mem[k]) {
-                        this._mem[k] = String(merged[k]);
-                    }
-                });
-            },
-            _persistAsyncSnapshot() {
-                const snapshot = { ...this._mem };
-                this._idbSaveAll(snapshot);
-                this._cacheSaveAll(snapshot);
-            },
-            _readUrlState() {
-                try {
-                    const rawHash = (window.location.hash || '').replace(/^#/, '');
-                    if (rawHash) {
-                        const params = new URLSearchParams(rawHash);
-                        const encoded = params.get('tf_s');
-                        if (encoded) {
-                            const json = this._decodeBase64Url(encoded);
-                            if (json) return JSON.parse(json) || {};
-                        }
-                    }
-                } catch (e) {}
-                try {
-                    if (window.history && window.history.state && window.history.state.__tf_store) {
-                        return window.history.state.__tf_store || {};
-                    }
-                } catch (e) {}
-                return {};
-            },
-            _writeUrlState(obj) {
-                const keys = Object.keys(obj || {});
-                try {
+                    const keys = Object.keys(obj || {});
                     if (keys.length === 0) {
                         if (window.location.hash && window.location.hash.includes('tf_s=')) {
                             window.location.hash = '';
                         }
-                    } else {
-                        const encoded = this._encodeBase64Url(JSON.stringify(obj));
-                        if (encoded) window.location.hash = 'tf_s=' + encoded;
+                        return;
                     }
-                } catch (err) {}
-                try {
-                    if (window.history && typeof window.history.replaceState === 'function') {
-                        const prevState = (window.history.state && typeof window.history.state === 'object') ? window.history.state : {};
-                        const nextState = { ...prevState, __tf_store: keys.length ? { ...obj } : {} };
-                        const nextHash = keys.length ? ('#tf_s=' + this._encodeBase64Url(JSON.stringify(obj))) : window.location.pathname + window.location.search;
-                        window.history.replaceState(nextState, '', nextHash);
+                    const encoded = this._encodeBase64Url(JSON.stringify(obj));
+                    if (encoded) {
+                        window.location.hash = 'tf_s=' + encoded;
                     }
-                } catch (err) {}
+                } catch (e) {}
             },
-            _readWindowStore() {
+            _readWindowName() {
                 try {
-                    if (window.name && window.name.startsWith('TF_STORE:')) {
-                        return JSON.parse(window.name.slice(9)) || {};
+                    if (typeof window.name === 'string' && window.name.startsWith('TF_STATE:')) {
+                        const parsed = JSON.parse(window.name.slice(9));
+                        return (parsed && typeof parsed === 'object') ? parsed : {};
                     }
                 } catch (e) {}
                 return {};
             },
-            _writeWindowStore(obj) {
+            _writeWindowName(obj) {
                 try {
-                    window.name = 'TF_STORE:' + JSON.stringify(obj);
+                    window.name = 'TF_STATE:' + JSON.stringify(obj || {});
                 } catch (e) {}
             },
-            _setCookie(key, value, maxAgeSec) {
-                try {
-                    const isHttps = location.protocol === 'https:';
-                    if (isHttps) {
-                        document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSec}; SameSite=None; Secure`;
-                    }
-                    document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSec}; SameSite=Lax`;
-                } catch (e) {}
-            },
-            _getCookie(key) {
+            _readCookie(key) {
                 try {
                     const prefix = encodeURIComponent(key) + '=';
-                    const parts = (document.cookie || '').split(';');
-                    for (let part of parts) {
-                        part = part.trim();
-                        if (part.startsWith(prefix)) {
-                            return decodeURIComponent(part.slice(prefix.length));
+                    const parts = document.cookie ? document.cookie.split('; ') : [];
+                    for (let i = 0; i < parts.length; i++) {
+                        if (parts[i].startsWith(prefix)) {
+                            return decodeURIComponent(parts[i].slice(prefix.length));
                         }
                     }
                 } catch (e) {}
                 return null;
             },
-            _removeCookie(key) {
+            _writeCookie(key, value, maxAgeSeconds = 21600) {
                 try {
-                    document.cookie = `${encodeURIComponent(key)}=; path=/; max-age=0; SameSite=None; Secure`;
-                    document.cookie = `${encodeURIComponent(key)}=; path=/; max-age=0; SameSite=Lax`;
+                    const encKey = encodeURIComponent(key);
+                    const encVal = encodeURIComponent(value);
+                    document.cookie = `${encKey}=${encVal}; path=/; max-age=${maxAgeSeconds}; SameSite=None; Secure`;
+                    document.cookie = `${encKey}=${encVal}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
+                } catch (e) {}
+            },
+            _deleteCookie(key) {
+                try {
+                    const encKey = encodeURIComponent(key);
+                    document.cookie = `${encKey}=; path=/; max-age=0; SameSite=None; Secure`;
+                    document.cookie = `${encKey}=; path=/; max-age=0; SameSite=Lax`;
+                } catch (e) {}
+            },
+            _openIdb() {
+                return new Promise((resolve, reject) => {
+                    if (typeof indexedDB === 'undefined') return reject(new Error('No IDB'));
+                    const req = indexedDB.open(this._idbName, 1);
+                    req.onupgradeneeded = () => {
+                        const dbInst = req.result;
+                        if (!dbInst.objectStoreNames.contains(this._idbStore)) {
+                            dbInst.createObjectStore(this._idbStore);
+                        }
+                    };
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                });
+            },
+            async _writeAsyncStore(key, val) {
+                try {
+                    const idb = await this._openIdb();
+                    await new Promise((resolve, reject) => {
+                        const tx = idb.transaction(this._idbStore, 'readwrite');
+                        tx.objectStore(this._idbStore).put(val, key);
+                        tx.oncomplete = () => resolve();
+                        tx.onerror = () => reject(tx.error);
+                    });
+                } catch (e) {}
+                try {
+                    if ('caches' in window) {
+                        const cache = await caches.open(this._cacheName);
+                        await cache.put('/' + encodeURIComponent(key), new Response(String(val)));
+                    }
+                } catch (e) {}
+            },
+            async _readAsyncStore(key) {
+                try {
+                    const idb = await this._openIdb();
+                    const val = await new Promise((resolve, reject) => {
+                        const tx = idb.transaction(this._idbStore, 'readonly');
+                        const req = tx.objectStore(this._idbStore).get(key);
+                        req.onsuccess = () => resolve(req.result ?? null);
+                        req.onerror = () => reject(req.error);
+                    });
+                    if (val !== null && val !== undefined) return String(val);
+                } catch (e) {}
+                try {
+                    if ('caches' in window) {
+                        const cache = await caches.open(this._cacheName);
+                        const match = await cache.match('/' + encodeURIComponent(key));
+                        if (match) return await match.text();
+                    }
+                } catch (e) {}
+                return null;
+            },
+            async _removeAsyncStore(key) {
+                try {
+                    const idb = await this._openIdb();
+                    await new Promise((resolve, reject) => {
+                        const tx = idb.transaction(this._idbStore, 'readwrite');
+                        tx.objectStore(this._idbStore).delete(key);
+                        tx.oncomplete = () => resolve();
+                        tx.onerror = () => reject(tx.error);
+                    });
+                } catch (e) {}
+                try {
+                    if ('caches' in window) {
+                        const cache = await caches.open(this._cacheName);
+                        await cache.delete('/' + encodeURIComponent(key));
+                    }
                 } catch (e) {}
             },
             getItem(key) {
-                if (this._mem[key] !== undefined && this._mem[key] !== null) return this._mem[key];
-                const uStore = this._readUrlState();
-                if (uStore[key] !== undefined && uStore[key] !== null) {
-                    this._mem[key] = uStore[key];
-                    return uStore[key];
+                if (Object.prototype.hasOwnProperty.call(this._mem, key)) {
+                    return this._mem[key];
                 }
                 try {
-                    const v = window.localStorage.getItem(key);
-                    if (v !== null) { this._mem[key] = v; return v; }
+                    const lsVal = window.localStorage.getItem(key);
+                    if (lsVal !== null) {
+                        this._mem[key] = lsVal;
+                        return lsVal;
+                    }
                 } catch (e) {}
                 try {
-                    const v = window.sessionStorage.getItem(key);
-                    if (v !== null) { this._mem[key] = v; return v; }
+                    const ssVal = window.sessionStorage.getItem(key);
+                    if (ssVal !== null) {
+                        this._mem[key] = ssVal;
+                        return ssVal;
+                    }
                 } catch (e) {}
-                const wStore = this._readWindowStore();
-                if (wStore[key] !== undefined && wStore[key] !== null) {
-                    this._mem[key] = wStore[key];
-                    return wStore[key];
+                const wn = this._readWindowName();
+                if (Object.prototype.hasOwnProperty.call(wn, key)) {
+                    this._mem[key] = wn[key];
+                    return wn[key];
                 }
-                const cVal = this._getCookie(key);
-                if (cVal !== null) {
-                    this._mem[key] = cVal;
-                    return cVal;
+                const hs = this._readHashState();
+                if (Object.prototype.hasOwnProperty.call(hs, key)) {
+                    this._mem[key] = hs[key];
+                    return hs[key];
+                }
+                const ck = this._readCookie(key);
+                if (ck !== null) {
+                    this._mem[key] = ck;
+                    return ck;
                 }
                 return null;
             },
-            setItem(key, value, persistAcrossReload = false) {
+            setItem(key, value, persistInEmbed = false) {
                 const strVal = String(value);
                 this._mem[key] = strVal;
                 try { window.localStorage.setItem(key, strVal); } catch (e) {}
                 try { window.sessionStorage.setItem(key, strVal); } catch (e) {}
-                const wStore = this._readWindowStore();
-                wStore[key] = strVal;
-                this._writeWindowStore(wStore);
-                if (persistAcrossReload) {
-                    const uStore = this._readUrlState();
-                    uStore[key] = strVal;
-                    this._writeUrlState(uStore);
-                    this._setCookie(key, strVal, Math.floor(APP_DEFAULT_CONFIG.SESSION_TTL_MS / 1000));
-                    this._persistAsyncSnapshot();
+                if (persistInEmbed) {
+                    const wn = this._readWindowName();
+                    wn[key] = strVal;
+                    this._writeWindowName(wn);
+
+                    const hs = this._readHashState();
+                    hs[key] = strVal;
+                    this._writeHashState(hs);
+
+                    if (strVal.length <= 3200) {
+                        this._writeCookie(key, strVal, Math.floor(APP_DEFAULT_CONFIG.SESSION_TTL_MS / 1000));
+                    }
+                    this._writeAsyncStore(key, strVal);
                 }
             },
             removeItem(key) {
                 delete this._mem[key];
                 try { window.localStorage.removeItem(key); } catch (e) {}
                 try { window.sessionStorage.removeItem(key); } catch (e) {}
-                const wStore = this._readWindowStore();
-                if (key in wStore) {
-                    delete wStore[key];
-                    this._writeWindowStore(wStore);
+                const wn = this._readWindowName();
+                if (Object.prototype.hasOwnProperty.call(wn, key)) {
+                    delete wn[key];
+                    this._writeWindowName(wn);
                 }
-                const uStore = this._readUrlState();
-                if (key in uStore) {
-                    delete uStore[key];
-                    this._writeUrlState(uStore);
+                const hs = this._readHashState();
+                if (Object.prototype.hasOwnProperty.call(hs, key)) {
+                    delete hs[key];
+                    this._writeHashState(hs);
                 }
-                this._removeCookie(key);
-                this._persistAsyncSnapshot();
+                this._deleteCookie(key);
+                this._removeAsyncStore(key);
+            },
+            async hydrateKeys(keys) {
+                for (const k of keys) {
+                    if (this.getItem(k) === null) {
+                        const asyncVal = await this._readAsyncStore(k);
+                        if (asyncVal !== null) {
+                            this.setItem(k, asyncVal, true);
+                        }
+                    }
+                }
             }
         };
 
         const SESSION_STORAGE_KEYS = {
             TOKEN: 'taskflow_session_token',
-            EXPIRES_AT: 'taskflow_session_expires_at',
-            LOGGED_USER: 'taskflow_logged_user',
-            USER_PROFILE: 'taskflow_user_profile'
+            USER_PROFILE: 'taskflow_user_profile',
+            EXPIRES_AT: 'taskflow_session_expires_at'
         };
+
+        let db = JSON.parse(JSON.stringify(EMPTY_DB));
+        let gasUrl = '';
+        let sessionToken = '';
+        let currentUser = null;
+        let isConnected = false;
+        let isConnecting = false;
+        let currentMasterTab = 'Kategori';
+        let tasksCurrentPage = 1;
+        const tasksPageSize = 15;
+        let tasksSpecialFilter = '';
+        let pendingDeleteTaskId = null;
+        let picChart = null;
+        let statusChart = null;
+        let priorityChart = null;
+        let reportTrendChart = null;
+        let reportCategoryChart = null;
+
+        function isSameText(a, b) {
+            return String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+        }
+
+        function normalizeCompletedFlag(val) {
+            const v = String(val ?? '').trim().toLowerCase();
+            return (v === 'yes' || v === 'true' || v === '1' || v === 'selesai' || v === 'completed') ? 'Yes' : 'No';
+        }
+
+        function getStatusConfig(statusName) {
+            const found = (db.Status || []).find(s => isSameText(s.Nama, statusName));
+            if (found) {
+                return {
+                    Nama: found.Nama,
+                    Warna: normalizeHexColor(found.Warna, '#64748B'),
+                    Completed: normalizeCompletedFlag(found.Completed)
+                };
+            }
+            const lower = String(statusName || '').trim().toLowerCase();
+            const fallbackCompleted = (lower === 'completed' || lower === 'done' || lower === 'selesai') ? 'Yes' : 'No';
+            return {
+                Nama: statusName || 'Open',
+                Warna: fallbackCompleted === 'Yes' ? '#059669' : '#3B82F6',
+                Completed: fallbackCompleted
+            };
+        }
+
+        function isTaskCompleted(task) {
+            if (!task) return false;
+            return getStatusConfig(task.Status).Completed === 'Yes';
+        }
+
+        function isTaskOverdue(task, todayStr = getTodayOffset(0)) {
+            if (!task || isTaskCompleted(task)) return false;
+            const target = normalizeDateISO(task.TargetDate);
+            return Boolean(target && target < todayStr);
+        }
+
+        function getScopedTasks() {
+            const all = db.Tasks || [];
+            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
+                return all.filter(t => isSameText(t.PIC, currentUser.Nama));
+            }
+            return all;
+        }
+
+        function getPicInitial(picOrName) {
+            if (picOrName && typeof picOrName === 'object') {
+                if (picOrName.Initial) return String(picOrName.Initial).trim().toUpperCase();
+                picOrName = picOrName.Nama || '';
+            }
+            const nameStr = String(picOrName || '').trim();
+            const found = (db.PIC || []).find(p => isSameText(p.Nama, nameStr));
+            if (found && found.Initial) return String(found.Initial).trim().toUpperCase();
+            const parts = nameStr.split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return 'U';
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
 
         function buildCompactSessionUser(userObj) {
             if (!userObj || typeof userObj !== 'object') return null;
@@ -1709,366 +1784,171 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             };
         }
 
-        function saveAuthSession(token, userObj) {
-            const cleanToken = String(token || '').trim();
-            const expiresAt = Date.now() + APP_DEFAULT_CONFIG.SESSION_TTL_MS;
-            const compactUser = buildCompactSessionUser(userObj);
-            sessionToken = cleanToken;
-            currentUser = compactUser;
+        function saveToLocal() {
+            SafeStorage.setItem('taskflow_cached_db', JSON.stringify(db), false);
+        }
 
-            SafeStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, cleanToken, true);
+        function loadFromLocal() {
+            try {
+                const raw = SafeStorage.getItem('taskflow_cached_db');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    db = normalizeIncomingDatabase(parsed);
+                }
+            } catch (e) {}
+        }
+
+        function normalizeIncomingDatabase(raw) {
+            const res = JSON.parse(JSON.stringify(EMPTY_DB));
+            if (!raw || typeof raw !== 'object') return res;
+            Object.keys(EMPTY_DB).forEach(key => {
+                if (Array.isArray(raw[key])) {
+                    res[key] = raw[key];
+                }
+            });
+            return res;
+        }
+
+        function saveAuthSession(token, userObj) {
+            sessionToken = String(token || '').trim();
+            currentUser = buildCompactSessionUser(userObj);
+            const expiresAt = Date.now() + APP_DEFAULT_CONFIG.SESSION_TTL_MS;
+            SafeStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, sessionToken, true);
+            SafeStorage.setItem(SESSION_STORAGE_KEYS.USER_PROFILE, JSON.stringify(currentUser), true);
             SafeStorage.setItem(SESSION_STORAGE_KEYS.EXPIRES_AT, String(expiresAt), true);
-            SafeStorage.setItem(SESSION_STORAGE_KEYS.LOGGED_USER, String(compactUser?.Username || '').trim(), true);
-            SafeStorage.setItem(SESSION_STORAGE_KEYS.USER_PROFILE, JSON.stringify(compactUser), true);
         }
 
         function refreshAuthSessionExpiry() {
             if (!sessionToken) return;
             const expiresAt = Date.now() + APP_DEFAULT_CONFIG.SESSION_TTL_MS;
-            SafeStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, sessionToken, true);
             SafeStorage.setItem(SESSION_STORAGE_KEYS.EXPIRES_AT, String(expiresAt), true);
-            if (currentUser) {
-                SafeStorage.setItem(SESSION_STORAGE_KEYS.USER_PROFILE, JSON.stringify(buildCompactSessionUser(currentUser)), true);
-            }
-        }
-
-        function getValidStoredSession() {
-            const token = (SafeStorage.getItem(SESSION_STORAGE_KEYS.TOKEN) || '').trim();
-            const expiresAt = Number(SafeStorage.getItem(SESSION_STORAGE_KEYS.EXPIRES_AT) || 0);
-            const profileRaw = SafeStorage.getItem(SESSION_STORAGE_KEYS.USER_PROFILE);
-            const loggedUser = (SafeStorage.getItem(SESSION_STORAGE_KEYS.LOGGED_USER) || '').trim();
-
-            if (!token || !expiresAt || Date.now() >= expiresAt) {
-                if (token || expiresAt) clearAuthSession();
-                return null;
-            }
-
-            let parsedUser = null;
-            if (profileRaw) {
-                try {
-                    parsedUser = JSON.parse(profileRaw);
-                } catch (e) {
-                    parsedUser = null;
-                }
-            }
-            if (!parsedUser && loggedUser) {
-                parsedUser = {
-                    Kode: '',
-                    Nama: loggedUser,
-                    Initial: loggedUser.slice(0, 2).toUpperCase(),
-                    Divisi: 'Workspace',
-                    Role: 'Staff',
-                    Username: loggedUser
-                };
-            }
-            return { token, expiresAt, user: parsedUser };
-        }
-
-        function resolveInitialGasUrl() {
-            const savedUrl = (SafeStorage.getItem('taskflow_gas_url') || '').trim();
-            if (savedUrl) return savedUrl;
-
-            const defaultWebAppUrl = (APP_DEFAULT_CONFIG.DEFAULT_GAS_WEB_APP_URL || '').trim();
-            return defaultWebAppUrl;
-        }
-
-        // Global Application State
-        let db = JSON.parse(JSON.stringify(EMPTY_DB));
-        let gasUrl = resolveInitialGasUrl();
-        let sessionToken = '';
-        let currentUser = null;
-        let isConnected = false;
-        let isConnecting = false;
-        let currentMasterTab = 'Kategori';
-        let tasksCurrentPage = 1;
-        const tasksPageSize = 15;
-        let tasksSpecialFilter = ''; // '', 'completed', 'inprogress', 'overdue', atau 'priority:Urgent'
-        let pendingDeleteTaskId = null;
-        let picChart = null;
-        let statusChart = null;
-        let priorityChart = null;
-        let reportTrendChart = null;
-        let reportCategoryChart = null;
-
-        function normalizeCompletedFlag(val) {
-            const s = String(val ?? '').trim().toLowerCase();
-            if (['yes', 'true', '1', 'y', 'ya', 'done', 'completed', 'selesai'].includes(s)) {
-                return 'Yes';
-            }
-            return 'No';
-        }
-
-        function normalizeIncomingDatabase(rawData) {
-            const normalized = { ...EMPTY_DB, ...(rawData || {}) };
-            if (Array.isArray(normalized.Kategori)) {
-                normalized.Kategori = normalized.Kategori.map(k => {
-                    const rawGroup = k.Group ?? k.group ?? k.Grup ?? k.grup ?? k.CategoryGroup ?? '';
-                    return {
-                        Kode: k.Kode || '',
-                        Nama: k.Nama || '',
-                        Group: String(rawGroup).trim(),
-                        Keterangan: k.Keterangan || ''
-                    };
-                });
-            }
-            if (Array.isArray(normalized.PIC)) {
-                normalized.PIC = normalized.PIC.map(p => {
-                    const rawInit = p.Initial ?? p.initial ?? p.Inisial ?? p.inisial ?? p.Initials ?? '';
-                    const cleanInit = String(rawInit).trim();
-                    return {
-                        Kode: p.Kode || '',
-                        Nama: p.Nama || '',
-                        Initial: cleanInit,
-                        Divisi: p.Divisi || '',
-                        Role: p.Role || 'Staff',
-                        Username: p.Username || '',
-                        Password: p.Password || ''
-                    };
-                });
-            }
-            if (Array.isArray(normalized.Status)) {
-                normalized.Status = normalized.Status.map(s => {
-                    const rawCompleted = s.Completed ?? s.completed ?? s.IsCompleted ?? '';
-                    const isYes = rawCompleted !== ''
-                        ? normalizeCompletedFlag(rawCompleted) === 'Yes'
-                        : ['done', 'completed', 'selesai'].includes(String(s.Nama || '').trim().toLowerCase());
-                    return {
-                        Kode: s.Kode || '',
-                        Nama: s.Nama || '',
-                        Warna: normalizeHexColor(s.Warna || s.warna || '#64748B', '#64748B'),
-                        Completed: isYes ? 'Yes' : 'No'
-                    };
-                });
-            }
-            return normalized;
-        }
-
-        function getPicInitial(picObjOrName) {
-            if (!picObjOrName) return '?';
-            if (typeof picObjOrName === 'object') {
-                const initVal = String(picObjOrName.Initial ?? picObjOrName.initial ?? picObjOrName.Inisial ?? '').trim();
-                if (initVal) return initVal;
-                const namaVal = String(picObjOrName.Nama || '').trim();
-                return namaVal ? namaVal.split(/\s+/).map(n => n[0]).join('').substring(0, 3).toUpperCase() : '?';
-            }
-            const found = (db.PIC || []).find(p => isSameText(p.Nama, picObjOrName) || isSameText(p.Initial, picObjOrName));
-            if (found) {
-                const foundInit = String(found.Initial ?? found.initial ?? found.Inisial ?? '').trim();
-                if (foundInit) return foundInit;
-            }
-            return String(picObjOrName).trim().split(/\s+/).map(n => n[0]).join('').substring(0, 3).toUpperCase();
-        }
-
-        function getStatusConfig(statusName) {
-            const found = (db.Status || []).find(s => isSameText(s.Nama, statusName));
-            if (found) {
-                return {
-                    Nama: found.Nama,
-                    Warna: normalizeHexColor(found.Warna, '#64748B'),
-                    Completed: normalizeCompletedFlag(found.Completed)
-                };
-            }
-            const lower = String(statusName || '').trim().toLowerCase();
-            const isDoneLegacy = ['done', 'completed', 'selesai'].includes(lower);
-            return {
-                Nama: statusName || 'Open',
-                Warna: isDoneLegacy ? '#059669' : '#64748B',
-                Completed: isDoneLegacy ? 'Yes' : 'No'
-            };
-        }
-
-        function isTaskCompleted(task) {
-            if (!task) return false;
-            return getStatusConfig(task.Status).Completed === 'Yes';
-        }
-
-        function isTaskOverdue(task, todayIso = getTodayOffset(0)) {
-            if (!task || isTaskCompleted(task)) return false;
-            const target = normalizeDateISO(task.TargetDate);
-            return Boolean(target && target < todayIso);
-        }
-
-        function getScopedTasks() {
-            const allTasks = db.Tasks || [];
-            if (currentUser && isSameText(currentUser.Role, 'Staff') && currentUser.Nama) {
-                return allTasks.filter(t => isSameText(t.PIC, currentUser.Nama));
-            }
-            return allTasks;
-        }
-
-        // 2. INISIALISASI APLIKASI & GATEKEEPER KONEKSI
-        window.addEventListener('DOMContentLoaded', async () => {
-            lucide.createIcons();
-            setupKeyboardAndBackdrop();
-
-            const versionEl = document.getElementById('login-app-version');
-            if (versionEl && APP_DEFAULT_CONFIG.APP_VERSION) {
-                versionEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
-            }
-
-            // Pulihkan penyimpanan asinkron (IndexedDB & Cache API) sebelum membaca sesi (krusial untuk Google Sites embed)
-            await SafeStorage.hydrateAsync();
-            gasUrl = resolveInitialGasUrl();
-
-            const storedSession = getValidStoredSession();
-            if (gasUrl) {
-                document.getElementById('gatekeeper-url-input').value = gasUrl;
-                const gasInput = document.getElementById('gas-url-input');
-                if (gasInput) gasInput.value = gasUrl;
-
-                if (storedSession && storedSession.token) {
-                    sessionToken = storedSession.token;
-                    currentUser = storedSession.user || {
-                        Kode: '',
-                        Nama: 'Memuat Profil...',
-                        Initial: 'TF',
-                        Divisi: 'Workspace',
-                        Role: 'Staff',
-                        Username: ''
-                    };
-                    isConnected = true;
-
-                    const cachedDbRaw = SafeStorage.getItem('taskflow_cached_db');
-                    if (cachedDbRaw) {
-                        try {
-                            db = normalizeIncomingDatabase(JSON.parse(cachedDbRaw));
-                        } catch (e) {}
-                    }
-
-                    // Pastikan penyimpanan sesi kembali ditulis ulang ke seluruh lapisan setelah reload
-                    refreshAuthSessionExpiry();
-                    enterMainApp();
-
-                    // Sinkronisasi latar belakang untuk memperbarui profil & data dari Google Sheet
-                    fetchAuthorizedData(sessionToken, true).then(ok => {
-                        if (ok) {
-                            applyUserSession();
-                            refreshAllViews();
-                        }
-                    });
-                } else {
-                    verifyAndConnect(gasUrl);
-                }
-            } else {
-                lockApplication('Masukkan URL Google Apps Script Web App untuk menghubungkan database.');
-            }
-        });
-
-        function isSameText(a, b) {
-            return String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
-        }
-
-        function saveToLocal() {
-            SafeStorage.setItem('taskflow_cached_db', JSON.stringify(db), false);
         }
 
         function clearAuthSession() {
             sessionToken = '';
             currentUser = null;
             SafeStorage.removeItem(SESSION_STORAGE_KEYS.TOKEN);
-            SafeStorage.removeItem(SESSION_STORAGE_KEYS.EXPIRES_AT);
-            SafeStorage.removeItem(SESSION_STORAGE_KEYS.LOGGED_USER);
             SafeStorage.removeItem(SESSION_STORAGE_KEYS.USER_PROFILE);
+            SafeStorage.removeItem(SESSION_STORAGE_KEYS.EXPIRES_AT);
             SafeStorage.removeItem('taskflow_cached_db');
         }
 
-        function setupKeyboardAndBackdrop() {
-            document.addEventListener('keydown', e => {
-                if (e.key === 'Escape') {
-                    closeTaskModal();
-                    closeMasterModal();
-                    closeConfirmModal();
-                    closeProfileModal();
-                    closeProfileDropdown();
-                }
-            });
-
-            document.addEventListener('click', e => {
-                const wrapper = document.getElementById('top-profile-wrapper');
-                if (wrapper && !wrapper.contains(e.target)) {
-                    closeProfileDropdown();
-                }
-            });
+        function restoreActiveSession() {
+            const token = String(SafeStorage.getItem(SESSION_STORAGE_KEYS.TOKEN) || '').trim();
+            const expRaw = Number(SafeStorage.getItem(SESSION_STORAGE_KEYS.EXPIRES_AT) || 0);
+            if (!token) return false;
+            if (expRaw > 0 && Date.now() > expRaw) {
+                clearAuthSession();
+                return false;
+            }
+            sessionToken = token;
+            try {
+                const uRaw = SafeStorage.getItem(SESSION_STORAGE_KEYS.USER_PROFILE);
+                if (uRaw) currentUser = JSON.parse(uRaw);
+            } catch (e) {
+                currentUser = null;
+            }
+            loadFromLocal();
+            return true;
         }
 
-        function lockApplication(errorMsg = '') {
-            isConnected = false;
-            document.getElementById('app-shell').classList.add('hidden');
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('connection-gatekeeper').classList.remove('hidden');
-            document.getElementById('gatekeeper-loading').classList.add('hidden');
-            document.getElementById('gatekeeper-form-area').classList.remove('hidden');
+        function resolveInitialGasUrl() {
+            const saved = String(SafeStorage.getItem('taskflow_gas_url') || '').trim();
+            if (saved) return saved;
+            const paramUrl = new URLSearchParams(window.location.search).get('gas_url');
+            if (paramUrl && paramUrl.trim()) return paramUrl.trim();
+            return String(APP_DEFAULT_CONFIG.DEFAULT_GAS_WEB_APP_URL || '').trim();
+        }
 
-            const errBox = document.getElementById('gatekeeper-error-box');
-            const errText = document.getElementById('gatekeeper-error-msg');
-            if (errorMsg) {
-                errBox.classList.remove('hidden');
-                errText.textContent = errorMsg;
-            } else {
-                errBox.classList.add('hidden');
-            }
-            lucide.createIcons();
+        function setLoginFormDisabled(disabled) {
+            const u = document.getElementById('login-username');
+            const p = document.getElementById('login-password');
+            const btn = document.getElementById('login-submit-btn');
+            if (u) u.disabled = disabled;
+            if (p) p.disabled = disabled;
+            if (btn) btn.disabled = disabled;
         }
 
         function showLoginScreen() {
             document.getElementById('connection-gatekeeper').classList.add('hidden');
             document.getElementById('app-shell').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
+            const verEl = document.getElementById('login-app-version');
+            if (verEl) verEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
             setLoginFormDisabled(false);
             lucide.createIcons();
         }
 
-        function setLoginFormDisabled(disabled) {
-            const userInp = document.getElementById('login-username');
-            const passInp = document.getElementById('login-password');
-            const submitBtn = document.getElementById('login-submit-btn');
-            if (userInp) userInp.disabled = disabled;
-            if (passInp) passInp.disabled = disabled;
-            if (submitBtn) {
-                submitBtn.disabled = disabled;
-                submitBtn.innerHTML = disabled
-                    ? '<div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div><span>Memverifikasi Akun...</span>'
-                    : '<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Aplikasi</span>';
-                if (!disabled) lucide.createIcons();
+        function lockApplication(errorMessage = '') {
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('connection-gatekeeper').classList.remove('hidden');
+            document.getElementById('gatekeeper-loading').classList.add('hidden');
+            document.getElementById('gatekeeper-form-area').classList.remove('hidden');
+            const errBox = document.getElementById('gatekeeper-error-box');
+            const errMsg = document.getElementById('gatekeeper-error-msg');
+            if (errorMessage) {
+                errMsg.textContent = errorMessage;
+                errBox.classList.remove('hidden');
+            } else {
+                errBox.classList.add('hidden');
             }
+            lucide.createIcons();
         }
 
         function connectFromGatekeeper() {
-            const url = (document.getElementById('gatekeeper-url-input').value || '').trim();
-            if (!url || !url.startsWith('https://script.google.com/')) {
-                lockApplication('Masukkan URL Google Apps Script Web App yang valid (dimulai dengan https://script.google.com/).');
+            const input = document.getElementById('gatekeeper-url-input');
+            const val = (input?.value || '').trim();
+            if (!val) {
+                lockApplication('Silakan masukkan URL Web App Google Apps Script terlebih dahulu.');
                 return;
             }
-            verifyAndConnect(url);
+            verifyAndConnect(val);
         }
 
         async function verifyAndConnect(targetUrl) {
             if (isConnecting) return;
-            isConnecting = true;
+            if (!targetUrl || !/^https:\/\/script\.google\.com\//i.test(targetUrl)) {
+                lockApplication('URL tidak valid. Pastikan diawali dengan https://script.google.com/macros/s/.../exec');
+                return;
+            }
 
+            isConnecting = true;
             document.getElementById('connection-gatekeeper').classList.remove('hidden');
-            document.getElementById('gatekeeper-loading').classList.remove('hidden');
             document.getElementById('gatekeeper-form-area').classList.add('hidden');
+            document.getElementById('gatekeeper-loading').classList.remove('hidden');
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 30000);
 
             try {
-                let res = await fetch(targetUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'PING' }),
+                const pingUrl = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}action=PING&_ts=${Date.now()}`;
+                let res = await fetch(pingUrl, {
+                    method: 'GET',
+                    redirect: 'follow',
+                    cache: 'no-store',
                     signal: controller.signal
                 });
 
                 if (!res.ok) {
-                    const pingUrl = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}action=PING`;
-                    res = await fetch(pingUrl, { signal: controller.signal });
+                    res = await fetch(targetUrl, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'PING' }),
+                        signal: controller.signal
+                    });
                 }
                 clearTimeout(timeoutId);
 
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
+                const rawText = await res.text();
+                let data = {};
+                try {
+                    data = JSON.parse(rawText);
+                } catch (parseErr) {
+                    throw new Error('Respons bukan JSON. Pastikan akses Web App diatur ke "Anyone" dan tidak meminta login Google.');
+                }
 
                 if (data.status === 'connected' || data.status === 'unauthorized') {
                     gasUrl = targetUrl;
@@ -2078,12 +1958,15 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                     if (gasInput) gasInput.value = targetUrl;
                     showLoginScreen();
                 } else {
-                    throw new Error('Respons Web App tidak dikenali.');
+                    throw new Error(data.message || 'Respons Web App tidak dikenali.');
                 }
             } catch (err) {
                 clearTimeout(timeoutId);
                 document.getElementById('gatekeeper-script-help').classList.remove('hidden');
-                lockApplication('Gagal terhubung ke Google Apps Script. Pastikan URL Web App benar dan sudah di-deploy dengan akses Anyone.');
+                const detail = err && err.name === 'AbortError'
+                    ? 'Waktu koneksi habis (timeout 30 detik).'
+                    : (err && err.message ? err.message : 'Gagal terhubung ke Google Apps Script.');
+                lockApplication(`Gagal terhubung ke Google Spreadsheet (${detail}). Pastikan URL Web App benar dan deployment diatur ke "Anyone".`);
             } finally {
                 isConnecting = false;
             }
@@ -3602,6 +3485,51 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 setTimeout(() => el.remove(), 220);
             }, 3200);
         }
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('top-profile-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeProfileDropdown();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const verEl = document.getElementById('login-app-version');
+            if (verEl) verEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
+
+            await SafeStorage.hydrateKeys([
+                'taskflow_gas_url',
+                SESSION_STORAGE_KEYS.TOKEN,
+                SESSION_STORAGE_KEYS.USER_PROFILE,
+                SESSION_STORAGE_KEYS.EXPIRES_AT
+            ]);
+
+            const initialUrl = resolveInitialGasUrl();
+            const urlInp = document.getElementById('gatekeeper-url-input');
+            const gasInp = document.getElementById('gas-url-input');
+            if (urlInp && initialUrl) urlInp.value = initialUrl;
+            if (gasInp && initialUrl) gasInp.value = initialUrl;
+
+            const hasValidSession = restoreActiveSession();
+            if (initialUrl && hasValidSession) {
+                gasUrl = initialUrl;
+                isConnected = true;
+                enterMainApp();
+                fetchAuthorizedData(sessionToken, true).then(updated => {
+                    if (updated) {
+                        applyUserSession();
+                        refreshAllViews();
+                    }
+                });
+                return;
+            }
+
+            if (initialUrl) {
+                verifyAndConnect(initialUrl);
+            } else {
+                lockApplication('');
+            }
+        });
     </script>
 </body>
 </html>

@@ -506,9 +506,9 @@
             </header>
 
             <!-- Scrollable Content Viewport -->
-            <main class="flex-1 w-full lg:overflow-y-auto p-4 sm:p-6 pb-12 space-y-6">
+            <main class="flex-1 w-full lg:overflow-y-auto px-3 pt-2.5 pb-8 sm:px-5 sm:pt-3 sm:pb-10 space-y-4">
                 <!-- ==================== VIEW 1: DASHBOARD ==================== -->
-                <section id="view-dashboard" class="space-y-6">
+                <section id="view-dashboard" class="space-y-4">
                     <!-- KPI Cards (Interactive Drill-Down) -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div onclick="drillDownTasks('all')" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all">
@@ -649,8 +649,8 @@
                 </section>
 
                 <!-- ==================== VIEW 2: DAFTAR PEKERJAAN ==================== -->
-                <section id="view-tasks" class="hidden space-y-4">
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+                <section id="view-tasks" class="hidden space-y-3">
+                    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
                         <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
                             <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
                             <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
@@ -700,8 +700,8 @@
                 </section>
 
                 <!-- ==================== VIEW 3: MONITORING TIM ==================== -->
-                <section id="view-monitoring" class="hidden space-y-5">
-                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <section id="view-monitoring" class="hidden space-y-3.5">
+                    <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <h3 class="text-sm font-bold text-slate-800">Kapasitas &amp; Beban Kerja Anggota Tim</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Klik kartu PIC untuk meninjau seluruh daftar pekerjaan yang ditugaskan.</p>
@@ -717,8 +717,8 @@
                 </section>
 
                 <!-- ==================== VIEW 4: LAPORAN & ANALITIK ==================== -->
-                <section id="view-reports" class="hidden space-y-5">
-                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <section id="view-reports" class="hidden space-y-3.5">
+                    <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div>
                             <h3 class="text-sm font-bold text-slate-800">Filter Periode &amp; Ekspor Laporan</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Analisis produktivitas tim dan unduh ringkasan kinerja dalam format CSV.</p>
@@ -1190,7 +1190,7 @@ function doPost(e) {
   }
 
   const lock = LockService.getScriptLock();
-  lock.tryLock(15000);
+  lock.tryLock(10000);
 
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -1203,8 +1203,9 @@ function doPost(e) {
       const task = payload.data || {};
       if (userRole === 'staff') task.PIC = sessionUser.Nama;
 
-      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h =&gt; String(h).trim());
-      const rows = sheet.getDataRange().getValues();
+      const lastCol = sheet.getLastColumn();
+      const lastRow = sheet.getLastRow();
+      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h =&gt; String(h).trim());
 
       const rowValues = headers.map(h =&gt; {
         const key = Object.keys(task).find(k =&gt; k.toLowerCase() === h.toLowerCase());
@@ -1218,66 +1219,76 @@ function doPost(e) {
 
       const idColIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'id');
       let foundRow = -1;
-      if (idColIdx !== -1) {
-        for (let i = 1; i &lt; rows.length; i++) {
-          if (String(rows[i][idColIdx]) === String(task.ID)) {
-            foundRow = i + 1;
+      if (idColIdx !== -1 &amp;&amp; lastRow &gt; 1) {
+        const idValues = sheet.getRange(2, idColIdx + 1, lastRow - 1, 1).getValues();
+        for (let i = 0; i &lt; idValues.length; i++) {
+          if (String(idValues[i][0]) === String(task.ID)) {
+            foundRow = i + 2;
             break;
           }
         }
       }
 
-      if (foundRow &gt; 0) {
-        sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
-        applyDateFormatting(sheet, headers, foundRow, 1);
-      } else {
-        sheet.appendRow(rowValues);
-        applyDateFormatting(sheet, headers, sheet.getLastRow(), 1);
-      }
+      const targetRow = foundRow &gt; 0 ? foundRow : lastRow + 1;
+      sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
+      headers.forEach((h, idx) =&gt; {
+        if (h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') {
+          sheet.getRange(targetRow, idx + 1).setNumberFormat('dd/MM/yyyy');
+        }
+      });
     } else if (action === 'DELETE_TASK') {
       const sheet = getExistingSheet(ss, SHEET_NAMES.TASKS);
       if (!sheet) return createJsonResponse({ status: 'error', message: 'Sheet Tasks tidak ditemukan.' });
 
-      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h =&gt; String(h).trim());
+      const lastCol = sheet.getLastColumn();
+      const lastRow = sheet.getLastRow();
+      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h =&gt; String(h).trim());
       const idColIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'id');
       const picColIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'pic');
-      const rows = sheet.getDataRange().getValues();
 
-      if (idColIdx !== -1) {
-        for (let i = 1; i &lt; rows.length; i++) {
-          if (String(rows[i][idColIdx]) === String(payload.id)) {
+      if (idColIdx !== -1 &amp;&amp; lastRow &gt; 1) {
+        const idValues = sheet.getRange(2, idColIdx + 1, lastRow - 1, 1).getValues();
+        for (let i = 0; i &lt; idValues.length; i++) {
+          if (String(idValues[i][0]) === String(payload.id)) {
+            const rowNum = i + 2;
             if (userRole === 'staff' &amp;&amp; picColIdx !== -1) {
-              if (String(rows[i][picColIdx] || '').trim().toLowerCase() !== String(sessionUser.Nama || '').trim().toLowerCase()) {
+              const rowPic = sheet.getRange(rowNum, picColIdx + 1).getValue();
+              if (String(rowPic || '').trim().toLowerCase() !== String(sessionUser.Nama || '').trim().toLowerCase()) {
                 return createJsonResponse({ status: 'error', message: 'Anda tidak berhak menghapus task milik PIC lain.' });
               }
             }
-            sheet.deleteRow(i + 1);
+            sheet.deleteRow(rowNum);
             break;
           }
         }
       }
-    } else if (action === 'SYNC_ALL') {
+    } else if (action === 'SYNC_SHEET' || action === 'SYNC_ALL') {
       if (userRole !== 'admin' &amp;&amp; userRole !== 'manager') {
         return createJsonResponse({ status: 'error', message: 'Hanya Admin atau Manager yang dapat memperbarui Master Data.' });
       }
 
-      const db = payload.database || {};
-      Object.keys(db).forEach(sheetName =&gt; {
-        if (sheetName === SHEET_NAMES.TASKS) return;
+      const targets = action === 'SYNC_SHEET'
+        ? { [payload.sheetName]: payload.items || [] }
+        : (payload.database || {});
+
+      Object.keys(targets).forEach(sheetName =&gt; {
+        if (!sheetName || sheetName === SHEET_NAMES.TASKS) return;
         const sheet = getExistingSheet(ss, sheetName);
         if (!sheet) return;
 
-        const items = db[sheetName] || [];
-        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h =&gt; String(h).trim());
+        const items = targets[sheetName] || [];
+        const lastCol = sheet.getLastColumn();
+        const lastRow = sheet.getLastRow();
+        const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h =&gt; String(h).trim());
 
         let existingPassMap = {};
-        if (sheetName === SHEET_NAMES.PIC &amp;&amp; sheet.getLastRow() &gt; 1) {
-          const oldData = sheet.getDataRange().getValues();
+        if (sheetName === SHEET_NAMES.PIC &amp;&amp; lastRow &gt; 1) {
+          const oldData = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
           const kodeIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'kode');
           const userIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'username');
           const passIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'password');
           if (passIdx !== -1) {
-            for (let r = 1; r &lt; oldData.length; r++) {
+            for (let r = 0; r &lt; oldData.length; r++) {
               const kVal = kodeIdx !== -1 ? String(oldData[r][kodeIdx] || '').trim().toLowerCase() : '';
               const uVal = userIdx !== -1 ? String(oldData[r][userIdx] || '').trim().toLowerCase() : '';
               const pVal = oldData[r][passIdx];
@@ -1287,24 +1298,24 @@ function doPost(e) {
           }
         }
 
-        if (sheet.getLastRow() &gt; 1) {
-          sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent();
-        }
+        const rows = items.map(item =&gt;
+          headers.map(h =&gt; {
+            const key = Object.keys(item).find(k =&gt; k.toLowerCase() === h.toLowerCase());
+            let val = key !== undefined &amp;&amp; item[key] !== undefined ? item[key] : '';
+            if (sheetName === SHEET_NAMES.PIC &amp;&amp; h.toLowerCase() === 'password' &amp;&amp; !String(val).trim()) {
+              const kLookup = String(item.Kode || '').trim().toLowerCase();
+              const uLookup = String(item.Username || '').trim().toLowerCase();
+              val = existingPassMap['kode:' + kLookup] ?? existingPassMap['user:' + uLookup] ?? '';
+            }
+            return val;
+          })
+        );
 
-        if (items &amp;&amp; items.length &gt; 0) {
-          const rows = items.map(item =&gt;
-            headers.map(h =&gt; {
-              const key = Object.keys(item).find(k =&gt; k.toLowerCase() === h.toLowerCase());
-              let val = key !== undefined &amp;&amp; item[key] !== undefined ? item[key] : '';
-              if (sheetName === SHEET_NAMES.PIC &amp;&amp; h.toLowerCase() === 'password' &amp;&amp; !String(val).trim()) {
-                const kLookup = String(item.Kode || '').trim().toLowerCase();
-                const uLookup = String(item.Username || '').trim().toLowerCase();
-                val = existingPassMap['kode:' + kLookup] ?? existingPassMap['user:' + uLookup] ?? '';
-              }
-              return val;
-            })
-          );
+        if (rows.length &gt; 0) {
           sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+        }
+        if (lastRow - 1 &gt; rows.length) {
+          sheet.getRange(rows.length + 2, 1, (lastRow - 1) - rows.length, headers.length).clearContent();
         }
       });
     }
@@ -1437,7 +1448,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
             // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.1.0',
+            APP_VERSION: 'v1.1.2',
             // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
@@ -3099,6 +3110,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 try {
                     const res = await fetch(gasUrl, {
                         method: 'POST',
+                        keepalive: true,
                         cache: 'no-store',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: 'SAVE_TASK', token: sessionToken, data: taskObj })
@@ -3139,6 +3151,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                     try {
                         const res = await fetch(gasUrl, {
                             method: 'POST',
+                            keepalive: true,
                             cache: 'no-store',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: 'DELETE_TASK', token: sessionToken, id: targetId })
@@ -3427,7 +3440,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             saveToLocal();
             closeMasterModal();
             refreshAllViews();
-            await pushMasterDataToSheet();
+            await pushMasterDataToSheet(currentMasterTab);
         }
 
         function deleteMasterItem(idx) {
@@ -3441,32 +3454,39 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             const yesBtn = document.getElementById('confirm-yes-btn');
             yesBtn.onclick = async () => {
                 closeConfirmModal();
-                const currentList = db[currentMasterTab] || [];
+                const targetTab = currentMasterTab;
+                const currentList = db[targetTab] || [];
                 if (!currentList[idx]) return;
                 currentList.splice(idx, 1);
-                db[currentMasterTab] = currentList;
+                db[targetTab] = currentList;
                 saveToLocal();
                 refreshAllViews();
-                await pushMasterDataToSheet();
+                await pushMasterDataToSheet(targetTab);
             };
             modal.classList.remove('hidden');
             lucide.createIcons();
         }
 
-        async function pushMasterDataToSheet() {
+        async function pushMasterDataToSheet(sheetName = currentMasterTab) {
             if (!gasUrl || !sessionToken) return;
             setPendingSync(1);
             try {
                 const res = await fetch(gasUrl, {
                     method: 'POST',
+                    keepalive: true,
                     cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'SYNC_ALL', token: sessionToken, database: db })
+                    body: JSON.stringify({
+                        action: 'SYNC_SHEET',
+                        token: sessionToken,
+                        sheetName: sheetName,
+                        items: db[sheetName] || []
+                    })
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
                     refreshAuthSessionExpiry();
-                    showToast('Master Data berhasil disinkronkan ke Google Sheet!', 'success');
+                    showToast(`Master ${sheetName} berhasil disinkronkan ke Google Sheet!`, 'success');
                 } else {
                     showToast(result.message || 'Gagal menyinkronkan Master Data.', 'error');
                 }

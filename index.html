@@ -463,6 +463,10 @@
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                         <span class="hidden md:inline">Sync Sheet</span>
                     </button>
+                    <span id="sync-status-pill" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                        <span>Menyimpan ke Sheet...</span>
+                    </span>
 
                     <button type="button" onclick="openTaskModal('')" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
                         <i data-lucide="plus" class="w-4 h-4"></i>
@@ -1433,7 +1437,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
             // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.0.7',
+            APP_VERSION: 'v1.0.8',
             // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
@@ -1711,6 +1715,20 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         let priorityChart = null;
         let reportTrendChart = null;
         let reportCategoryChart = null;
+        let pendingSyncCount = 0;
+
+        function setPendingSync(delta) {
+            pendingSyncCount = Math.max(0, pendingSyncCount + delta);
+            const pill = document.getElementById('sync-status-pill');
+            if (pill) {
+                pill.classList.toggle('hidden', pendingSyncCount === 0);
+            }
+            if (pendingSyncCount > 0) {
+                SafeStorage.setItem('taskflow_last_mutation_ts', String(Date.now()), true);
+            } else {
+                SafeStorage.removeItem('taskflow_last_mutation_ts');
+            }
+        }
 
         function isSameText(a, b) {
             return String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
@@ -1785,7 +1803,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         }
 
         function saveToLocal() {
-            SafeStorage.setItem('taskflow_cached_db', JSON.stringify(db), false);
+            SafeStorage.setItem('taskflow_cached_db', JSON.stringify(db), true);
         }
 
         function loadFromLocal() {
@@ -2022,13 +2040,22 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
         async function fetchAuthorizedData(token, isBackgroundRefresh = false) {
             if (!gasUrl || !token) return false;
+            if (isBackgroundRefresh && pendingSyncCount > 0) return false;
+
+            const lastMutationTs = Number(SafeStorage.getItem('taskflow_last_mutation_ts') || 0);
+            if (isBackgroundRefresh && lastMutationTs > 0 && (Date.now() - lastMutationTs) < 8000) {
+                await new Promise(r => setTimeout(r, 2500));
+            }
+
             try {
                 const res = await fetch(gasUrl, {
                     method: 'POST',
+                    cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'GET_DATA', token })
+                    body: JSON.stringify({ action: 'GET_DATA', token, _ts: Date.now() })
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (isBackgroundRefresh && pendingSyncCount > 0) return false;
                 const result = await res.json();
 
                 if (result.status === 'success' && result.data) {
@@ -3066,24 +3093,30 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             saveToLocal();
             closeTaskModal();
             refreshAllViews();
-            showToast(existingId ? 'Task berhasil diperbarui!' : 'Task baru berhasil ditambahkan!', 'success');
 
             if (gasUrl && sessionToken) {
+                setPendingSync(1);
                 try {
                     const res = await fetch(gasUrl, {
                         method: 'POST',
+                        cache: 'no-store',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: 'SAVE_TASK', token: sessionToken, data: taskObj })
                     });
                     const result = await res.json();
                     if (result.status === 'success') {
                         refreshAuthSessionExpiry();
+                        showToast(existingId ? 'Perubahan task tersimpan di Spreadsheet!' : 'Task baru tersimpan di Spreadsheet!', 'success');
                     } else {
                         showToast(result.message || 'Gagal menyinkronkan task ke Spreadsheet.', 'error');
                     }
                 } catch (err) {
                     showToast('Task tersimpan lokal, namun gagal terhubung ke Spreadsheet.', 'error');
+                } finally {
+                    setPendingSync(-1);
                 }
+            } else {
+                showToast(existingId ? 'Task berhasil diperbarui!' : 'Task baru berhasil ditambahkan!', 'success');
             }
         }
 
@@ -3100,24 +3133,30 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 db.Tasks = (db.Tasks || []).filter(t => String(t.ID) !== String(targetId));
                 saveToLocal();
                 refreshAllViews();
-                showToast('Task berhasil dihapus.', 'success');
 
                 if (gasUrl && sessionToken) {
+                    setPendingSync(1);
                     try {
                         const res = await fetch(gasUrl, {
                             method: 'POST',
+                            cache: 'no-store',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: 'DELETE_TASK', token: sessionToken, id: targetId })
                         });
                         const result = await res.json();
                         if (result.status === 'success') {
                             refreshAuthSessionExpiry();
+                            showToast('Task berhasil dihapus permanen di Spreadsheet!', 'success');
                         } else {
                             showToast(result.message || 'Gagal menghapus task di Spreadsheet.', 'error');
                         }
                     } catch (err) {
                         showToast('Gagal menghapus task di Google Spreadsheet.', 'error');
+                    } finally {
+                        setPendingSync(-1);
                     }
+                } else {
+                    showToast('Task berhasil dihapus.', 'success');
                 }
             };
             modal.classList.remove('hidden');
@@ -3404,9 +3443,11 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
         async function pushMasterDataToSheet() {
             if (!gasUrl || !sessionToken) return;
+            setPendingSync(1);
             try {
                 const res = await fetch(gasUrl, {
                     method: 'POST',
+                    cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'SYNC_ALL', token: sessionToken, database: db })
                 });
@@ -3419,6 +3460,8 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 }
             } catch (err) {
                 showToast('Perubahan tersimpan lokal, gagal menyinkronkan ke Spreadsheet.', 'error');
+            } finally {
+                setPendingSync(-1);
             }
         }
 
@@ -3486,10 +3529,10 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             }, 3200);
         }
 
-        document.addEventListener('click', (e) => {
-            const wrapper = document.getElementById('top-profile-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                closeProfileDropdown();
+        window.addEventListener('beforeunload', (e) => {
+            if (pendingSyncCount > 0) {
+                e.preventDefault();
+                e.returnValue = '';
             }
         });
 
@@ -3499,6 +3542,8 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
             await SafeStorage.hydrateKeys([
                 'taskflow_gas_url',
+                'taskflow_cached_db',
+                'taskflow_last_mutation_ts',
                 SESSION_STORAGE_KEYS.TOKEN,
                 SESSION_STORAGE_KEYS.USER_PROFILE,
                 SESSION_STORAGE_KEYS.EXPIRES_AT

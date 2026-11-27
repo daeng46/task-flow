@@ -86,18 +86,6 @@
                         <i data-lucide="plug-zap" class="w-4 h-4"></i>
                         <span>Hubungkan &amp; Buka Aplikasi</span>
                     </button>
-
-                    <div id="gatekeeper-script-help" class="hidden pt-3 border-t border-slate-200 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-700">Google Apps Script (Code.gs)</span>
-                            <button type="button" onclick="copyGasCode()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1">
-                                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Kode
-                            </button>
-                        </div>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">
-                            Tempel di <b>Extensions &gt; Apps Script</b> pada Google Sheet Anda, lalu <b>Deploy &gt; Web App</b> dengan akses <b>Anyone</b>.
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -142,7 +130,7 @@
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.0.6</span>
+                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.2.3</span>
                 </div>
             </form>
         </div>
@@ -430,10 +418,6 @@
                     <i data-lucide="folder-kanban" class="w-4 h-4 shrink-0"></i>
                     <span>Master Data</span>
                 </button>
-                <button type="button" id="nav-integration" onclick="switchView('integration')" data-nav="integration" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
-                    <i data-lucide="sheet" class="w-4 h-4 shrink-0"></i>
-                    <span>Integrasi Google Sheet</span>
-                </button>
             </nav>
 
             <div class="p-4 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
@@ -448,7 +432,7 @@
         <!-- Main Column -->
         <div class="flex-1 flex flex-col min-w-0 lg:overflow-hidden">
             <!-- Top Header -->
-            <header class="h-16 px-4 sm:px-6 bg-white border-b border-slate-200/90 flex items-center justify-between gap-3 shrink-0 z-20">
+            <header class="sticky lg:static top-0 h-16 px-4 sm:px-6 bg-white border-b border-slate-200/90 flex items-center justify-between gap-3 shrink-0 z-20">
                 <div class="flex items-center gap-3 min-w-0">
                     <button type="button" onclick="openMobileSidebar()" aria-label="Buka menu" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100">
                         <i data-lucide="menu" class="w-5 h-5"></i>
@@ -507,7 +491,7 @@
             </header>
 
             <!-- Scrollable Content Viewport -->
-            <main class="flex-1 w-full lg:overflow-y-auto px-3 pt-2.5 pb-8 sm:px-5 sm:pt-3 sm:pb-10 space-y-4">
+            <main id="main-viewport" class="flex-1 w-full lg:overflow-y-auto px-3 pt-2.5 pb-8 sm:px-5 sm:pt-3 sm:pb-10 space-y-4">
                 <!-- ==================== VIEW 1: DASHBOARD ==================== -->
                 <section id="view-dashboard" class="space-y-4">
                     <!-- KPI Cards (Interactive Drill-Down) -->
@@ -659,85 +643,87 @@
                 </section>
 
                 <!-- ==================== VIEW 2: DAFTAR PEKERJAAN ==================== -->
-                <section id="view-tasks" class="hidden space-y-3">
-                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-                        <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
-                            <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
-                            <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
-                        </div>
+                <section id="view-tasks" class="hidden flex-col lg:h-full lg:overflow-hidden space-y-3">
+                    <div id="tasks-sticky-filter" class="sticky top-16 lg:static z-20 bg-slate-50 shrink-0">
+                        <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+                            <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
+                                <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
+                                <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
+                            </div>
 
-                        <!-- Baris Pencarian Utama & Tombol Reset -->
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                            <div class="relative flex-1">
-                                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                <input type="text" id="filter-search" oninput="tasksCurrentPage=1; renderTasksTable()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                            <!-- Baris 1: Kotak Pencarian & Tombol Reset -->
+                            <div class="flex flex-col sm:flex-row gap-2.5">
+                                <div class="flex-1 relative">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="filter-search" oninput="tasksCurrentPage=1; renderTasksTable()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 shrink-0 transition-colors">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                    <span>Reset Filter</span>
+                                </button>
                             </div>
-                            <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 shrink-0 transition-colors">
-                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                                <span>Reset Filter</span>
-                            </button>
-                        </div>
 
-                        <!-- Grid 6 Filter: Kategori, Priority, PIC, Status, Reference, Action Plan -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5">
-                            <div>
-                                <label for="filter-kategori" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori</label>
-                                <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="">Semua Kategori</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="filter-priority" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
-                                <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="">Semua Priority</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="filter-pic" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">PIC</label>
-                                <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="">Semua PIC</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="filter-status" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
-                                <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="">Semua Status</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="filter-reference" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reference</label>
-                                <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="">Semua Reference</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="filter-actionplan" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Action Plan</label>
-                                <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="">Semua Action Plan</option>
-                                </select>
+                            <!-- Baris 2: Grid 6 Filter (Kategori, Priority, PIC, Status, Reference, Action Plan) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                                <div>
+                                    <label for="filter-kategori" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori</label>
+                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua Kategori</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-priority" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
+                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua Priority</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-pic" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">PIC</label>
+                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua PIC</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-status" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
+                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua Status</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-reference" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reference</label>
+                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua Reference</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-actionplan" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Action Plan</label>
+                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">Semua Action Plan</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                        <div class="overflow-x-auto">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs lg:flex-1 lg:min-h-0 flex flex-col">
+                        <div class="overflow-x-auto lg:overflow-y-auto lg:flex-1 rounded-t-2xl">
                             <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
-                                        <th class="py-3 px-4 font-semibold">ID</th>
-                                        <th class="py-3 px-4 font-semibold">Pekerjaan &amp; Kategori</th>
-                                        <th class="py-3 px-4 font-semibold">Priority</th>
-                                        <th class="py-3 px-4 font-semibold">PIC</th>
-                                        <th class="py-3 px-4 font-semibold">Target Date</th>
-                                        <th class="py-3 px-4 font-semibold">Status</th>
-                                        <th class="py-3 px-4 font-semibold">Progress</th>
-                                        <th class="py-3 px-4 text-right font-semibold">Aksi</th>
+                                <thead id="tasks-table-head" class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                                    <tr class="text-[11px] uppercase tracking-wider text-slate-500">
+                                        <th class="py-3 px-4 font-semibold bg-slate-50 rounded-tl-2xl">ID</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">Pekerjaan &amp; Kategori</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">Priority</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">PIC</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">Target Date</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">Status</th>
+                                        <th class="py-3 px-4 font-semibold bg-slate-50">Progress</th>
+                                        <th class="py-3 px-4 text-right font-semibold bg-slate-50 rounded-tr-2xl">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
                             </table>
                         </div>
-                        <div id="tasks-pagination" class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500"></div>
+                        <div id="tasks-pagination" class="px-4 py-3 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500"></div>
                     </div>
                 </section>
 
@@ -903,481 +889,6 @@
                         </div>
                     </div>
                 </section>
-
-                <!-- ==================== VIEW 4: INTEGRASI GOOGLE SHEET ==================== -->
-                <section id="view-integration" class="hidden space-y-4">
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <h3 class="text-base font-bold text-slate-800">Konfigurasi Google Apps Script Web App</h3>
-                                <p class="text-xs text-slate-500 mt-0.5">Kelola tautan endpoint Web App dan salin skrip backend Code.gs.</p>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Session Token Protected</span>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label for="gas-url-input" class="block text-xs font-semibold text-slate-700">URL Web App (/exec)</label>
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 text-base sm:text-sm border border-slate-300 rounded-xl px-3.5 py-2 focus:outline-none focus:border-indigo-500">
-                                <button type="button" onclick="saveGasUrl()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl">Simpan &amp; Hubungkan</button>
-                                <button type="button" onclick="disconnectGasUrl()" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-xl border border-rose-200">Putuskan</button>
-                            </div>
-                        </div>
-
-                        <div class="pt-4 border-t border-slate-200 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-700">Backend Code.gs (Strict Existing Schema &amp; Persistent Token)</span>
-                                <button type="button" onclick="copyGasCode()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">
-                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Code.gs
-                                </button>
-                            </div>
-                            <pre id="gas-code-block" class="p-4 rounded-xl bg-slate-900 text-slate-200 text-[11px] font-mono overflow-x-auto max-h-96 leading-relaxed">// ============================================================================
-// GOOGLE APPS SCRIPT BACKEND UNTUK TASK FLOW
-// (STRICT EXISTING SCHEMA, FAST 1-STEP LOGIN &amp; PERSISTENT SESSION TOKEN)
-// ============================================================================
-
-const SHEET_NAMES = {
-  TASKS: 'Tasks',
-  KATEGORI: 'Kategori',
-  PRIORITY: 'Priority',
-  PIC: 'PIC',
-  STATUS: 'Status',
-  REFERENCE: 'Reference',
-  ACTION_PLAN: 'ActionPlan'
-};
-
-const SCHEMAS = {
-  [SHEET_NAMES.TASKS]: [
-    'ID', 'Tanggal', 'Kategori', 'Task', 'Priority', 'PIC',
-    'TargetDate', 'Status', 'Progress', 'Reference', 'ActionPlan', 'Catatan'
-  ],
-  [SHEET_NAMES.KATEGORI]: ['Kode', 'Nama', 'Group', 'Keterangan'],
-  [SHEET_NAMES.PRIORITY]: ['Kode', 'Nama', 'SLA_Hari'],
-  [SHEET_NAMES.PIC]: ['Kode', 'Nama', 'Initial', 'Divisi', 'Role', 'Username', 'Password'],
-  [SHEET_NAMES.STATUS]: ['Kode', 'Nama', 'Warna', 'Completed'],
-  [SHEET_NAMES.REFERENCE]: ['Kode', 'Nama', 'Keterangan'],
-  [SHEET_NAMES.ACTION_PLAN]: ['Kode', 'Nama', 'KategoriTerkait']
-};
-
-const SESSION_TTL_SECONDS = 21600; // Masa aktif sesi: 6 jam
-const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
-
-function createJsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
-    ContentService.MimeType.JSON
-  );
-}
-
-/**
- * Mengambil sheet yang SUDAH ADA saja. Tidak pernah membuat sheet atau kolom baru.
- */
-function getExistingSheet(ss, sheetName) {
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet || sheet.getLastColumn() === 0) return null;
-  return sheet;
-}
-
-function createSessionToken(userObj) {
-  const token =
-    Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
-  const expiresAt = Date.now() + SESSION_TTL_MS;
-  const sessionPayload = JSON.stringify({
-    user: userObj,
-    expiresAt: expiresAt
-  });
-
-  try {
-    CacheService.getScriptCache().put('TF_SESSION_' + token, sessionPayload, SESSION_TTL_SECONDS);
-  } catch (e) {}
-
-  try {
-    PropertiesService.getScriptProperties().setProperty('TF_SESSION_' + token, sessionPayload);
-  } catch (e) {}
-
-  cleanupExpiredSessions();
-  return token;
-}
-
-function validateSessionToken(token) {
-  const cleanToken = String(token || '').trim();
-  if (!cleanToken) return null;
-
-  const key = 'TF_SESSION_' + cleanToken;
-  const cache = CacheService.getScriptCache();
-  let raw = cache.get(key);
-
-  if (!raw) {
-    try {
-      raw = PropertiesService.getScriptProperties().getProperty(key);
-    } catch (e) {
-      raw = null;
-    }
-  }
-
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw);
-    const user = parsed.user || parsed;
-    const expiresAt = Number(parsed.expiresAt || 0);
-
-    if (expiresAt &gt; 0 &amp;&amp; Date.now() &gt; expiresAt) {
-      revokeSessionToken(cleanToken);
-      return null;
-    }
-
-    const renewedPayload = JSON.stringify({
-      user: user,
-      expiresAt: Date.now() + SESSION_TTL_MS
-    });
-
-    try { cache.put(key, renewedPayload, SESSION_TTL_SECONDS); } catch (e) {}
-    try { PropertiesService.getScriptProperties().setProperty(key, renewedPayload); } catch (e) {}
-
-    return user;
-  } catch (err) {
-    return null;
-  }
-}
-
-function revokeSessionToken(token) {
-  const cleanToken = String(token || '').trim();
-  if (!cleanToken) return;
-  const key = 'TF_SESSION_' + cleanToken;
-
-  try { CacheService.getScriptCache().remove(key); } catch (e) {}
-  try { PropertiesService.getScriptProperties().deleteProperty(key); } catch (e) {}
-}
-
-function cleanupExpiredSessions() {
-  try {
-    const props = PropertiesService.getScriptProperties();
-    const all = props.getProperties();
-    const now = Date.now();
-
-    Object.keys(all).forEach(k =&gt; {
-      if (!k.startsWith('TF_SESSION_')) return;
-      try {
-        const parsed = JSON.parse(all[k]);
-        if (parsed.expiresAt &amp;&amp; now &gt; Number(parsed.expiresAt)) {
-          props.deleteProperty(k);
-        }
-      } catch (err) {
-        props.deleteProperty(k);
-      }
-    });
-  } catch (e) {}
-}
-
-function sanitizeSheetRows(sheetName, rows, sessionUser) {
-  if (sheetName === SHEET_NAMES.PIC) {
-    return rows.map(item =&gt; {
-      const { Password, password, ...safeRow } = item;
-      return safeRow;
-    });
-  }
-
-  if (
-    sheetName === SHEET_NAMES.TASKS &amp;&amp;
-    sessionUser &amp;&amp;
-    String(sessionUser.Role || '').trim().toLowerCase() === 'staff'
-  ) {
-    const targetName = String(sessionUser.Nama || '').trim().toLowerCase();
-    return rows.filter(t =&gt; String(t.PIC || '').trim().toLowerCase() === targetName);
-  }
-
-  return rows;
-}
-
-function fetchAuthorizedDatabase(sessionUser) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const result = {};
-
-  Object.keys(SCHEMAS).forEach(name =&gt; {
-    const sheet = getExistingSheet(ss, name);
-    if (!sheet) {
-      result[name] = [];
-      return;
-    }
-
-    const expectedHeaders = SCHEMAS[name];
-    const data = sheet.getDataRange().getValues();
-
-    if (data.length &lt;= 1) {
-      result[name] = [];
-      return;
-    }
-
-    const actualHeaders = data[0].map(h =&gt; String(h).trim());
-    const mappedRows = data
-      .slice(1)
-      .filter(row =&gt; row.some(cell =&gt; cell !== '' &amp;&amp; cell !== null))
-      .map(row =&gt; {
-        const obj = {};
-        actualHeaders.forEach((h, idx) =&gt; {
-          if (!h) return;
-          let val = row[idx];
-          if (val instanceof Date) {
-            val = Utilities.formatDate(val, 'GMT+7', 'yyyy-MM-dd');
-          }
-          obj[h] = val;
-        });
-
-        expectedHeaders.forEach(stdKey =&gt; {
-          const matchedKey = Object.keys(obj).find(k =&gt; k.toLowerCase() === stdKey.toLowerCase());
-          let val = matchedKey !== undefined ? obj[matchedKey] : '';
-          if (val instanceof Date) {
-            val = Utilities.formatDate(val, 'GMT+7', 'yyyy-MM-dd');
-          }
-          obj[stdKey] = val;
-        });
-
-        return obj;
-      });
-
-    result[name] = sanitizeSheetRows(name, mappedRows, sessionUser);
-  });
-
-  return result;
-}
-
-function authenticatePic(username, password) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = getExistingSheet(ss, SHEET_NAMES.PIC);
-  if (!sheet) {
-    return { status: 'error', message: 'Sheet PIC tidak ditemukan di Spreadsheet.' };
-  }
-
-  const data = sheet.getDataRange().getValues();
-  if (data.length &lt;= 1) {
-    return { status: 'error', message: 'Data pada sheet PIC masih kosong.' };
-  }
-
-  const headers = data[0].map(h =&gt; String(h).trim());
-  const userIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'username');
-  const passIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'password');
-
-  if (userIdx === -1 || passIdx === -1) {
-    return { status: 'error', message: 'Kolom Username atau Password belum tersedia pada sheet PIC.' };
-  }
-
-  const inputUser = String(username || '').trim().toLowerCase();
-  const inputPass = String(password || '').trim();
-
-  if (!inputUser || !inputPass) {
-    return { status: 'error', message: 'Username dan Password wajib diisi.' };
-  }
-
-  const expectedHeaders = SCHEMAS[SHEET_NAMES.PIC];
-
-  for (let i = 1; i &lt; data.length; i++) {
-    const row = data[i];
-    const dbUser = String(row[userIdx] || '').trim().toLowerCase();
-    const dbPass = String(row[passIdx] || '').trim();
-
-    if (dbUser &amp;&amp; dbUser === inputUser &amp;&amp; dbPass === inputPass) {
-      const userObj = {};
-      expectedHeaders.forEach(stdKey =&gt; {
-        if (stdKey.toLowerCase() === 'password') return;
-        const colIdx = headers.findIndex(h =&gt; h.toLowerCase() === stdKey.toLowerCase());
-        let val = colIdx !== -1 ? row[colIdx] : '';
-        if (val instanceof Date) {
-          val = Utilities.formatDate(val, 'GMT+7', 'yyyy-MM-dd');
-        }
-        userObj[stdKey] = val;
-      });
-
-      const token = createSessionToken(userObj);
-      const workspaceData = fetchAuthorizedDatabase(userObj);
-      return { status: 'success', token: token, user: userObj, data: workspaceData };
-    }
-  }
-
-  return { status: 'error', message: 'Username atau Password salah.' };
-}
-
-function doGet(e) {
-  const action = String((e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) || '').trim().toUpperCase();
-  if (action === 'PING') {
-    return createJsonResponse({ status: 'connected', app: 'Task Flow' });
-  }
-  return createJsonResponse({
-    status: 'unauthorized',
-    message: 'Akses ditolak. Silakan login melalui aplikasi Task Flow.'
-  });
-}
-
-function doPost(e) {
-  const payload = JSON.parse((e &amp;&amp; e.postData &amp;&amp; e.postData.contents) || '{}');
-  const action = String(payload.action || '').trim().toUpperCase();
-
-  if (action === 'PING') return createJsonResponse({ status: 'connected', app: 'Task Flow' });
-  if (action === 'LOGIN') return createJsonResponse(authenticatePic(payload.username, payload.password));
-  if (action === 'LOGOUT') {
-    revokeSessionToken(payload.token);
-    return createJsonResponse({ status: 'success' });
-  }
-
-  const sessionUser = validateSessionToken(payload.token);
-  if (!sessionUser) {
-    return createJsonResponse({
-      status: 'unauthorized',
-      message: 'Sesi login tidak valid atau telah berakhir. Silakan login kembali.'
-    });
-  }
-
-  if (action === 'GET_DATA') {
-    const data = fetchAuthorizedDatabase(sessionUser);
-    return createJsonResponse({ status: 'success', user: sessionUser, data: data });
-  }
-
-  const lock = LockService.getScriptLock();
-  lock.tryLock(10000);
-
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const userRole = String(sessionUser.Role || 'Staff').trim().toLowerCase();
-
-    if (action === 'SAVE_TASK') {
-      const sheet = getExistingSheet(ss, SHEET_NAMES.TASKS);
-      if (!sheet) return createJsonResponse({ status: 'error', message: 'Sheet Tasks tidak ditemukan.' });
-
-      const task = payload.data || {};
-      if (userRole === 'staff') task.PIC = sessionUser.Nama;
-
-      const lastCol = sheet.getLastColumn();
-      const lastRow = sheet.getLastRow();
-      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h =&gt; String(h).trim());
-
-      const rowValues = headers.map(h =&gt; {
-        const key = Object.keys(task).find(k =&gt; k.toLowerCase() === h.toLowerCase());
-        let val = key !== undefined ? task[key] : '';
-        if ((h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') &amp;&amp; /^\d{4}-\d{2}-\d{2}$/.test(String(val))) {
-          const parts = String(val).split('-');
-          val = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        }
-        return val;
-      });
-
-      const idColIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'id');
-      let foundRow = -1;
-      if (idColIdx !== -1 &amp;&amp; lastRow &gt; 1) {
-        const idValues = sheet.getRange(2, idColIdx + 1, lastRow - 1, 1).getValues();
-        for (let i = 0; i &lt; idValues.length; i++) {
-          if (String(idValues[i][0]) === String(task.ID)) {
-            foundRow = i + 2;
-            break;
-          }
-        }
-      }
-
-      const targetRow = foundRow &gt; 0 ? foundRow : lastRow + 1;
-      sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
-      headers.forEach((h, idx) =&gt; {
-        if (h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') {
-          sheet.getRange(targetRow, idx + 1).setNumberFormat('dd/MM/yyyy');
-        }
-      });
-    } else if (action === 'DELETE_TASK') {
-      const sheet = getExistingSheet(ss, SHEET_NAMES.TASKS);
-      if (!sheet) return createJsonResponse({ status: 'error', message: 'Sheet Tasks tidak ditemukan.' });
-
-      const lastCol = sheet.getLastColumn();
-      const lastRow = sheet.getLastRow();
-      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h =&gt; String(h).trim());
-      const idColIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'id');
-      const picColIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'pic');
-
-      if (idColIdx !== -1 &amp;&amp; lastRow &gt; 1) {
-        const idValues = sheet.getRange(2, idColIdx + 1, lastRow - 1, 1).getValues();
-        for (let i = 0; i &lt; idValues.length; i++) {
-          if (String(idValues[i][0]) === String(payload.id)) {
-            const rowNum = i + 2;
-            if (userRole === 'staff' &amp;&amp; picColIdx !== -1) {
-              const rowPic = sheet.getRange(rowNum, picColIdx + 1).getValue();
-              if (String(rowPic || '').trim().toLowerCase() !== String(sessionUser.Nama || '').trim().toLowerCase()) {
-                return createJsonResponse({ status: 'error', message: 'Anda tidak berhak menghapus task milik PIC lain.' });
-              }
-            }
-            sheet.deleteRow(rowNum);
-            break;
-          }
-        }
-      }
-    } else if (action === 'SYNC_SHEET' || action === 'SYNC_ALL') {
-      if (userRole !== 'admin' &amp;&amp; userRole !== 'manager') {
-        return createJsonResponse({ status: 'error', message: 'Hanya Admin atau Manager yang dapat memperbarui Master Data.' });
-      }
-
-      const targets = action === 'SYNC_SHEET'
-        ? { [payload.sheetName]: payload.items || [] }
-        : (payload.database || {});
-
-      Object.keys(targets).forEach(sheetName =&gt; {
-        if (!sheetName || sheetName === SHEET_NAMES.TASKS) return;
-        const sheet = getExistingSheet(ss, sheetName);
-        if (!sheet) return;
-
-        const items = targets[sheetName] || [];
-        const lastCol = sheet.getLastColumn();
-        const lastRow = sheet.getLastRow();
-        const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h =&gt; String(h).trim());
-
-        let existingPassMap = {};
-        if (sheetName === SHEET_NAMES.PIC &amp;&amp; lastRow &gt; 1) {
-          const oldData = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
-          const kodeIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'kode');
-          const userIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'username');
-          const passIdx = headers.findIndex(h =&gt; h.toLowerCase() === 'password');
-          if (passIdx !== -1) {
-            for (let r = 0; r &lt; oldData.length; r++) {
-              const kVal = kodeIdx !== -1 ? String(oldData[r][kodeIdx] || '').trim().toLowerCase() : '';
-              const uVal = userIdx !== -1 ? String(oldData[r][userIdx] || '').trim().toLowerCase() : '';
-              const pVal = oldData[r][passIdx];
-              if (kVal) existingPassMap['kode:' + kVal] = pVal;
-              if (uVal) existingPassMap['user:' + uVal] = pVal;
-            }
-          }
-        }
-
-        const rows = items.map(item =&gt;
-          headers.map(h =&gt; {
-            const key = Object.keys(item).find(k =&gt; k.toLowerCase() === h.toLowerCase());
-            let val = key !== undefined &amp;&amp; item[key] !== undefined ? item[key] : '';
-            if (sheetName === SHEET_NAMES.PIC &amp;&amp; h.toLowerCase() === 'password' &amp;&amp; !String(val).trim()) {
-              const kLookup = String(item.Kode || '').trim().toLowerCase();
-              const uLookup = String(item.Username || '').trim().toLowerCase();
-              val = existingPassMap['kode:' + kLookup] ?? existingPassMap['user:' + uLookup] ?? '';
-            }
-            return val;
-          })
-        );
-
-        if (rows.length &gt; 0) {
-          sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
-        }
-        if (lastRow - 1 &gt; rows.length) {
-          sheet.getRange(rows.length + 2, 1, (lastRow - 1) - rows.length, headers.length).clearContent();
-        }
-      });
-    }
-
-    return createJsonResponse({ status: 'success' });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function applyDateFormatting(sheet, headers, startRow, numRows) {
-  headers.forEach((h, idx) =&gt; {
-    if (h.toLowerCase() === 'tanggal' || h.toLowerCase() === 'targetdate') {
-      sheet.getRange(startRow, idx + 1, numRows, 1).setNumberFormat('dd/MM/yyyy');
-    }
-  });
-}</pre>
-                        </div>
-                    </div>
-                </section>
             </main>
         </div>
     </div>
@@ -1490,7 +1001,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
             // Nomor versi aplikasi (dinaikkan setiap pembaruan skrip)
-            APP_VERSION: 'v1.1.8',
+            APP_VERSION: 'v1.2.5',
             // Isi dengan URL Web App Google Apps Script (/exec) Anda agar otomatis terhubung secara default
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             // Batas waktu sesi aktif di browser (6 jam = 21.600.000 ms, selaras dengan SESSION_TTL_SECONDS di Code.gs)
@@ -1947,7 +1458,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             const verEl = document.getElementById('login-app-version');
             if (verEl) verEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
             setLoginFormDisabled(false);
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function lockApplication(errorMessage = '') {
@@ -1964,7 +1475,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             } else {
                 errBox.classList.add('hidden');
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function connectFromGatekeeper() {
@@ -2025,15 +1536,12 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                     gasUrl = targetUrl;
                     isConnected = true;
                     SafeStorage.setItem('taskflow_gas_url', targetUrl, true);
-                    const gasInput = document.getElementById('gas-url-input');
-                    if (gasInput) gasInput.value = targetUrl;
                     showLoginScreen();
                 } else {
                     throw new Error(data.message || 'Respons Web App tidak dikenali.');
                 }
             } catch (err) {
                 clearTimeout(timeoutId);
-                document.getElementById('gatekeeper-script-help').classList.remove('hidden');
                 const detail = err && err.name === 'AbortError'
                     ? 'Waktu koneksi habis (timeout 30 detik).'
                     : (err && err.message ? err.message : 'Gagal terhubung ke Google Apps Script.');
@@ -2143,7 +1651,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             applyUserSession();
             refreshAllViews();
             switchView('dashboard');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function handleLogout() {
@@ -2177,13 +1685,10 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             document.getElementById('dropdown-user-role-badge').textContent = role;
 
             const isStaff = isSameText(role, 'Staff');
-            const isAdmin = isSameText(role, 'Admin');
             const navMonitoring = document.getElementById('nav-monitoring');
             const navMaster = document.getElementById('nav-master');
-            const navIntegration = document.getElementById('nav-integration');
             if (navMonitoring) navMonitoring.classList.toggle('hidden', isStaff);
             if (navMaster) navMaster.classList.toggle('hidden', isStaff);
-            if (navIntegration) navIntegration.classList.toggle('hidden', !isAdmin);
         }
 
         function toggleProfileDropdown(e) {
@@ -2196,6 +1701,13 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             const menu = document.getElementById('top-profile-dropdown');
             if (menu) menu.classList.add('hidden');
         }
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('top-profile-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeProfileDropdown();
+            }
+        });
 
         function openProfileModal() {
             closeProfileDropdown();
@@ -2214,7 +1726,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             document.getElementById('profile-modal-task-stats').textContent = `${myDone} Completed / ${myTasks.length} Total`;
 
             modal.classList.remove('hidden');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function closeProfileModal() {
@@ -2234,11 +1746,25 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
         function switchView(viewName) {
             closeMobileSidebar();
-            const views = ['dashboard', 'tasks', 'monitoring', 'reports', 'master', 'integration'];
+            const views = ['dashboard', 'tasks', 'monitoring', 'reports', 'master'];
             views.forEach(v => {
                 const el = document.getElementById(`view-${v}`);
-                if (el) el.classList.toggle('hidden', v !== viewName);
+                if (!el) return;
+                const isTarget = v === viewName;
+                el.classList.toggle('hidden', !isTarget);
+                if (v === 'tasks') {
+                    el.classList.toggle('flex', isTarget);
+                }
             });
+
+            const mainEl = document.getElementById('main-viewport');
+            if (mainEl) {
+                const isTasksDesktop = viewName === 'tasks' && window.innerWidth >= 1024;
+                mainEl.classList.toggle('lg:overflow-hidden', isTasksDesktop);
+                mainEl.classList.toggle('lg:overflow-y-auto', !isTasksDesktop);
+                mainEl.classList.toggle('lg:pb-3', isTasksDesktop);
+                mainEl.classList.toggle('lg:pb-10', !isTasksDesktop);
+            }
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const active = btn.dataset.nav === viewName;
@@ -2252,19 +1778,23 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 tasks: ['Daftar Pekerjaan', 'Kelola, pantau, dan perbarui status seluruh task'],
                 monitoring: ['Monitoring Tim', 'Pantau kapasitas beban kerja dan progres per anggota tim'],
                 reports: ['Laporan & Analitik', 'Evaluasi tren penyelesaian, produktivitas PIC, dan ekspor laporan'],
-                master: ['Master Data', 'Pengaturan referensi kategori, priority, PIC, dan status'],
-                integration: ['Integrasi Google Sheet', 'Konfigurasi koneksi Google Apps Script Web App']
+                master: ['Master Data', 'Pengaturan referensi kategori, priority, PIC, dan status']
             };
             const [t, sub] = titles[viewName] || ['Task Flow', ''];
-            document.getElementById('header-page-title').textContent = t;
-            document.getElementById('header-page-subtitle').textContent = sub;
+            const titleEl = document.getElementById('header-page-title');
+            const subEl = document.getElementById('header-page-subtitle');
+            if (titleEl) titleEl.textContent = t;
+            if (subEl) subEl.textContent = sub;
 
             if (viewName === 'dashboard') renderDashboard();
-            if (viewName === 'tasks') renderTasksTable();
+            if (viewName === 'tasks') {
+                renderTasksTable();
+                requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
+            }
             if (viewName === 'monitoring') renderMonitoringView();
             if (viewName === 'reports') renderReportsView();
             if (viewName === 'master') switchMasterTab(currentMasterTab);
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function refreshAllViews() {
@@ -2274,7 +1804,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             renderMonitoringView();
             renderReportsView();
             renderMasterTable();
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function renderMonitoringView() {
@@ -2584,21 +2114,24 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         // ==================== DASHBOARD RENDERING & DRILL-DOWN ====================
         function drillDownTasks(mode, value = '') {
             tasksSpecialFilter = '';
-            const searchEl = document.getElementById('filter-search');
+            const filterIds = [
+                'filter-search',
+                'filter-kategori',
+                'filter-priority',
+                'filter-pic',
+                'filter-status',
+                'filter-reference',
+                'filter-actionplan'
+            ];
+            filterIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
             const katEl = document.getElementById('filter-kategori');
             const prioEl = document.getElementById('filter-priority');
             const picEl = document.getElementById('filter-pic');
             const statusEl = document.getElementById('filter-status');
-            const refEl = document.getElementById('filter-reference');
-            const apEl = document.getElementById('filter-actionplan');
-
-            if (searchEl) searchEl.value = '';
-            if (katEl) katEl.value = '';
-            if (prioEl) prioEl.value = '';
-            if (picEl) picEl.value = '';
-            if (statusEl) statusEl.value = '';
-            if (refEl) refEl.value = '';
-            if (apEl) apEl.value = '';
 
             if (mode === 'completed') {
                 tasksSpecialFilter = 'completed';
@@ -2617,8 +2150,9 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 if (katEl && katName) katEl.value = katName;
                 if (statusEl && statusName) statusEl.value = statusName;
             } else if (mode === 'priority') {
-                if (prioEl && Array.from(prioEl.options).some(o => o.value === value)) {
-                    prioEl.value = value;
+                if (prioEl && Array.from(prioEl.options).some(o => isSameText(o.value, value))) {
+                    const matchedOpt = Array.from(prioEl.options).find(o => isSameText(o.value, value));
+                    if (matchedOpt) prioEl.value = matchedOpt.value;
                 } else {
                     tasksSpecialFilter = `priority:${value}`;
                 }
@@ -2648,7 +2182,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 ? db.Status
                 : Array.from(new Set(tasks.map(t => String(t.Status || '').trim()).filter(Boolean))).map(name => getStatusConfig(name));
 
-            // 1. Chart Beban Kerja per PIC (Combo: Bar Total Task + Line Completed, In Progress, Overdue)
+            // 1. Chart Beban Kerja per PIC
             const picCanvas = document.getElementById('chart-pic');
             if (picCanvas && typeof Chart !== 'undefined') {
                 const picNames = Array.from(new Set([
@@ -2753,7 +2287,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 });
             }
 
-            // 2. Chart Komposisi Status (Doughnut: Completed vs In Progress dengan Data Label "Nilai (Percent%)")
+            // 2. Chart Komposisi Status
             const statusCanvas = document.getElementById('chart-status');
             if (statusCanvas && typeof Chart !== 'undefined') {
                 const stLabels = ['Completed', 'In Progress'];
@@ -2826,7 +2360,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 });
             }
 
-            // 3. Chart Distribusi Priority (Horizontal Bar)
+            // 3. Chart Distribusi Priority
             const prioCanvas = document.getElementById('chart-priority');
             if (prioCanvas && typeof Chart !== 'undefined') {
                 const prioNames = Array.from(new Set([
@@ -2865,7 +2399,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 });
             }
 
-            // 4. Matriks Rekapitulasi Task per Kategori & Status + Baris Total
+            // 4. Matriks Rekapitulasi Task per Kategori & Status
             const rekapHead = document.getElementById('rekap-kategori-head');
             const rekapBody = document.getElementById('rekap-kategori-body');
             const rekapFoot = document.getElementById('rekap-kategori-foot');
@@ -2981,7 +2515,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 }
             }
 
-            // 5. Panel Task Perlu Ditindaklanjuti (Overdue / H-3 / Urgent)
+            // 5. Panel Task Perlu Ditindaklanjuti
             const actionListEl = document.getElementById('action-required-list');
             const actionCountEl = document.getElementById('action-required-count');
             if (actionListEl) {
@@ -2999,7 +2533,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
                 if (urgentList.length === 0) {
                     actionListEl.innerHTML = `
-                        <div class="py-8 text-center space-y-1.5">
+                        <div class="col-span-full py-8 text-center space-y-1.5">
                             <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
                                 <i data-lucide="check-check" class="w-5 h-5"></i>
                             </div>
@@ -3032,22 +2566,57 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                     }).join('');
                 }
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // ==================== FILTER & DAFTAR PEKERJAAN ====================
+        function updateStickyTasksTableHeaderOffset() {
+            const filterBar = document.getElementById('tasks-sticky-filter');
+            const tableHead = document.getElementById('tasks-table-head');
+            const mainEl = document.getElementById('main-viewport');
+            if (!filterBar || !tableHead) return;
+
+            const isDesktop = window.innerWidth >= 1024;
+            const tasksView = document.getElementById('view-tasks');
+            const isTasksVisible = tasksView && !tasksView.classList.contains('hidden');
+
+            if (mainEl) {
+                const isTasksDesktop = isTasksVisible && isDesktop;
+                mainEl.classList.toggle('lg:overflow-hidden', isTasksDesktop);
+                mainEl.classList.toggle('lg:overflow-y-auto', !isTasksDesktop);
+                mainEl.classList.toggle('lg:pb-3', isTasksDesktop);
+                mainEl.classList.toggle('lg:pb-10', !isTasksDesktop);
+            }
+
+            if (isDesktop) {
+                // Pada desktop, area scroll terisolasi di dalam wadah tabel sehingga thead menempel di top: 0
+                filterBar.style.top = '';
+                filterBar.style.marginTop = '';
+                filterBar.style.paddingTop = '';
+                tableHead.style.top = '0px';
+            } else {
+                // Pada mobile/tablet, filter menempel tepat di bawah header utama dan thead di bawah filter
+                const headerEl = document.querySelector('header');
+                const topOffset = headerEl ? headerEl.offsetHeight : 64;
+                filterBar.style.top = `${topOffset}px`;
+                const filterHeight = filterBar.offsetHeight || 0;
+                tableHead.style.top = `${topOffset + filterHeight}px`;
+            }
+        }
+
         function populateFilterAndFormDropdowns() {
-            const fillSelect = (id, items, placeholder, useValField = 'Nama') => {
+            const fillSelect = (id, items, defaultLabel) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                const prev = el.value;
-                const opts = placeholder !== null ? [`<option value="">${escapeHtml(placeholder)}</option>`] : [];
-                (items || []).forEach(it => {
-                    const val = String(it[useValField] || '').trim();
-                    if (val) opts.push(`<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`);
-                });
-                el.innerHTML = opts.join('');
-                if (prev && Array.from(el.options).some(o => o.value === prev)) el.value = prev;
+                const prevVal = el.value;
+                const names = Array.from(new Set((items || []).map(x => String(x.Nama || '').trim()).filter(Boolean)));
+                let html = defaultLabel !== null ? `<option value="">${escapeHtml(defaultLabel)}</option>` : '';
+                html += names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+                el.innerHTML = html;
+                if (prevVal && names.some(n => isSameText(n, prevVal))) {
+                    const matched = names.find(n => isSameText(n, prevVal));
+                    if (matched) el.value = matched;
+                }
             };
 
             fillSelect('filter-kategori', db.Kategori, 'Semua Kategori');
@@ -3067,46 +2636,55 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
         function resetAllTaskFilters() {
             tasksSpecialFilter = '';
-            tasksCurrentPage = 1;
-            ['filter-search', 'filter-kategori', 'filter-priority', 'filter-pic', 'filter-status', 'filter-reference', 'filter-actionplan'].forEach(id => {
+            const filterIds = [
+                'filter-search',
+                'filter-kategori',
+                'filter-priority',
+                'filter-pic',
+                'filter-status',
+                'filter-reference',
+                'filter-actionplan'
+            ];
+            filterIds.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
+            tasksCurrentPage = 1;
             renderTasksTable();
         }
 
         function getFilteredTasks() {
             const q = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
-            const kat = document.getElementById('filter-kategori')?.value || '';
-            const prio = document.getElementById('filter-priority')?.value || '';
-            const pic = document.getElementById('filter-pic')?.value || '';
-            const st = document.getElementById('filter-status')?.value || '';
-            const ref = document.getElementById('filter-reference')?.value || '';
-            const ap = document.getElementById('filter-actionplan')?.value || '';
+            const fKat = document.getElementById('filter-kategori')?.value || '';
+            const fPrio = document.getElementById('filter-priority')?.value || '';
+            const fPic = document.getElementById('filter-pic')?.value || '';
+            const fStatus = document.getElementById('filter-status')?.value || '';
+            const fRef = document.getElementById('filter-reference')?.value || '';
+            const fAct = document.getElementById('filter-actionplan')?.value || '';
             const today = getTodayOffset(0);
 
             return getScopedTasks().filter(t => {
-                if (kat && !isSameText(t.Kategori, kat)) return false;
-                if (prio && !isSameText(t.Priority, prio)) return false;
-                if (pic && !isSameText(t.PIC, pic)) return false;
-                if (st && !isSameText(t.Status, st)) return false;
-                if (ref && !isSameText(t.Reference, ref)) return false;
-                if (ap && !isSameText(t.ActionPlan, ap)) return false;
-
-                if (tasksSpecialFilter === 'completed') {
-                    if (!isTaskCompleted(t)) return false;
-                } else if (tasksSpecialFilter === 'inprogress') {
-                    if (isTaskCompleted(t)) return false;
-                } else if (tasksSpecialFilter === 'overdue') {
-                    if (!isTaskOverdue(t, today)) return false;
-                } else if (tasksSpecialFilter.startsWith('priority:')) {
+                if (tasksSpecialFilter === 'completed' && !isTaskCompleted(t)) return false;
+                if (tasksSpecialFilter === 'inprogress' && isTaskCompleted(t)) return false;
+                if (tasksSpecialFilter === 'overdue' && !isTaskOverdue(t, today)) return false;
+                if (tasksSpecialFilter.startsWith('priority:')) {
                     const targetPrio = tasksSpecialFilter.slice(9);
                     if (!isSameText(t.Priority, targetPrio)) return false;
                 }
 
+                if (fKat && !isSameText(t.Kategori, fKat)) return false;
+                if (fPrio && !isSameText(t.Priority, fPrio)) return false;
+                if (fPic && !isSameText(t.PIC, fPic)) return false;
+                if (fStatus && !isSameText(t.Status, fStatus)) return false;
+                if (fRef && !isSameText(t.Reference, fRef)) return false;
+                if (fAct && !isSameText(t.ActionPlan, fAct)) return false;
+
                 if (q) {
-                    const hay = `${t.ID} ${t.Task} ${t.Kategori} ${t.Priority} ${t.PIC} ${t.Status} ${t.Reference} ${t.ActionPlan} ${t.Catatan}`.toLowerCase();
-                    if (!hay.includes(q)) return false;
+                    const haystack = [
+                        t.ID, t.Task, t.Kategori, t.Priority, t.PIC,
+                        t.Status, t.Reference, t.ActionPlan, t.Catatan
+                    ].map(v => String(v || '').toLowerCase()).join(' ');
+                    if (!haystack.includes(q)) return false;
                 }
                 return true;
             });
@@ -3115,21 +2693,21 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         function renderTasksTable() {
             const tbody = document.getElementById('tasks-table-body');
             const pagEl = document.getElementById('tasks-pagination');
-            const qfBanner = document.getElementById('tasks-active-quickfilter');
-            const qfLabel = document.getElementById('tasks-active-quickfilter-label');
+            const quickBar = document.getElementById('tasks-active-quickfilter');
+            const quickLabel = document.getElementById('tasks-active-quickfilter-label');
             if (!tbody) return;
 
-            if (qfBanner && qfLabel) {
+            if (quickBar && quickLabel) {
                 if (tasksSpecialFilter) {
-                    qfBanner.classList.remove('hidden');
                     const labelMap = {
-                        completed: 'Filter Aktif: Hanya Task Completed',
-                        inprogress: 'Filter Aktif: Hanya Task In Progress',
-                        overdue: 'Filter Aktif: Hanya Task Overdue (Melewati Target Date)'
+                        completed: 'Filter Cepat: Task Completed',
+                        inprogress: 'Filter Cepat: Task In Progress',
+                        overdue: 'Filter Cepat: Task Overdue'
                     };
-                    qfLabel.textContent = labelMap[tasksSpecialFilter] || `Filter Aktif: Priority ${tasksSpecialFilter.replace('priority:', '')}`;
+                    quickLabel.textContent = labelMap[tasksSpecialFilter] || `Filter Cepat: ${tasksSpecialFilter.replace('priority:', 'Priority ')}`;
+                    quickBar.classList.remove('hidden');
                 } else {
-                    qfBanner.classList.add('hidden');
+                    quickBar.classList.add('hidden');
                 }
             }
 
@@ -3143,130 +2721,140 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             const today = getTodayOffset(0);
 
             if (pageItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400">Tidak ada data pekerjaan yang sesuai dengan filter.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400">Tidak ada pekerjaan yang sesuai dengan filter saat ini.</td></tr>`;
             } else {
                 tbody.innerHTML = pageItems.map(t => {
                     const stCfg = getStatusConfig(t.Status);
-                    const targetIso = normalizeDateISO(t.TargetDate);
-                    const isOver = stCfg.Completed !== 'Yes' && targetIso && targetIso < today;
+                    const stHex = stCfg.Warna;
+                    const over = isTaskOverdue(t, today);
                     const prog = Math.min(100, Math.max(0, Number(t.Progress || 0)));
+                    const prioLower = String(t.Priority || '').trim().toLowerCase();
+                    const prioBadge = prioLower === 'urgent'
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : prioLower === 'high'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : prioLower === 'medium'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-slate-100 text-slate-600 border-slate-200';
+
+                    const subParts = [t.Kategori, t.Catatan].filter(Boolean).map(v => escapeHtml(v));
 
                     return `<tr class="hover:bg-slate-50/90 transition-colors">
                         <td class="py-3 px-4 font-mono text-[11px] font-semibold text-slate-500 whitespace-nowrap">${escapeHtml(t.ID)}</td>
-                        <td class="py-3 px-4 min-w-[220px]">
-                            <p class="font-bold text-slate-800">${escapeHtml(t.Task)}</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(t.Kategori || '-')} ${t.Catatan ? '• ' + escapeHtml(t.Catatan) : ''}</p>
+                        <td class="py-3 px-4 min-w-[240px]">
+                            <p class="font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">${subParts.join(' • ') || '-'}</p>
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700">${escapeHtml(t.Priority || '-')}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
+                            <div class="inline-flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
                                 <span class="font-medium text-slate-700">${escapeHtml(t.PIC || '-')}</span>
                             </div>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap ${isOver ? 'text-rose-600 font-bold' : 'text-slate-600'}">
-                            ${formatDateDisplay(t.TargetDate)}
-                            ${isOver ? '<span class="ml-1 px-1.5 py-0.5 rounded bg-rose-50 text-[10px] font-bold">Overdue</span>' : ''}
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="font-medium ${over ? 'text-rose-600 font-bold' : 'text-slate-600'}">${formatDateDisplay(t.TargetDate)}</span>
+                            ${over ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-bold">Overdue</span>' : ''}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
-                            <span style="background-color:${hexToRgba(stCfg.Warna, 0.14)};color:${stCfg.Warna};border-color:${hexToRgba(stCfg.Warna, 0.35)};" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border">
-                                ${escapeHtml(stCfg.Nama)}
-                            </span>
+                            <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(t.Status || '-')}</span>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap min-w-[120px]">
+                        <td class="py-3 px-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                     <div class="h-full bg-indigo-600 rounded-full" style="width:${prog}%"></div>
                                 </div>
-                                <span class="text-[11px] font-bold text-slate-600 w-8 text-right">${prog}%</span>
+                                <span class="font-bold text-slate-700 text-[11px]">${prog}%</span>
                             </div>
                         </td>
                         <td class="py-3 px-4 text-right whitespace-nowrap">
-                            <div class="inline-flex items-center gap-1">
-                                <button type="button" onclick="openTaskModal('${escapeHtml(t.ID)}')" title="Edit Task" class="p-2 sm:p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
-                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                </button>
-                                <button type="button" onclick="confirmDeleteTask('${escapeHtml(t.ID)}')" title="Hapus Task" class="p-2 sm:p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
-                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </div>
+                            <button type="button" onclick="openTaskModal('${escapeHtml(t.ID)}')" title="Edit Task" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button type="button" onclick="confirmDeleteTask('${escapeHtml(t.ID)}')" title="Hapus Task" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
                         </td>
                     </tr>`;
                 }).join('');
             }
 
             if (pagEl) {
+                const showingFrom = totalItems === 0 ? 0 : startIdx + 1;
+                const showingTo = Math.min(totalItems, startIdx + tasksPageSize);
                 pagEl.innerHTML = `
-                    <span>Menampilkan <strong>${pageItems.length}</strong> dari <strong>${totalItems}</strong> task</span>
+                    <span>Menampilkan <strong class="text-slate-700">${showingFrom}–${showingTo}</strong> dari <strong class="text-slate-700">${totalItems}</strong> task</span>
                     <div class="flex items-center gap-1.5">
-                        <button type="button" ${tasksCurrentPage <= 1 ? 'disabled' : ''} onclick="tasksCurrentPage--; renderTasksTable()" class="px-3 py-1 rounded-lg border border-slate-300 bg-white disabled:opacity-40 hover:bg-slate-100">Prev</button>
+                        <button type="button" ${tasksCurrentPage <= 1 ? 'disabled' : ''} onclick="tasksCurrentPage=Math.max(1, tasksCurrentPage-1); renderTasksTable()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Sebelumnya</button>
                         <span class="px-2 font-semibold text-slate-700">Hal ${tasksCurrentPage} / ${totalPages}</span>
-                        <button type="button" ${tasksCurrentPage >= totalPages ? 'disabled' : ''} onclick="tasksCurrentPage++; renderTasksTable()" class="px-3 py-1 rounded-lg border border-slate-300 bg-white disabled:opacity-40 hover:bg-slate-100">Next</button>
-                    </div>
-                `;
+                        <button type="button" ${tasksCurrentPage >= totalPages ? 'disabled' : ''} onclick="tasksCurrentPage=Math.min(${totalPages}, tasksCurrentPage+1); renderTasksTable()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Berikutnya</button>
+                    </div>`;
             }
-            lucide.createIcons();
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
         }
 
-        // ==================== MODAL & CRUD TASK ====================
+        function onTaskStatusChange() {
+            const stVal = document.getElementById('task-input-status')?.value || '';
+            if (getStatusConfig(stVal).Completed === 'Yes') {
+                const progInp = document.getElementById('task-input-progress');
+                const progLbl = document.getElementById('task-progress-label');
+                if (progInp) progInp.value = 100;
+                if (progLbl) progLbl.textContent = '100%';
+            }
+        }
+
         function openTaskModal(taskId = '') {
             populateFilterAndFormDropdowns();
             const modal = document.getElementById('task-modal');
-            const titleEl = document.getElementById('task-modal-title');
-            const editIdEl = document.getElementById('task-edit-id');
-            const picSelect = document.getElementById('task-input-pic');
+            const form = document.getElementById('task-form');
+            if (!modal || !form) return;
 
             const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
+            const picSelect = document.getElementById('task-input-pic');
 
             if (taskId) {
-                const task = (db.Tasks || []).find(t => String(t.ID) === String(taskId));
-                if (!task) return;
-                titleEl.textContent = `Edit Task (${task.ID})`;
-                editIdEl.value = task.ID;
-                document.getElementById('task-input-tanggal').value = normalizeDateISO(task.Tanggal) || getTodayOffset(0);
-                document.getElementById('task-input-targetdate').value = normalizeDateISO(task.TargetDate) || getTodayOffset(3);
-                document.getElementById('task-input-task').value = task.Task || '';
-                document.getElementById('task-input-kategori').value = task.Kategori || '';
-                document.getElementById('task-input-priority').value = task.Priority || '';
-                picSelect.value = task.PIC || '';
-                document.getElementById('task-input-status').value = task.Status || '';
-                const prog = Number(task.Progress || 0);
+                const existing = (db.Tasks || []).find(t => String(t.ID) === String(taskId));
+                if (!existing) return;
+                document.getElementById('task-modal-title').textContent = `Edit Task (${existing.ID})`;
+                document.getElementById('task-edit-id').value = existing.ID;
+                document.getElementById('task-input-tanggal').value = normalizeDateISO(existing.Tanggal) || getTodayOffset(0);
+                document.getElementById('task-input-targetdate').value = normalizeDateISO(existing.TargetDate) || getTodayOffset(3);
+                document.getElementById('task-input-task').value = existing.Task || '';
+                document.getElementById('task-input-kategori').value = existing.Kategori || '';
+                document.getElementById('task-input-priority').value = existing.Priority || '';
+                if (picSelect) picSelect.value = existing.PIC || '';
+                document.getElementById('task-input-status').value = existing.Status || '';
+                const prog = Number(existing.Progress || 0);
                 document.getElementById('task-input-progress').value = prog;
                 document.getElementById('task-progress-label').textContent = `${prog}%`;
-                document.getElementById('task-input-reference').value = task.Reference || '';
-                document.getElementById('task-input-actionplan').value = task.ActionPlan || '';
-                document.getElementById('task-input-catatan').value = task.Catatan || '';
+                document.getElementById('task-input-reference').value = existing.Reference || '';
+                document.getElementById('task-input-actionplan').value = existing.ActionPlan || '';
+                document.getElementById('task-input-catatan').value = existing.Catatan || '';
             } else {
-                titleEl.textContent = 'Tambah Task Baru';
-                editIdEl.value = '';
-                document.getElementById('task-form').reset();
+                form.reset();
+                document.getElementById('task-modal-title').textContent = 'Tambah Task Baru';
+                document.getElementById('task-edit-id').value = '';
                 document.getElementById('task-input-tanggal').value = getTodayOffset(0);
                 document.getElementById('task-input-targetdate').value = getTodayOffset(3);
                 document.getElementById('task-input-progress').value = 0;
                 document.getElementById('task-progress-label').textContent = '0%';
-                if (currentUser && currentUser.Nama) {
+                if (isStaff && picSelect && currentUser?.Nama) {
                     picSelect.value = currentUser.Nama;
                 }
             }
 
             if (picSelect) picSelect.disabled = Boolean(isStaff);
             modal.classList.remove('hidden');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function closeTaskModal() {
             const modal = document.getElementById('task-modal');
             if (modal) modal.classList.add('hidden');
-        }
-
-        function onTaskStatusChange() {
-            const stName = document.getElementById('task-input-status')?.value || '';
-            if (getStatusConfig(stName).Completed === 'Yes') {
-                document.getElementById('task-input-progress').value = 100;
-                document.getElementById('task-progress-label').textContent = '100%';
-            }
         }
 
         async function saveTask(e) {
@@ -3369,7 +2957,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 }
             };
             modal.classList.remove('hidden');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function closeConfirmModal() {
@@ -3528,7 +3116,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                     ${actions}
                 </tr>`;
             }).join('');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function syncColorPickerFromHex(val) {
@@ -3588,7 +3176,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             }
 
             modal.classList.remove('hidden');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function closeMasterModal() {
@@ -3660,7 +3248,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 await pushMasterDataToSheet(targetTab);
             };
             modal.classList.remove('hidden');
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         async function pushMasterDataToSheet(sheetName = currentMasterTab) {
@@ -3708,36 +3296,6 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             }
         }
 
-        function saveGasUrl() {
-            const url = (document.getElementById('gas-url-input')?.value || '').trim();
-            if (!url || !url.startsWith('https://script.google.com/')) {
-                showToast('Masukkan URL Web App Google Apps Script yang valid.', 'error');
-                return;
-            }
-            gasUrl = url;
-            SafeStorage.setItem('taskflow_gas_url', url, true);
-            showToast('URL Google Apps Script berhasil disimpan!', 'success');
-        }
-
-        function disconnectGasUrl() {
-            SafeStorage.removeItem('taskflow_gas_url');
-            clearAuthSession();
-            gasUrl = '';
-            lockApplication('Koneksi diputuskan. Masukkan URL Google Apps Script Web App baru.');
-        }
-
-        function copyGasCode() {
-            const codeEl = document.getElementById('gas-code-block');
-            if (!codeEl) return;
-            const ta = document.createElement('textarea');
-            ta.value = codeEl.textContent;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            showToast('Kode Code.gs berhasil disalin ke clipboard!', 'success');
-        }
-
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -3756,6 +3314,13 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 setTimeout(() => el.remove(), 220);
             }, 3200);
         }
+
+        window.resetAllTaskFilters = resetAllTaskFilters;
+        window.populateFilterAndFormDropdowns = populateFilterAndFormDropdowns;
+        window.getFilteredTasks = getFilteredTasks;
+        window.renderTasksTable = renderTasksTable;
+        window.updateStickyTasksTableHeaderOffset = updateStickyTasksTableHeaderOffset;
+        window.addEventListener('resize', updateStickyTasksTableHeaderOffset);
 
         window.addEventListener('beforeunload', (e) => {
             if (pendingSyncCount > 0) {
@@ -3779,9 +3344,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
 
             const initialUrl = resolveInitialGasUrl();
             const urlInp = document.getElementById('gatekeeper-url-input');
-            const gasInp = document.getElementById('gas-url-input');
             if (urlInp && initialUrl) urlInp.value = initialUrl;
-            if (gasInp && initialUrl) gasInp.value = initialUrl;
 
             const hasValidSession = restoreActiveSession();
             if (initialUrl && hasValidSession) {

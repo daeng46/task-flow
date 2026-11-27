@@ -660,29 +660,61 @@
 
                 <!-- ==================== VIEW 2: DAFTAR PEKERJAAN ==================== -->
                 <section id="view-tasks" class="hidden space-y-3">
-                    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
+                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
                         <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
                             <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
                             <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                            <div class="lg:col-span-2 relative">
+
+                        <!-- Baris Pencarian Utama & Tombol Reset -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                            <div class="relative flex-1">
                                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                <input type="text" id="filter-search" oninput="tasksCurrentPage=1; renderTasksTable()" placeholder="Cari ID, task, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                                <input type="text" id="filter-search" oninput="tasksCurrentPage=1; renderTasksTable()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
                             </div>
-                            <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                <option value="">Semua Kategori</option>
-                            </select>
-                            <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                                <option value="">Semua PIC</option>
-                            </select>
-                            <div class="flex gap-2">
-                                <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="flex-1 text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 shrink-0 transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                <span>Reset Filter</span>
+                            </button>
+                        </div>
+
+                        <!-- Grid 6 Filter: Kategori, Priority, PIC, Status, Reference, Action Plan -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5">
+                            <div>
+                                <label for="filter-kategori" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori</label>
+                                <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Kategori</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filter-priority" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
+                                <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Priority</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filter-pic" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">PIC</label>
+                                <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua PIC</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filter-status" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
+                                <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Status</option>
                                 </select>
-                                <button type="button" onclick="resetAllTaskFilters()" title="Reset Filter" class="px-3 py-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 shrink-0">
-                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                                </button>
+                            </div>
+                            <div>
+                                <label for="filter-reference" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reference</label>
+                                <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Reference</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filter-actionplan" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Action Plan</label>
+                                <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">Semua Action Plan</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -2554,13 +2586,19 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             tasksSpecialFilter = '';
             const searchEl = document.getElementById('filter-search');
             const katEl = document.getElementById('filter-kategori');
+            const prioEl = document.getElementById('filter-priority');
             const picEl = document.getElementById('filter-pic');
             const statusEl = document.getElementById('filter-status');
+            const refEl = document.getElementById('filter-reference');
+            const apEl = document.getElementById('filter-actionplan');
 
             if (searchEl) searchEl.value = '';
             if (katEl) katEl.value = '';
+            if (prioEl) prioEl.value = '';
             if (picEl) picEl.value = '';
             if (statusEl) statusEl.value = '';
+            if (refEl) refEl.value = '';
+            if (apEl) apEl.value = '';
 
             if (mode === 'completed') {
                 tasksSpecialFilter = 'completed';
@@ -2579,7 +2617,11 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 if (katEl && katName) katEl.value = katName;
                 if (statusEl && statusName) statusEl.value = statusName;
             } else if (mode === 'priority') {
-                tasksSpecialFilter = `priority:${value}`;
+                if (prioEl && Array.from(prioEl.options).some(o => o.value === value)) {
+                    prioEl.value = value;
+                } else {
+                    tasksSpecialFilter = `priority:${value}`;
+                }
             }
 
             tasksCurrentPage = 1;
@@ -3009,8 +3051,11 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
             };
 
             fillSelect('filter-kategori', db.Kategori, 'Semua Kategori');
+            fillSelect('filter-priority', db.Priority, 'Semua Priority');
             fillSelect('filter-pic', db.PIC, 'Semua PIC');
             fillSelect('filter-status', db.Status, 'Semua Status');
+            fillSelect('filter-reference', db.Reference, 'Semua Reference');
+            fillSelect('filter-actionplan', db.ActionPlan, 'Semua Action Plan');
 
             fillSelect('task-input-kategori', db.Kategori, null);
             fillSelect('task-input-priority', db.Priority, null);
@@ -3023,7 +3068,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         function resetAllTaskFilters() {
             tasksSpecialFilter = '';
             tasksCurrentPage = 1;
-            ['filter-search', 'filter-kategori', 'filter-pic', 'filter-status'].forEach(id => {
+            ['filter-search', 'filter-kategori', 'filter-priority', 'filter-pic', 'filter-status', 'filter-reference', 'filter-actionplan'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
@@ -3033,14 +3078,20 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
         function getFilteredTasks() {
             const q = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
             const kat = document.getElementById('filter-kategori')?.value || '';
+            const prio = document.getElementById('filter-priority')?.value || '';
             const pic = document.getElementById('filter-pic')?.value || '';
             const st = document.getElementById('filter-status')?.value || '';
+            const ref = document.getElementById('filter-reference')?.value || '';
+            const ap = document.getElementById('filter-actionplan')?.value || '';
             const today = getTodayOffset(0);
 
             return getScopedTasks().filter(t => {
                 if (kat && !isSameText(t.Kategori, kat)) return false;
+                if (prio && !isSameText(t.Priority, prio)) return false;
                 if (pic && !isSameText(t.PIC, pic)) return false;
                 if (st && !isSameText(t.Status, st)) return false;
+                if (ref && !isSameText(t.Reference, ref)) return false;
+                if (ap && !isSameText(t.ActionPlan, ap)) return false;
 
                 if (tasksSpecialFilter === 'completed') {
                     if (!isTaskCompleted(t)) return false;
@@ -3054,7 +3105,7 @@ function applyDateFormatting(sheet, headers, startRow, numRows) {
                 }
 
                 if (q) {
-                    const hay = `${t.ID} ${t.Task} ${t.Kategori} ${t.PIC} ${t.Status} ${t.Catatan}`.toLowerCase();
+                    const hay = `${t.ID} ${t.Task} ${t.Kategori} ${t.Priority} ${t.PIC} ${t.Status} ${t.Reference} ${t.ActionPlan} ${t.Catatan}`.toLowerCase();
                     if (!hay.includes(q)) return false;
                 }
                 return true;

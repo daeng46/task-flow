@@ -130,7 +130,7 @@
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.2.8</span>
+                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.2.9</span>
                 </div>
             </form>
         </div>
@@ -717,7 +717,11 @@
                     </div>
 
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs lg:flex-1 lg:min-h-0 flex flex-col">
-                        <div class="overflow-x-auto lg:overflow-y-auto lg:flex-1 rounded-t-2xl">
+                        <!-- Tampilan Kartu Responsif Khusus Smartphone (< 768px) -->
+                        <div id="tasks-mobile-cards" class="block md:hidden divide-y divide-slate-100"></div>
+
+                        <!-- Tampilan Tabel Penuh untuk Tablet & Laptop (>= 768px) -->
+                        <div class="hidden md:block overflow-x-auto lg:overflow-y-auto lg:flex-1 rounded-t-2xl">
                             <table class="w-full text-left border-collapse">
                                 <thead id="tasks-table-head" class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                                     <tr class="text-[11px] uppercase tracking-wider text-slate-500">
@@ -1011,7 +1015,7 @@
 
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
-            APP_VERSION: 'v1.2.8',
+            APP_VERSION: 'v1.2.9',
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             SESSION_TTL_MS: 6 * 60 * 60 * 1000
         };
@@ -1292,45 +1296,48 @@
             const remaining = [];
             setPendingSync(1);
 
-            for (const op of snapshot) {
-                try {
-                    let payload = null;
-                    if (op.type === 'SAVE_TASK') {
-                        const latestTask = (db.Tasks || []).find(t => String(t.ID) === String(op.key)) || op.payload;
-                        payload = { action: 'SAVE_TASK', token: sessionToken, data: latestTask };
-                    } else if (op.type === 'DELETE_TASK') {
-                        payload = { action: 'DELETE_TASK', token: sessionToken, id: op.key };
-                    } else if (op.type === 'SYNC_SHEET') {
-                        payload = { action: 'SYNC_SHEET', token: sessionToken, sheetName: op.key, items: db[op.key] || op.payload || [] };
-                    }
-                    if (!payload) continue;
+            try {
+                for (const op of snapshot) {
+                    try {
+                        let payload = null;
+                        if (op.type === 'SAVE_TASK') {
+                            const latestTask = (db.Tasks || []).find(t => String(t.ID) === String(op.key)) || op.payload;
+                            payload = { action: 'SAVE_TASK', token: sessionToken, data: latestTask };
+                        } else if (op.type === 'DELETE_TASK') {
+                            payload = { action: 'DELETE_TASK', token: sessionToken, id: op.key };
+                        } else if (op.type === 'SYNC_SHEET') {
+                            payload = { action: 'SYNC_SHEET', token: sessionToken, sheetName: op.key, items: db[op.key] || op.payload || [] };
+                        }
+                        if (!payload) continue;
 
-                    const res = await fetch(gasUrl, {
-                        method: 'POST',
-                        cache: 'no-store',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload)
-                    });
-                    const result = await res.json();
-                    if (result.status !== 'success') {
+                        const res = await fetch(gasUrl, {
+                            method: 'POST',
+                            cache: 'no-store',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await res.json();
+                        if (result.status !== 'success') {
+                            remaining.push(op);
+                        }
+                    } catch (e) {
                         remaining.push(op);
                     }
-                } catch (e) {
-                    remaining.push(op);
                 }
-            }
 
-            unsyncedQueue = remaining;
-            saveUnsyncedQueue();
-            setPendingSync(-1);
+                unsyncedQueue = remaining;
+                saveUnsyncedQueue();
 
-            if (remaining.length === 0) {
-                refreshAuthSessionExpiry();
-                updateSidebarConnectionStatus('connected');
-                showToast('Seluruh perubahan berhasil disinkronkan ke Google Sheet!', 'success');
-            } else {
-                updateSidebarConnectionStatus('error');
-                showToast(`${remaining.length} perubahan masih gagal terkirim. Periksa koneksi Anda.`, 'error');
+                if (remaining.length === 0) {
+                    refreshAuthSessionExpiry();
+                    updateSidebarConnectionStatus('connected');
+                    showToast('Seluruh perubahan berhasil disinkronkan ke Google Sheet!', 'success');
+                } else {
+                    updateSidebarConnectionStatus('error');
+                    showToast(`${remaining.length} perubahan masih gagal terkirim. Periksa koneksi Anda.`, 'error');
+                }
+            } finally {
+                setPendingSync(-1);
             }
         }
 
@@ -1769,7 +1776,6 @@
             if (wrapper && !wrapper.contains(e.target)) {
                 closeProfileDropdown();
             }
-            // Tutup modal jika klik pada area backdrop di luar kotak dialog
             if (e.target && e.target.dataset && e.target.dataset.modalBackdrop) {
                 const fnName = e.target.dataset.modalBackdrop;
                 if (typeof window[fnName] === 'function') {
@@ -1876,21 +1882,31 @@
             if (subEl) subEl.textContent = sub;
 
             if (viewName === 'dashboard') {
-                renderDashboard();
-                dirtyViews.dashboard = false;
+                if (dirtyViews.dashboard) {
+                    renderDashboard();
+                    dirtyViews.dashboard = false;
+                }
             } else if (viewName === 'tasks') {
-                renderTasksTable();
-                dirtyViews.tasks = false;
+                if (dirtyViews.tasks) {
+                    renderTasksTable();
+                    dirtyViews.tasks = false;
+                }
                 requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
             } else if (viewName === 'monitoring') {
-                renderMonitoringView();
-                dirtyViews.monitoring = false;
+                if (dirtyViews.monitoring) {
+                    renderMonitoringView();
+                    dirtyViews.monitoring = false;
+                }
             } else if (viewName === 'reports') {
-                renderReportsView();
-                dirtyViews.reports = false;
+                if (dirtyViews.reports) {
+                    renderReportsView();
+                    dirtyViews.reports = false;
+                }
             } else if (viewName === 'master') {
-                switchMasterTab(currentMasterTab);
-                dirtyViews.master = false;
+                if (dirtyViews.master) {
+                    switchMasterTab(currentMasterTab);
+                    dirtyViews.master = false;
+                }
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
@@ -1909,7 +1925,6 @@
                 return;
             }
 
-            // Lazy View Rendering: hanya render ulang halaman yang sedang aktif
             if (activeView === 'dashboard') {
                 renderDashboard();
                 dirtyViews.dashboard = false;
@@ -2144,7 +2159,6 @@
             const rate = total ? Math.round((doneCount / total) * 100) : 0;
             const avgProg = total ? Math.round(agg.totalProgressSum / total) : 0;
 
-            // Akurasi On-Time Delivery: bandingkan tanggal penyelesaian (atau hari ini jika belum tercatat) terhadap TargetDate
             const onTimeCount = doneTasks.filter(t => {
                 const target = normalizeDateISO(t.TargetDate);
                 if (!target) return true;
@@ -2300,7 +2314,7 @@
                 showToast('Tidak ada data task pada periode ini untuk diekspor.', 'error');
                 return;
             }
-            const headers = ['ID', 'Tanggal', 'Kategori', 'Task', 'Priority', 'PIC', 'TargetDate', 'Status', 'Progress', 'Reference', 'ActionPlan', 'Catatan'];
+            const headers = ['ID', 'Tanggal', 'Kategori', 'Task', 'Priority', 'PIC', 'TargetDate', 'Status', 'Progress', 'Reference', 'ActionPlan', 'Catatan', 'CompletedDate'];
             const csvRows = [
                 headers.join(','),
                 ...tasks.map(t => headers.map(h => `"${String(t[h] ?? '').replace(/"/g, '""')}"`).join(','))
@@ -2372,6 +2386,7 @@
             }
 
             tasksCurrentPage = 1;
+            dirtyViews.tasks = true;
             switchView('tasks');
         }
 
@@ -2936,6 +2951,7 @@
 
         function renderTasksTable() {
             const tbody = document.getElementById('tasks-table-body');
+            const mobileCardsEl = document.getElementById('tasks-mobile-cards');
             const pagEl = document.getElementById('tasks-pagination');
             const quickBar = document.getElementById('tasks-active-quickfilter');
             const quickLabel = document.getElementById('tasks-active-quickfilter-label');
@@ -2967,9 +2983,13 @@
             const today = getTodayOffset(0);
 
             if (pageItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400">Tidak ada pekerjaan yang sesuai dengan filter saat ini.</td></tr>`;
+                const emptyMsg = 'Tidak ada pekerjaan yang sesuai dengan filter saat ini.';
+                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400">${emptyMsg}</td></tr>`;
+                if (mobileCardsEl) {
+                    mobileCardsEl.innerHTML = `<div class="py-10 px-4 text-center text-xs text-slate-400">${emptyMsg}</div>`;
+                }
             } else {
-                tbody.innerHTML = pageItems.map(t => {
+                const preparedRows = pageItems.map(t => {
                     const stCfg = getStatusConfig(t.Status);
                     const stHex = stCfg.Warna;
                     const over = isTaskOverdue(t, today);
@@ -2991,6 +3011,10 @@
                         ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[10px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
                         : '';
 
+                    return { t, stHex, over, prog, prioBadge, subParts, refBadge, actBadge };
+                });
+
+                tbody.innerHTML = preparedRows.map(({ t, stHex, over, prog, prioBadge, subParts, refBadge, actBadge }) => {
                     return `<tr class="hover:bg-slate-50/90 transition-colors">
                         <td class="py-3 px-4 font-mono text-[11px] font-semibold text-slate-500 whitespace-nowrap">${escapeHtml(t.ID)}</td>
                         <td class="py-3 px-4 min-w-[240px]">
@@ -3023,15 +3047,64 @@
                             </div>
                         </td>
                         <td class="py-3 px-4 text-right whitespace-nowrap">
-                            <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" title="Edit Task" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
-                                <i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i>
+                            <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" title="Edit Task" class="p-2.5 lg:p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                <i data-lucide="pencil" class="w-4 h-4 lg:w-3.5 lg:h-3.5 pointer-events-none"></i>
                             </button>
-                            <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" title="Hapus Task" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i>
+                            <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" title="Hapus Task" class="p-2.5 lg:p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4 lg:w-3.5 lg:h-3.5 pointer-events-none"></i>
                             </button>
                         </td>
                     </tr>`;
                 }).join('');
+
+                if (mobileCardsEl) {
+                    mobileCardsEl.innerHTML = preparedRows.map(({ t, stHex, over, prog, prioBadge, subParts, refBadge, actBadge }) => {
+                        return `<div class="p-4 space-y-3 hover:bg-slate-50/80 transition-colors">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="font-mono text-[11px] font-semibold text-slate-400 shrink-0">${escapeHtml(t.ID)}</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
+                                </div>
+                                <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0">${escapeHtml(t.Status || '-')}</span>
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
+                                <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">${subParts.join(' • ') || '-'}</p>
+                                ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5 mt-1.5">${refBadge}${actBadge}</div>` : ''}
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 pt-1">
+                                <div class="inline-flex items-center gap-2 min-w-0">
+                                    <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
+                                    <span class="font-medium text-slate-700 truncate">${escapeHtml(t.PIC || '-')}</span>
+                                </div>
+                                <div class="inline-flex items-center gap-1.5 shrink-0">
+                                    <span class="text-slate-400">Target:</span>
+                                    <span class="font-semibold ${over ? 'text-rose-600' : 'text-slate-700'}">${formatDateDisplay(t.TargetDate)}</span>
+                                    ${over ? '<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-bold">Overdue</span>' : ''}
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 flex-1">
+                                    <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-indigo-600 rounded-full" style="width:${prog}%"></div>
+                                    </div>
+                                    <span class="font-bold text-slate-700 text-xs shrink-0">${prog}%</span>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" aria-label="Edit Task" class="p-2.5 rounded-xl text-slate-600 bg-slate-100 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                        <i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i>
+                                    </button>
+                                    <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" aria-label="Hapus Task" class="p-2.5 rounded-xl text-slate-600 bg-slate-100 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
             }
 
             if (pagEl) {
@@ -3046,7 +3119,10 @@
                     </div>`;
             }
 
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: tbody });
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: tbody });
+                if (mobileCardsEl) lucide.createIcons({ root: mobileCardsEl });
+            }
             requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
         }
 
@@ -3071,7 +3147,6 @@
             if (progLbl) progLbl.textContent = `${num}%`;
         }
 
-        // Pencocokan nilai dropdown case-insensitive + pertahankan nilai lama jika sudah diarsipkan dari Master
         function setSelectValueSafe(selectId, rawVal) {
             const sel = document.getElementById(selectId);
             if (!sel) return;
@@ -3525,7 +3600,6 @@
             const extra = document.getElementById('master-input-extra').value.trim();
             const list = db[currentMasterTab] || [];
 
-            // Validasi duplikasi nama item pada Master Data yang sama
             const isDuplicateName = list.some((it, idx) => idx !== editIdx && isSameText(it.Nama, nama));
             if (isDuplicateName) {
                 showToast(`Nama "${nama}" sudah terdaftar pada Master ${currentMasterTab}.`, 'error');

@@ -8,7 +8,10 @@ Kompatibel dengan Backend Google Apps Script v1.2.15
 Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                  update grafik Chart.js tanpa destroy ulang, lazy startup
                  rendering, proteksi CSV formula injection, focus trap modal,
-                 & penyesuaian otomatis tinggi filter sticky Daftar Pekerjaan.
+                 penyesuaian otomatis tinggi filter sticky Daftar Pekerjaan,
+                 penguatan escapeHtml & sanitasi konteks, paginasi 25-50 item,
+                 skala font proporsional, serta tinggi seragam input,
+                 dropdown, dan button.
 ============================================================================
 -->
 <html lang="id">
@@ -32,7 +35,30 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             margin: 0;
             padding: 0;
             font-family: 'Inter', sans-serif;
+            font-size: 13.5px;
+            line-height: 1.45;
             background-color: #f8fafc;
+        }
+        @media (max-width: 639.98px) {
+            html, body {
+                font-size: 12px;
+                line-height: 1.38;
+            }
+        }
+        .tf-ctrl-input,
+        .tf-ctrl-select,
+        .tf-ctrl-btn {
+            height: 36px;
+            min-height: 36px;
+            box-sizing: border-box;
+        }
+        @media (max-width: 639.98px) {
+            .tf-ctrl-input,
+            .tf-ctrl-select,
+            .tf-ctrl-btn {
+                height: 34px;
+                min-height: 34px;
+            }
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -69,39 +95,39 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     <!-- Connection Lock Screen / Gatekeeper -->
     <div id="connection-gatekeeper" class="fixed inset-0 w-screen min-h-[100dvh] overflow-y-auto z-[100] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden fade-in my-auto">
-            <div class="px-6 py-5 bg-[#090B16] text-white flex items-center gap-3.5 border-b border-slate-800">
+            <div class="px-5 sm:px-6 py-4 sm:py-5 bg-[#090B16] text-white flex items-center gap-3.5 border-b border-slate-800">
                 <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 shrink-0">
                     <i data-lucide="database" class="w-5 h-5"></i>
                 </div>
                 <div class="min-w-0">
-                    <h2 class="text-lg font-bold tracking-tight text-white">Koneksi Database</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Silahkan masukkan link Google Spreadsheet</p>
+                    <h2 class="text-base sm:text-lg font-bold tracking-tight text-white">Koneksi Database</h2>
+                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Silahkan masukkan link Google Spreadsheet</p>
                 </div>
             </div>
 
-            <div class="p-6 sm:p-7 space-y-5">
+            <div class="p-5 sm:p-7 space-y-4 sm:space-y-5">
                 <!-- Loading State -->
                 <div id="gatekeeper-loading" class="hidden py-8 text-center space-y-3">
                     <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
-                    <p class="text-sm font-semibold text-slate-700">Menghubungkan ke Google Spreadsheet...</p>
-                    <p class="text-xs text-slate-500">Memverifikasi struktur sheet dan sinkronisasi data</p>
+                    <p class="text-xs sm:text-sm font-semibold text-slate-700">Menghubungkan ke Google Spreadsheet...</p>
+                    <p class="text-[11px] sm:text-xs text-slate-500">Memverifikasi struktur sheet dan sinkronisasi data</p>
                 </div>
 
                 <!-- Form & Error State -->
                 <div id="gatekeeper-form-area" class="space-y-4">
                     <div id="gatekeeper-error-box" class="hidden p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5">
                         <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i>
-                        <p id="gatekeeper-error-msg" class="text-xs text-rose-700 leading-relaxed">URL Google Apps Script belum dikonfigurasi atau tidak merespons.</p>
+                        <p id="gatekeeper-error-msg" class="text-[11px] sm:text-xs text-rose-700 leading-relaxed">URL Google Apps Script belum dikonfigurasi atau tidak merespons.</p>
                     </div>
 
                     <div>
-                        <label for="gatekeeper-url-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        <label for="gatekeeper-url-input" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
                             URL GOOGLE APPS SCRIPT WEB APP <span class="text-rose-500">*</span>
                         </label>
-                        <input type="url" id="gatekeeper-url-input" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full text-base sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
+                        <input type="url" id="gatekeeper-url-input" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="tf-ctrl-input w-full text-[12px] sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl px-3.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
                     </div>
 
-                    <button type="button" onclick="connectFromGatekeeper()" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-[13px] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
+                    <button type="button" onclick="connectFromGatekeeper()" class="tf-ctrl-btn w-full inline-flex items-center justify-center gap-2 px-5 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-[12px] sm:text-[13px] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
                         <i data-lucide="plug-zap" class="w-4 h-4"></i>
                         <span>Hubungkan &amp; Buka Aplikasi</span>
                     </button>
@@ -113,15 +139,15 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     <!-- Login Screen (Membaca dari Tabel PIC di Google Spreadsheet) -->
     <div id="login-screen" class="fixed inset-0 w-screen min-h-[100dvh] overflow-y-auto z-[90] hidden bg-[#090C18] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-[400px] overflow-hidden fade-in my-auto">
-            <div class="px-6 pt-8 pb-7 bg-[#090B16] text-white text-center border-b border-slate-800/80">
+            <div class="px-6 pt-7 pb-6 sm:pt-8 sm:pb-7 bg-[#090B16] text-white text-center border-b border-slate-800/80">
                 <div class="w-12 h-12 rounded-xl bg-[#4F46E5] flex items-center justify-center text-white shadow-lg shadow-indigo-600/35 mx-auto mb-3.5">
                     <i data-lucide="check-square" class="w-6 h-6"></i>
                 </div>
-                <h2 class="text-2xl font-bold tracking-tight text-white">Task <span class="text-[#6366F1]">Flow</span></h2>
+                <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Task <span class="text-[#6366F1]">Flow</span></h2>
                 <p class="text-xs sm:text-[13px] text-slate-400 mt-1.5">Silahkan masuk untuk menggunakan aplikasi</p>
             </div>
 
-            <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
+            <form onsubmit="handleLogin(event)" class="p-5 sm:p-6 space-y-4">
                 <div id="login-error-box" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium flex items-center gap-2">
                     <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
                     <span id="login-error-msg">Username atau Password salah!</span>
@@ -131,7 +157,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <label for="login-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
                     <div class="relative">
                         <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" id="login-username" required autocomplete="username" placeholder="Masukkan Username" class="w-full text-base sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
+                        <input type="text" id="login-username" required autocomplete="username" placeholder="Masukkan Username" class="tf-ctrl-input w-full text-[12px] sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
                     </div>
                 </div>
 
@@ -139,17 +165,17 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <label for="login-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Masukkan Password" class="w-full text-base sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
+                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Masukkan Password" class="tf-ctrl-input w-full text-[12px] sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
                     </div>
                 </div>
 
-                <button type="submit" id="login-submit-btn" class="w-full mt-1 py-2.5 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-[13px] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100 transition-all flex items-center justify-center gap-2">
+                <button type="submit" id="login-submit-btn" class="tf-ctrl-btn w-full mt-1 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-[12px] sm:text-[13px] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100 transition-all flex items-center justify-center gap-2">
                     <i data-lucide="log-in" class="w-4 h-4"></i>
                     <span>Masuk ke Aplikasi</span>
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-xs font-medium text-slate-400 tracking-wide">Version v1.2.15</span>
+                    <span id="login-app-version" class="text-[11px] sm:text-xs font-medium text-slate-400 tracking-wide">Version v1.2.15</span>
                 </div>
             </form>
         </div>
@@ -159,7 +185,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     <div id="master-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90dvh] sm:max-h-[90vh] my-auto flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                <h3 id="master-modal-title" class="text-base font-bold text-slate-800">Tambah Master Data</h3>
+                <h3 id="master-modal-title" class="text-[15px] sm:text-base font-bold text-slate-800">Tambah Master Data</h3>
                 <button type="button" onclick="closeMasterModal()" aria-label="Tutup modal master data" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -170,14 +196,14 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                 <div>
                     <label id="master-label-name" for="master-input-name" class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Item <span class="text-rose-500">*</span></label>
-                    <input type="text" id="master-input-name" required placeholder="Masukkan nama..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="master-input-name" required placeholder="Masukkan nama..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Field Khusus Master KATEGORI (Group) -->
                 <div id="master-kategori-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
                     <div>
                         <label for="master-input-group" class="block text-xs font-semibold text-slate-700 mb-1.5">Group Kategori <span class="text-rose-500">*</span></label>
-                        <input type="text" id="master-input-group" list="master-group-datalist" placeholder="Contoh: Internal / Eksternal / Operasional..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="master-input-group" list="master-group-datalist" placeholder="Contoh: Internal / Eksternal / Operasional..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                         <datalist id="master-group-datalist"></datalist>
                     </div>
                 </div>
@@ -187,11 +213,11 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label for="master-input-initial" class="block text-xs font-semibold text-slate-700 mb-1.5">Initial (Untuk Chart) <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-initial" maxlength="8" placeholder="Contoh: BS / AND" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="master-input-initial" maxlength="8" placeholder="Contoh: BS / AND" class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
                             <label for="master-input-role" class="block text-xs font-semibold text-slate-700 mb-1.5">Hak Akses (Role) <span class="text-rose-500">*</span></label>
-                            <select id="master-input-role" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <select id="master-input-role" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
                                 <option value="Staff">Staff (Terbatas)</option>
                                 <option value="Manager">Manager (Kelola Master &amp; Monitor Tim)</option>
                                 <option value="Admin">Admin (Full Akses &amp; Database)</option>
@@ -201,13 +227,13 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username Login <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
                             <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password Login <span id="master-password-required-mark" class="text-rose-500">*</span></label>
                             <div class="relative">
-                                <input type="password" id="master-input-password" autocomplete="new-password" placeholder="Password..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg pl-3 pr-9 py-2 focus:outline-none focus:border-indigo-500">
-                                <button type="button" onclick="toggleMasterPasswordVisibility()" aria-label="Tampilkan atau sembunyikan password" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                                <input type="password" id="master-input-password" autocomplete="new-password" placeholder="Password..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg pl-3 pr-9 focus:outline-none focus:border-indigo-500">
+                                <button type="button" onclick="toggleMasterPasswordVisibility()" aria-label="Tampilkan atau sembunyikan password" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
                                     <i id="master-password-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -221,13 +247,13 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                         <div>
                             <label for="master-input-color-hex" class="block text-xs font-semibold text-slate-700 mb-1.5">Warna HEXA <span class="text-rose-500">*</span></label>
                             <div class="flex items-center gap-2">
-                                <input type="color" id="master-input-colorpicker" value="#3b82f6" onchange="document.getElementById('master-input-color-hex').value = this.value.toUpperCase()" class="h-9 w-11 rounded-lg border border-slate-300 cursor-pointer p-0.5 bg-white shrink-0">
-                                <input type="text" id="master-input-color-hex" value="#3B82F6" maxlength="9" oninput="syncColorPickerFromHex(this.value)" placeholder="#3B82F6" class="w-full text-base sm:text-[13px] font-mono uppercase border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                <input type="color" id="master-input-colorpicker" value="#3b82f6" onchange="document.getElementById('master-input-color-hex').value = this.value.toUpperCase()" class="tf-ctrl-input w-11 rounded-lg border border-slate-300 cursor-pointer p-0.5 bg-white shrink-0">
+                                <input type="text" id="master-input-color-hex" value="#3B82F6" maxlength="9" oninput="syncColorPickerFromHex(this.value)" placeholder="#3B82F6" class="tf-ctrl-input w-full text-[12px] sm:text-[13px] font-mono uppercase border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                             </div>
                         </div>
                         <div>
                             <label for="master-input-completed" class="block text-xs font-semibold text-slate-700 mb-1.5">Completed <span class="text-rose-500">*</span></label>
-                            <select id="master-input-completed" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <select id="master-input-completed" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500">
                                 <option value="No">No (In Progress)</option>
                                 <option value="Yes">Yes (Completed)</option>
                             </select>
@@ -237,12 +263,12 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                 <div id="master-extra-container">
                     <label id="master-label-extra" for="master-input-extra" class="block text-xs font-semibold text-slate-700 mb-1.5">Keterangan</label>
-                    <input type="text" id="master-input-extra" placeholder="Keterangan tambahan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="master-input-extra" placeholder="Keterangan tambahan..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
-                    <button type="button" onclick="closeMasterModal()" class="w-full sm:w-auto px-4 py-2 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                    <button type="submit" id="master-submit-btn" class="w-full sm:w-auto px-5 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan</button>
+                    <button type="button" onclick="closeMasterModal()" class="tf-ctrl-btn w-full sm:w-auto px-4 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" id="master-submit-btn" class="tf-ctrl-btn w-full sm:w-auto px-5 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan</button>
                 </div>
             </form>
         </div>
@@ -255,12 +281,12 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <i data-lucide="alert-triangle" class="w-6 h-6"></i>
             </div>
             <div>
-                <h4 class="text-base font-bold text-slate-800">Konfirmasi Hapus</h4>
-                <p id="confirm-message" class="text-xs sm:text-[13px] text-slate-500 mt-1.5 leading-relaxed">Apakah Anda yakin ingin menghapus data ini?</p>
+                <h4 class="text-[15px] sm:text-base font-bold text-slate-800">Konfirmasi Hapus</h4>
+                <p id="confirm-message" class="text-[12px] sm:text-[13px] text-slate-500 mt-1.5 leading-relaxed">Apakah Anda yakin ingin menghapus data ini?</p>
             </div>
             <div class="flex gap-2.5 justify-center pt-2">
-                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                <button type="button" id="confirm-yes-btn" class="flex-1 py-2 text-[13px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors">Ya, Hapus</button>
+                <button type="button" onclick="closeConfirmModal()" class="tf-ctrl-btn flex-1 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                <button type="button" id="confirm-yes-btn" class="tf-ctrl-btn flex-1 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors">Ya, Hapus</button>
             </div>
         </div>
     </div>
@@ -268,14 +294,14 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     <!-- ==================== MODAL: MY PROFILE ==================== -->
     <div id="profile-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90dvh] my-auto flex flex-col overflow-hidden fade-in">
-            <div class="px-6 py-5 bg-[#090B16] text-white flex items-center justify-between border-b border-slate-800">
+            <div class="px-5 sm:px-6 py-4 sm:py-5 bg-[#090B16] text-white flex items-center justify-between border-b border-slate-800">
                 <div class="flex items-center gap-3.5 min-w-0">
-                    <div id="profile-modal-avatar" class="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-lg shadow-indigo-600/30 shrink-0">
+                    <div id="profile-modal-avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-lg shadow-indigo-600/30 shrink-0">
                         U
                     </div>
                     <div class="min-w-0">
-                        <h3 id="profile-modal-name" class="text-base font-bold text-white truncate">Nama User</h3>
-                        <p id="profile-modal-divisi" class="text-xs text-slate-400 truncate mt-0.5">Divisi</p>
+                        <h3 id="profile-modal-name" class="text-[15px] sm:text-base font-bold text-white truncate">Nama User</h3>
+                        <p id="profile-modal-divisi" class="text-[11px] sm:text-xs text-slate-400 truncate mt-0.5">Divisi</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeProfileModal()" aria-label="Tutup profil" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
@@ -283,33 +309,33 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 </button>
             </div>
 
-            <div class="p-6 space-y-4">
+            <div class="p-5 sm:p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Kode PIC</p>
-                        <p id="profile-modal-kode" class="text-[13px] font-mono font-bold text-slate-800 mt-1">-</p>
+                        <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Kode PIC</p>
+                        <p id="profile-modal-kode" class="text-xs sm:text-[13px] font-mono font-bold text-slate-800 mt-1">-</p>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Initial</p>
-                        <p id="profile-modal-initial" class="text-[13px] font-bold text-indigo-600 mt-1">-</p>
+                        <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Initial</p>
+                        <p id="profile-modal-initial" class="text-xs sm:text-[13px] font-bold text-indigo-600 mt-1">-</p>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Username</p>
-                        <p id="profile-modal-username" class="text-[13px] font-semibold text-slate-800 mt-1 truncate">-</p>
+                        <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Username</p>
+                        <p id="profile-modal-username" class="text-xs sm:text-[13px] font-semibold text-slate-800 mt-1 truncate">-</p>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hak Akses (Role)</p>
-                        <p id="profile-modal-role" class="text-[13px] font-bold text-slate-800 mt-1">-</p>
+                        <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hak Akses (Role)</p>
+                        <p id="profile-modal-role" class="text-xs sm:text-[13px] font-bold text-slate-800 mt-1">-</p>
                     </div>
                 </div>
 
                 <div class="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between">
-                    <span class="text-xs font-medium text-indigo-900">Ringkasan Task Anda</span>
-                    <span id="profile-modal-task-stats" class="text-xs font-bold text-indigo-700">0 Completed / 0 Total</span>
+                    <span class="text-[11px] sm:text-xs font-medium text-indigo-900">Ringkasan Task Anda</span>
+                    <span id="profile-modal-task-stats" class="text-[11px] sm:text-xs font-bold text-indigo-700">0 Completed / 0 Total</span>
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeProfileModal()" class="w-full sm:w-auto px-5 py-2 text-[13px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                    <button type="button" onclick="closeProfileModal()" class="tf-ctrl-btn w-full sm:w-auto px-5 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                         Tutup
                     </button>
                 </div>
@@ -321,7 +347,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     <div id="task-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] my-auto flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                <h3 id="task-modal-title" class="text-base font-bold text-slate-800">Tambah Task Baru</h3>
+                <h3 id="task-modal-title" class="text-[15px] sm:text-base font-bold text-slate-800">Tambah Task Baru</h3>
                 <button type="button" onclick="closeTaskModal()" aria-label="Tutup modal task" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -333,38 +359,38 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="task-input-tanggal" class="block text-xs font-semibold text-slate-700 mb-1.5">Tanggal Input <span class="text-rose-500">*</span></label>
-                        <input type="date" id="task-input-tanggal" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <input type="date" id="task-input-tanggal" required class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
                         <label for="task-input-targetdate" class="block text-xs font-semibold text-slate-700 mb-1.5">Target Date (Deadline) <span class="text-rose-500">*</span></label>
-                        <input type="date" id="task-input-targetdate" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <input type="date" id="task-input-targetdate" required class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
                 <div>
                     <label for="task-input-task" class="block text-xs font-semibold text-slate-700 mb-1.5">Nama / Deskripsi Pekerjaan <span class="text-rose-500">*</span></label>
-                    <input type="text" id="task-input-task" required placeholder="Contoh: Rekonsiliasi Laporan Bulanan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="task-input-task" required placeholder="Contoh: Rekonsiliasi Laporan Bulanan..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label for="task-input-kategori" class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori <span class="text-rose-500">*</span></label>
-                        <select id="task-input-kategori" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <select id="task-input-kategori" required class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
                         <label for="task-input-priority" class="block text-xs font-semibold text-slate-700 mb-1.5">Priority <span class="text-rose-500">*</span></label>
-                        <select id="task-input-priority" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <select id="task-input-priority" required class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
                         <label for="task-input-pic" class="block text-xs font-semibold text-slate-700 mb-1.5">PIC <span class="text-rose-500">*</span></label>
-                        <select id="task-input-pic" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <select id="task-input-pic" required class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="task-input-status" class="block text-xs font-semibold text-slate-700 mb-1.5">Status <span class="text-rose-500">*</span></label>
-                        <select id="task-input-status" required onchange="onTaskStatusChange()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <select id="task-input-status" required onchange="onTaskStatusChange()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
@@ -378,22 +404,22 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="task-input-reference" class="block text-xs font-semibold text-slate-700 mb-1.5">Reference</label>
-                        <select id="task-input-reference" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <select id="task-input-reference" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
                         <label for="task-input-actionplan" class="block text-xs font-semibold text-slate-700 mb-1.5">Action Plan</label>
-                        <select id="task-input-actionplan" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <select id="task-input-actionplan" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                 </div>
 
                 <div>
                     <label for="task-input-catatan" class="block text-xs font-semibold text-slate-700 mb-1.5">Catatan Tambahan</label>
-                    <textarea id="task-input-catatan" rows="2" placeholder="Catatan progres atau kendala..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"></textarea>
+                    <textarea id="task-input-catatan" rows="2" placeholder="Catatan progres atau kendala..." class="w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"></textarea>
                 </div>
 
                 <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
-                    <button type="button" onclick="closeTaskModal()" class="w-full sm:w-auto px-4 py-2 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                    <button type="submit" class="w-full sm:w-auto px-5 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan Task</button>
+                    <button type="button" onclick="closeTaskModal()" class="tf-ctrl-btn w-full sm:w-auto px-4 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" class="tf-ctrl-btn w-full sm:w-auto px-5 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan Task</button>
                 </div>
             </form>
         </div>
@@ -462,18 +488,18 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                         <i data-lucide="menu" class="w-5 h-5"></i>
                     </button>
                     <div class="min-w-0">
-                        <h1 id="header-page-title" class="text-base sm:text-lg font-bold text-slate-800 truncate">Dashboard Monitoring</h1>
+                        <h1 id="header-page-title" class="text-[15px] sm:text-lg font-bold text-slate-800 truncate">Dashboard Monitoring</h1>
                         <p id="header-page-subtitle" class="text-xs text-slate-400 hidden sm:block truncate">Ringkasan progres pekerjaan dan performa tim</p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <button type="button" id="unsynced-retry-btn" onclick="retryUnsyncedOperations()" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition-colors">
+                    <button type="button" id="unsynced-retry-btn" onclick="retryUnsyncedOperations()" class="tf-ctrl-btn hidden inline-flex items-center gap-1.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] sm:text-xs font-semibold transition-colors">
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                         <span id="unsynced-retry-label">Kirim Ulang</span>
                     </button>
 
-                    <span id="sync-status-pill" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">
+                    <span id="sync-status-pill" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-[11px] sm:text-xs font-semibold">
                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
                         <span>Menyimpan ke Sheet...</span>
                     </span>
@@ -521,16 +547,16 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                                 <i data-lucide="filter" class="w-4 h-4"></i>
                             </span>
                             <div class="min-w-0">
-                                <h3 class="text-sm sm:text-[15px] font-bold text-slate-800 truncate">Filter Tampilan Dashboard</h3>
-                                <p id="dashboard-filter-subtitle" class="text-xs text-slate-400 truncate mt-0.5">Menampilkan ringkasan seluruh PIC</p>
+                                <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800 truncate">Filter Tampilan Dashboard</h3>
+                                <p id="dashboard-filter-subtitle" class="text-[11px] sm:text-xs text-slate-400 truncate mt-0.5">Menampilkan ringkasan seluruh PIC</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
-                            <label for="dashboard-pic-filter" class="text-xs font-semibold text-slate-600 whitespace-nowrap">PIC:</label>
-                            <select id="dashboard-pic-filter" onchange="renderDashboard()" class="min-w-[175px] text-base sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
+                            <label for="dashboard-pic-filter" class="text-[11px] sm:text-xs font-semibold text-slate-600 whitespace-nowrap">PIC:</label>
+                            <select id="dashboard-pic-filter" onchange="renderDashboard()" class="tf-ctrl-select min-w-[140px] sm:min-w-[175px] text-[12px] sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
                                 <option value="">Semua PIC</option>
                             </select>
-                            <button type="button" id="dashboard-pic-reset-btn" onclick="resetDashboardPicFilter()" class="hidden px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                            <button type="button" id="dashboard-pic-reset-btn" onclick="resetDashboardPicFilter()" class="tf-ctrl-btn hidden inline-flex items-center justify-center px-3 rounded-xl border border-slate-300 text-[11px] sm:text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                                 Reset
                             </button>
                         </div>
@@ -538,58 +564,58 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                     <!-- KPI Cards (Interactive Drill-Down) -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <div data-drill-mode="all" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="all" role="button" tabindex="0" class="group bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">Total Task</span>
-                                <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span class="text-[11px] sm:text-[13px] font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">Total Task</span>
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="layers" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-total" class="text-2xl sm:text-[28px] font-bold tracking-tight text-slate-800 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1.5">
-                                <p class="text-xs text-slate-400">Seluruh pekerjaan</p>
+                            <p id="kpi-total" class="text-lg sm:text-[26px] font-bold tracking-tight text-slate-800 mt-1.5 sm:mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1 sm:mt-1.5">
+                                <p class="text-[10px] sm:text-xs text-slate-400">Seluruh pekerjaan</p>
                                 <span class="text-[11px] font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">Lihat &rarr;</span>
                             </div>
                         </div>
 
-                        <div data-drill-mode="completed" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-emerald-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="completed" role="button" tabindex="0" class="group bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-emerald-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Completed</span>
-                                <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span class="text-[11px] sm:text-[13px] font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Completed</span>
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-done" class="text-2xl sm:text-[28px] font-bold tracking-tight text-emerald-600 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1.5">
-                                <p id="kpi-done-pct" class="text-xs text-slate-400">0% selesai</p>
+                            <p id="kpi-done" class="text-lg sm:text-[26px] font-bold tracking-tight text-emerald-600 mt-1.5 sm:mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1 sm:mt-1.5">
+                                <p id="kpi-done-pct" class="text-[10px] sm:text-xs text-slate-400">0% selesai</p>
                                 <span class="text-[11px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
                             </div>
                         </div>
 
-                        <div data-drill-mode="inprogress" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="inprogress" role="button" tabindex="0" class="group bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">In Progress</span>
-                                <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span class="text-[11px] sm:text-[13px] font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">In Progress</span>
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="clock" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-progress" class="text-2xl sm:text-[28px] font-bold tracking-tight text-blue-600 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1.5">
-                                <p class="text-xs text-slate-400">Sedang dikerjakan</p>
+                            <p id="kpi-progress" class="text-lg sm:text-[26px] font-bold tracking-tight text-blue-600 mt-1.5 sm:mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1 sm:mt-1.5">
+                                <p class="text-[10px] sm:text-xs text-slate-400">Sedang dikerjakan</p>
                                 <span class="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
                             </div>
                         </div>
 
-                        <div data-drill-mode="overdue" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-rose-400 hover:shadow-md cursor-pointer transition-all">
+                        <div data-drill-mode="overdue" role="button" tabindex="0" class="group bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-rose-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-rose-600 transition-colors">Overdue</span>
-                                <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span class="text-[11px] sm:text-[13px] font-semibold text-slate-500 group-hover:text-rose-600 transition-colors">Overdue</span>
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="alert-circle" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-overdue" class="text-2xl sm:text-[28px] font-bold tracking-tight text-rose-600 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1.5">
-                                <p class="text-xs text-slate-400">Lewat target date</p>
+                            <p id="kpi-overdue" class="text-lg sm:text-[26px] font-bold tracking-tight text-rose-600 mt-1.5 sm:mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1 sm:mt-1.5">
+                                <p class="text-[10px] sm:text-xs text-slate-400">Lewat target date</p>
                                 <span class="text-[11px] font-semibold text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
                             </div>
                         </div>
@@ -597,38 +623,38 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                     <!-- Charts Grid (Status Composition, PIC Workload, Priority Breakdown) -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Komposisi Status</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Klik segmen untuk filter status</p>
+                                    <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Komposisi Status</h3>
+                                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Klik segmen untuk filter status</p>
                                 </div>
                             </div>
-                            <div class="h-64 relative">
+                            <div class="h-60 sm:h-64 relative">
                                 <canvas id="chart-status"></canvas>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-6 flex flex-col">
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-6 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Beban Kerja per PIC</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Klik batang PIC untuk melihat daftar tugasnya</p>
+                                    <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Beban Kerja per PIC</h3>
+                                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Klik batang PIC untuk melihat daftar tugasnya</p>
                                 </div>
                             </div>
-                            <div class="h-64 relative">
+                            <div class="h-60 sm:h-64 relative">
                                 <canvas id="chart-pic"></canvas>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Distribusi Priority</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Klik untuk filter tingkat prioritas</p>
+                                    <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Distribusi Priority</h3>
+                                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Klik untuk filter tingkat prioritas</p>
                                 </div>
                             </div>
-                            <div class="h-64 relative">
+                            <div class="h-60 sm:h-64 relative">
                                 <canvas id="chart-priority"></canvas>
                             </div>
                         </div>
@@ -638,48 +664,48 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <div class="space-y-4">
                         <!-- Rekapitulasi Task per Kategori & Status -->
                         <div class="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
-                            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                            <div class="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                                 <div>
-                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Distribusi pekerjaan berdasarkan kategori dan progres penyelesaian</p>
+                                    <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
+                                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Distribusi pekerjaan berdasarkan kategori dan progres penyelesaian</p>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2.5">
-                                    <select id="rekap-filter-group" onchange="renderDashboard()" class="text-base sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="rekap-filter-group" onchange="renderDashboard()" class="tf-ctrl-select text-[12px] sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Group</option>
                                     </select>
-                                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer text-[13px] font-medium text-slate-700 select-none">
+                                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer text-[11px] sm:text-[13px] font-medium text-slate-700 select-none">
                                         <input type="checkbox" id="rekap-show-empty" checked onchange="renderDashboard()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                                         <span>Tampilkan Data kosong</span>
                                     </label>
-                                    <span id="rekap-kategori-count" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold shrink-0">0 Kategori</span>
+                                    <span id="rekap-kategori-count" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] sm:text-xs font-semibold shrink-0">0 Kategori</span>
                                 </div>
                             </div>
                             <div class="overflow-x-auto flex-1">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
-                                        <tr id="rekap-kategori-head" class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500"></tr>
+                                        <tr id="rekap-kategori-head" class="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-xs uppercase tracking-wider text-slate-500"></tr>
                                     </thead>
-                                    <tbody id="rekap-kategori-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
-                                    <tfoot id="rekap-kategori-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-[13px] font-bold text-slate-800"></tfoot>
+                                    <tbody id="rekap-kategori-body" class="divide-y divide-slate-100 text-[12px] sm:text-[13px]"></tbody>
+                                    <tfoot id="rekap-kategori-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-[12px] sm:text-[13px] font-bold text-slate-800"></tfoot>
                                 </table>
                             </div>
                         </div>
 
                         <!-- Task Perlu Ditindaklanjuti (Overdue / Due Soon / Urgent) -->
                         <div class="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
-                            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
+                            <div class="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                                         <i data-lucide="bell-ring" class="w-4 h-4"></i>
                                     </span>
                                     <div class="min-w-0">
-                                        <h3 class="text-sm sm:text-[15px] font-bold text-slate-800 truncate">Perlu Ditindaklanjuti</h3>
-                                        <p class="text-xs text-slate-400 truncate mt-0.5">Overdue, mendekati deadline (H-3), atau Urgent</p>
+                                        <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800 truncate">Perlu Ditindaklanjuti</h3>
+                                        <p class="text-[11px] sm:text-xs text-slate-400 truncate mt-0.5">Overdue, mendekati deadline (H-3), atau Urgent</p>
                                     </div>
                                 </div>
-                                <span id="action-required-count" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shrink-0">0 Task</span>
+                                <span id="action-required-count" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] sm:text-xs font-bold shrink-0">0 Task</span>
                             </div>
-                            <div id="action-required-list" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto flex-1"></div>
+                            <div id="action-required-list" class="p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto flex-1"></div>
                         </div>
                     </div>
                 </section>
@@ -688,7 +714,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <section id="view-tasks" class="hidden flex-col lg:h-full lg:overflow-hidden space-y-3">
                     <div id="tasks-sticky-filter" class="sticky top-16 lg:static z-10 bg-slate-50/95 backdrop-blur-sm shrink-0">
                         <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5 sm:space-y-3">
-                            <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs sm:text-[13px] text-indigo-800">
+                            <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-[11px] sm:text-[13px] text-indigo-800">
                                 <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
                                 <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
                             </div>
@@ -696,24 +722,24 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             <!-- Baris 1: Compact Search Bar + Toggle Filter Mobile (dengan Badge Counter) + Tambah Task -->
                             <div class="flex items-center gap-2">
                                 <div class="flex-1 relative min-w-0">
-                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-indigo-500">
+                                    <i data-lucide="search" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-xl pl-8 sm:pl-9 pr-7 sm:pr-8 focus:outline-none focus:border-indigo-500">
                                     <button type="button" id="btn-clear-search" onclick="clearTasksSearchInput()" aria-label="Hapus pencarian" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md">
                                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
                                 <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" aria-expanded="false" aria-controls="tasks-filter-grid-wrapper" class="lg:hidden inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors">
-                                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-600"></i>
+                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" aria-expanded="false" aria-controls="tasks-filter-grid-wrapper" class="tf-ctrl-btn lg:hidden inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-xl border border-slate-300 text-[11px] sm:text-[13px] font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                                        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600"></i>
                                         <span>Filter</span>
-                                        <span id="mobile-filter-badge" class="hidden inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold leading-none">0</span>
+                                        <span id="mobile-filter-badge" class="hidden inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold leading-none">0</span>
                                     </button>
-                                    <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="hidden lg:inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                                    <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="tf-ctrl-btn hidden lg:inline-flex items-center justify-center gap-1.5 px-3.5 rounded-xl border border-slate-300 text-[12px] sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                                         <span>Reset Filter</span>
                                     </button>
-                                    <button type="button" onclick="openTaskModal('')" class="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
-                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <button type="button" onclick="openTaskModal('')" class="tf-ctrl-btn inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 text-[11px] sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                                         <span class="sm:hidden">Task</span>
                                         <span class="hidden sm:inline">Tambah Task</span>
                                     </button>
@@ -721,51 +747,51 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             </div>
 
                             <!-- Baris 2: Collapsible Panel Filter (Tertutup di Mobile/Tablet secara default, Terbuka di Desktop) -->
-                            <div id="tasks-filter-grid-wrapper" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-2.5 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                            <div id="tasks-filter-grid-wrapper" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                                 <div>
-                                    <label for="filter-kategori" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Kategori</label>
-                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-kategori" class="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Kategori</label>
+                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg sm:rounded-xl px-2.5 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Kategori</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-priority" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Priority</label>
-                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-priority" class="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Priority</label>
+                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg sm:rounded-xl px-2.5 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Priority</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-pic" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">PIC</label>
-                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-pic" class="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">PIC</label>
+                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg sm:rounded-xl px-2.5 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua PIC</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-status" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Status</label>
-                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-status" class="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Status</label>
+                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg sm:rounded-xl px-2.5 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Status</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-reference" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Reference</label>
-                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-reference" class="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Reference</label>
+                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg sm:rounded-xl px-2.5 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Reference</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-actionplan" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Action Plan</label>
-                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-actionplan" class="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Action Plan</label>
+                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="tf-ctrl-select w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg sm:rounded-xl px-2.5 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Action Plan</option>
                                     </select>
                                 </div>
 
                                 <!-- Aksi Panel Filter Khusus Mobile & Tablet -->
                                 <div class="col-span-full lg:hidden flex items-center gap-2 pt-1">
-                                    <button type="button" onclick="resetAllTaskFilters()" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors">
+                                    <button type="button" onclick="resetAllTaskFilters()" class="tf-ctrl-btn flex-1 inline-flex items-center justify-center gap-1.5 px-3 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-[11px] font-semibold text-slate-700 transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                                         <span>Reset Filter</span>
                                     </button>
-                                    <button type="button" onclick="toggleMobileTaskFilters(false)" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition-colors">
+                                    <button type="button" onclick="toggleMobileTaskFilters(false)" class="tf-ctrl-btn flex-1 inline-flex items-center justify-center gap-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-[11px] font-semibold text-white transition-colors">
                                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                         <span>Terapkan</span>
                                     </button>
@@ -774,15 +800,15 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs lg:flex-1 lg:min-h-0 flex flex-col">
+                    <div id="tasks-list-container" class="bg-white rounded-2xl border border-slate-200/80 shadow-xs lg:flex-1 lg:min-h-0 flex flex-col">
                         <!-- Tampilan Kartu Responsif Khusus Smartphone (< 768px) -->
                         <div id="tasks-mobile-cards" class="block md:hidden divide-y divide-slate-100"></div>
 
                         <!-- Tampilan Tabel Penuh untuk Tablet & Laptop (>= 768px) -->
-                        <div class="hidden md:block overflow-x-auto lg:overflow-y-auto lg:flex-1 rounded-t-2xl">
+                        <div id="tasks-table-scroll-area" class="hidden md:block overflow-x-auto lg:overflow-y-auto lg:flex-1 rounded-t-2xl">
                             <table class="w-full text-left border-collapse">
                                 <thead id="tasks-table-head" class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
-                                    <tr class="text-xs uppercase tracking-wider text-slate-500">
+                                    <tr class="text-[11px] sm:text-xs uppercase tracking-wider text-slate-500">
                                         <th class="py-3 px-4 font-semibold bg-slate-50 rounded-tl-2xl">ID</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">Pekerjaan &amp; Detail</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">Priority</th>
@@ -793,10 +819,10 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                                         <th class="py-3 px-4 text-right font-semibold bg-slate-50 rounded-tr-2xl">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
+                                <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-[12px] sm:text-[13px]"></tbody>
                             </table>
                         </div>
-                        <div id="tasks-pagination" class="px-4 py-3 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-[13px] text-slate-500"></div>
+                        <div id="tasks-pagination" class="px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-[13px] text-slate-500"></div>
                     </div>
                 </section>
 
@@ -804,11 +830,11 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <section id="view-monitoring" class="hidden space-y-3.5">
                     <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Kapasitas &amp; Beban Kerja Anggota Tim</h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Klik kartu PIC untuk meninjau seluruh daftar pekerjaan yang ditugaskan.</p>
+                            <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Kapasitas &amp; Beban Kerja Anggota Tim</h3>
+                            <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Klik kartu PIC untuk meninjau seluruh daftar pekerjaan yang ditugaskan.</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <select id="monitoring-divisi-filter" onchange="renderMonitoringView()" class="text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <select id="monitoring-divisi-filter" onchange="renderMonitoringView()" class="tf-ctrl-select text-[12px] sm:text-[13px] border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
                                 <option value="">Semua Divisi</option>
                             </select>
                         </div>
@@ -821,18 +847,18 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <section id="view-reports" class="hidden space-y-3.5">
                     <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Filter Periode, PIC &amp; Ekspor Laporan</h3>
-                            <p id="report-filter-subtitle" class="text-xs text-slate-500 mt-0.5">Analisis produktivitas tim dan unduh ringkasan kinerja dalam format CSV.</p>
+                            <h3 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Filter Periode, PIC &amp; Ekspor Laporan</h3>
+                            <p id="report-filter-subtitle" class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Analisis produktivitas tim dan unduh ringkasan kinerja dalam format CSV.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <select id="report-pic-filter" onchange="renderReportsView()" class="min-w-[165px] text-base sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
+                            <select id="report-pic-filter" onchange="renderReportsView()" class="tf-ctrl-select min-w-[140px] sm:min-w-[165px] text-[12px] sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
                                 <option value="">Semua PIC</option>
                             </select>
-                            <input type="date" id="report-date-from" onchange="renderReportsView()" class="text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                            <span class="text-xs text-slate-400 font-medium">s/d</span>
-                            <input type="date" id="report-date-to" onchange="renderReportsView()" class="text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                            <button type="button" onclick="resetReportFilters()" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">Reset</button>
-                            <button type="button" onclick="exportReportCsv()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-[13px] font-semibold shadow-xs transition-colors">
+                            <input type="date" id="report-date-from" onchange="renderReportsView()" class="tf-ctrl-input text-[12px] sm:text-[13px] border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
+                            <span class="text-[11px] sm:text-xs text-slate-400 font-medium">s/d</span>
+                            <input type="date" id="report-date-to" onchange="renderReportsView()" class="tf-ctrl-input text-[12px] sm:text-[13px] border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
+                            <button type="button" onclick="resetReportFilters()" class="tf-ctrl-btn inline-flex items-center justify-center px-3 sm:px-3.5 rounded-xl border border-slate-300 text-[11px] sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">Reset</button>
+                            <button type="button" onclick="exportReportCsv()" class="tf-ctrl-btn inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-[13px] font-semibold shadow-xs transition-colors">
                                 <i data-lucide="download" class="w-3.5 h-3.5"></i>
                                 <span>Export CSV</span>
                             </button>
@@ -841,37 +867,37 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                     <!-- Ringkasan Analitik Periode -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">Total Task Periode</p>
-                            <p id="rep-kpi-total" class="text-2xl sm:text-[26px] font-bold tracking-tight text-slate-800 mt-1.5">0</p>
+                        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80">
+                            <p class="text-[11px] sm:text-[13px] font-semibold text-slate-500">Total Task Periode</p>
+                            <p id="rep-kpi-total" class="text-lg sm:text-[24px] font-bold tracking-tight text-slate-800 mt-1 sm:mt-1.5">0</p>
                         </div>
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">Completion Rate</p>
-                            <p id="rep-kpi-rate" class="text-2xl sm:text-[26px] font-bold tracking-tight text-emerald-600 mt-1.5">0%</p>
+                        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80">
+                            <p class="text-[11px] sm:text-[13px] font-semibold text-slate-500">Completion Rate</p>
+                            <p id="rep-kpi-rate" class="text-lg sm:text-[24px] font-bold tracking-tight text-emerald-600 mt-1 sm:mt-1.5">0%</p>
                         </div>
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">Rata-rata Progress</p>
-                            <p id="rep-kpi-avg-prog" class="text-2xl sm:text-[26px] font-bold tracking-tight text-indigo-600 mt-1.5">0%</p>
+                        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80">
+                            <p class="text-[11px] sm:text-[13px] font-semibold text-slate-500">Rata-rata Progress</p>
+                            <p id="rep-kpi-avg-prog" class="text-lg sm:text-[24px] font-bold tracking-tight text-indigo-600 mt-1 sm:mt-1.5">0%</p>
                         </div>
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">On-Time Delivery</p>
-                            <p id="rep-kpi-ontime" class="text-2xl sm:text-[26px] font-bold tracking-tight text-blue-600 mt-1.5">0%</p>
+                        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80">
+                            <p class="text-[11px] sm:text-[13px] font-semibold text-slate-500">On-Time Delivery</p>
+                            <p id="rep-kpi-ontime" class="text-lg sm:text-[24px] font-bold tracking-tight text-blue-600 mt-1 sm:mt-1.5">0%</p>
                         </div>
                     </div>
 
                     <!-- Grafik Analitik -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                            <h4 class="text-sm sm:text-[15px] font-bold text-slate-800 mb-0.5">Tren Input vs Penyelesaian Task</h4>
-                            <p class="text-xs text-slate-400 mb-3">Perbandingan jumlah task masuk dan task selesai per bulan</p>
-                            <div class="h-64 relative">
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                            <h4 class="text-[13px] sm:text-[15px] font-bold text-slate-800 mb-0.5">Tren Input vs Penyelesaian Task</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-400 mb-3">Perbandingan jumlah task masuk dan task selesai per bulan</p>
+                            <div class="h-60 sm:h-64 relative">
                                 <canvas id="chart-report-trend"></canvas>
                             </div>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                            <h4 class="text-sm sm:text-[15px] font-bold text-slate-800 mb-0.5">Volume Pekerjaan per Kategori</h4>
-                            <p class="text-xs text-slate-400 mb-3">Sebaran total task berdasarkan kategori pekerjaan</p>
-                            <div class="h-64 relative">
+                        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                            <h4 class="text-[13px] sm:text-[15px] font-bold text-slate-800 mb-0.5">Volume Pekerjaan per Kategori</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-400 mb-3">Sebaran total task berdasarkan kategori pekerjaan</p>
+                            <div class="h-60 sm:h-64 relative">
                                 <canvas id="chart-report-category"></canvas>
                             </div>
                         </div>
@@ -879,14 +905,14 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                     <!-- Tabel Performa Detail per PIC -->
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                        <div class="px-5 py-4 border-b border-slate-100">
-                            <h4 class="text-sm sm:text-[15px] font-bold text-slate-800">Rapor Kinerja &amp; Penyelesaian per PIC</h4>
-                            <p class="text-xs text-slate-400 mt-0.5">Rekapitulasi produktivitas masing-masing anggota tim pada periode terpilih</p>
+                        <div class="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100">
+                            <h4 class="text-[13px] sm:text-[15px] font-bold text-slate-800">Rapor Kinerja &amp; Penyelesaian per PIC</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Rekapitulasi produktivitas masing-masing anggota tim pada periode terpilih</p>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-xs uppercase tracking-wider text-slate-500">
                                         <th class="sticky left-0 z-10 bg-slate-50 py-3 px-4 font-semibold">Nama PIC</th>
                                         <th class="py-3 px-4 font-semibold">Divisi</th>
                                         <th class="py-3 px-3 text-center font-semibold">Total</th>
@@ -897,8 +923,8 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                                         <th class="py-3 px-4 text-right font-semibold">Completion Rate</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-pic-table-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
-                                <tfoot id="report-pic-table-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-[13px] font-bold text-slate-800"></tfoot>
+                                <tbody id="report-pic-table-body" class="divide-y divide-slate-100 text-[12px] sm:text-[13px]"></tbody>
+                                <tfoot id="report-pic-table-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-[12px] sm:text-[13px] font-bold text-slate-800"></tfoot>
                             </table>
                         </div>
                     </div>
@@ -908,43 +934,43 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 <section id="view-master" class="hidden space-y-3">
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                         <div class="border-b border-slate-200 px-3 sm:px-4 flex items-center gap-1.5 overflow-x-auto">
-                            <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
-                            <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Priority</button>
-                            <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">PIC &amp; User</button>
-                            <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Status</button>
-                            <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Reference</button>
-                            <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Action Plan</button>
+                            <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn py-2.5 sm:py-3 px-2.5 sm:px-3 text-[11px] sm:text-[13px] font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
+                            <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn py-2.5 sm:py-3 px-2.5 sm:px-3 text-[11px] sm:text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Priority</button>
+                            <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn py-2.5 sm:py-3 px-2.5 sm:px-3 text-[11px] sm:text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">PIC &amp; User</button>
+                            <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn py-2.5 sm:py-3 px-2.5 sm:px-3 text-[11px] sm:text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Status</button>
+                            <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn py-2.5 sm:py-3 px-2.5 sm:px-3 text-[11px] sm:text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Reference</button>
+                            <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn py-2.5 sm:py-3 px-2.5 sm:px-3 text-[11px] sm:text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Action Plan</button>
                         </div>
 
                         <div class="p-3.5 sm:p-4 space-y-3">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                 <div>
-                                    <h3 id="master-title" class="text-sm sm:text-[15px] font-bold text-slate-800">Master Data: Kategori</h3>
-                                    <p id="master-desc" class="text-xs text-slate-500 mt-0.5">Kelola daftar referensi kategori pekerjaan.</p>
+                                    <h3 id="master-title" class="text-[13px] sm:text-[15px] font-bold text-slate-800">Master Data: Kategori</h3>
+                                    <p id="master-desc" class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Kelola daftar referensi kategori pekerjaan.</p>
                                 </div>
-                                <button type="button" onclick="openMasterModal(-1)" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-[13px] font-semibold rounded-xl shadow-sm shrink-0 transition-colors">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                <button type="button" onclick="openMasterModal(-1)" class="tf-ctrl-btn inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] sm:text-[13px] font-semibold rounded-xl shadow-sm shrink-0 transition-colors">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                                     <span id="master-add-btn-label">Tambah Kategori</span>
                                 </button>
                             </div>
 
                             <div id="master-filter-grid" class="grid grid-cols-1 gap-2.5">
                                 <div class="relative">
-                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="master-filter-search" oninput="onMasterSearchInput()" placeholder="Cari data master..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                                    <i data-lucide="search" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="master-filter-search" oninput="onMasterSearchInput()" placeholder="Cari data master..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-xl pl-9 sm:pl-10 pr-3 focus:outline-none focus:border-indigo-500">
                                 </div>
-                                <select id="master-filter-role" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-role" onchange="renderMasterTable()" class="tf-ctrl-select hidden w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Role</option>
                                     <option value="Admin">Admin</option>
                                     <option value="Manager">Manager</option>
                                     <option value="Staff">Staff</option>
                                 </select>
-                                <select id="master-filter-completed" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-completed" onchange="renderMasterTable()" class="tf-ctrl-select hidden w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Status Completed</option>
                                     <option value="Yes">Yes (Completed)</option>
                                     <option value="No">No (In Progress)</option>
                                 </select>
-                                <select id="master-filter-group" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-group" onchange="renderMasterTable()" class="tf-ctrl-select hidden w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-xl px-2.5 sm:px-3 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Group</option>
                                 </select>
                             </div>
@@ -953,12 +979,12 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left border-collapse">
                                         <thead>
-                                            <tr id="master-table-head" class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500"></tr>
+                                            <tr id="master-table-head" class="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-xs uppercase tracking-wider text-slate-500"></tr>
                                         </thead>
-                                        <tbody id="master-table-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
+                                        <tbody id="master-table-body" class="divide-y divide-slate-100 text-[12px] sm:text-[13px]"></tbody>
                                     </table>
                                 </div>
-                                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-xs sm:text-[13px] text-slate-500">
+                                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-[11px] sm:text-[13px] text-slate-500">
                                     Total ditampilkan: <strong id="master-count-label" class="text-slate-700">0</strong> item
                                 </div>
                             </div>
@@ -981,6 +1007,32 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        function sanitizeUrl(rawUrl) {
+            const cleaned = String(rawUrl ?? '').trim();
+            if (!cleaned) return '';
+            try {
+                const parsed = new URL(cleaned, window.location.origin);
+                const proto = parsed.protocol.toLowerCase();
+                if (proto === 'https:' || proto === 'http:' || proto === 'mailto:') {
+                    return parsed.href;
+                }
+            } catch (e) {}
+            return '';
+        }
+
+        function buildSafeStyleAttr(stylesMap) {
+            const parts = [];
+            Object.entries(stylesMap || {}).forEach(([prop, val]) => {
+                if (!val) return;
+                const safeProp = String(prop).replace(/[^a-zA-Z-]/g, '');
+                const safeVal = String(val).replace(/[;<>]/g, '').trim();
+                if (safeProp && safeVal) {
+                    parts.push(`${safeProp}:${safeVal}`);
+                }
+            });
+            return parts.length ? ` style="${escapeHtml(parts.join(';'))}"` : '';
         }
 
         function getTodayOffset(days) {
@@ -1254,8 +1306,16 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             TOKEN: 'taskflow_session_token',
             USER_PROFILE: 'taskflow_user_profile',
             EXPIRES_AT: 'taskflow_session_expires_at',
-            UNSYNCED_QUEUE: 'taskflow_unsynced_queue'
+            UNSYNCED_QUEUE: 'taskflow_unsynced_queue',
+            TASKS_PAGE_SIZE: 'taskflow_tasks_page_size'
         };
+
+        const ALLOWED_PAGE_SIZES = [25, 50];
+
+        function normalizePageSize(val) {
+            const num = Number(val);
+            return ALLOWED_PAGE_SIZES.includes(num) ? num : 25;
+        }
 
         let db = JSON.parse(JSON.stringify(EMPTY_DB));
         let gasUrl = '';
@@ -1265,7 +1325,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         let isConnecting = false;
         let currentMasterTab = 'Kategori';
         let tasksCurrentPage = 1;
-        const tasksPageSize = 15;
+        let tasksPageSize = 25;
         let tasksSpecialFilter = '';
         let pendingDeleteTaskId = null;
         let picChart = null;
@@ -1558,6 +1618,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             } catch (e) {
                 currentUser = null;
             }
+            tasksPageSize = normalizePageSize(SafeStorage.getItem(SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE));
             loadFromLocal();
             loadUnsyncedQueue();
             return true;
@@ -2163,7 +2224,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const filteredPics = pics.filter(p => !selectedDiv || isSameText(p.Divisi, selectedDiv));
 
             if (filteredPics.length === 0) {
-                gridEl.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-[13px] text-slate-400">Belum ada data anggota tim (PIC) yang tersedia.</div>`;
+                gridEl.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-xs sm:text-[13px] text-slate-400">Belum ada data anggota tim (PIC) yang tersedia.</div>`;
                 return;
             }
 
@@ -2175,72 +2236,74 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 const todayMs = new Date(`${today}T00:00:00`).getTime();
 
                 return `
-                <div data-drill-mode="pic" data-drill-value="${escapeHtml(pic.Nama)}" role="button" tabindex="0" class="group bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between space-y-4">
+                <div data-drill-mode="pic" data-drill-value="${escapeHtml(pic.Nama)}" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between space-y-4">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-3">
                             <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-11 h-11 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-indigo-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs">
                                     ${escapeHtml(getPicInitial(pic))}
                                 </div>
                                 <div class="min-w-0">
-                                    <h4 class="text-sm sm:text-[15px] font-bold text-slate-800 group-hover:text-indigo-600 truncate transition-colors">${escapeHtml(pic.Nama)}</h4>
-                                    <p class="text-xs text-slate-500 truncate mt-0.5">${escapeHtml(pic.Divisi || '-')} • <span class="font-semibold text-slate-600">${escapeHtml(pic.Role || 'Staff')}</span></p>
+                                    <h4 class="text-[13px] sm:text-[15px] font-bold text-slate-800 group-hover:text-indigo-600 truncate transition-colors">${escapeHtml(pic.Nama)}</h4>
+                                    <p class="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">${escapeHtml(pic.Divisi || '-')} • <span class="font-semibold text-slate-600">${escapeHtml(pic.Role || 'Staff')}</span></p>
                                 </div>
                             </div>
-                            <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold shrink-0">${pStat.total} Task</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] sm:text-xs font-bold shrink-0">${pStat.total} Task</span>
                         </div>
 
                         <div class="grid grid-cols-3 gap-2 pt-1">
-                            <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
-                                <p class="text-base sm:text-lg font-bold text-emerald-700">${pStat.done}</p>
-                                <p class="text-[11px] font-semibold text-emerald-600">Completed</p>
+                            <div class="p-2 sm:p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
+                                <p class="text-sm sm:text-lg font-bold text-emerald-700">${pStat.done}</p>
+                                <p class="text-[10px] sm:text-[11px] font-semibold text-emerald-600">Completed</p>
                             </div>
-                            <div class="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-center">
-                                <p class="text-base sm:text-lg font-bold text-blue-700">${pStat.inProgress}</p>
-                                <p class="text-[11px] font-semibold text-blue-600">In Progress</p>
+                            <div class="p-2 sm:p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-center">
+                                <p class="text-sm sm:text-lg font-bold text-blue-700">${pStat.inProgress}</p>
+                                <p class="text-[10px] sm:text-[11px] font-semibold text-blue-600">In Progress</p>
                             </div>
-                            <div class="p-2.5 rounded-xl bg-rose-50/70 border border-rose-100 text-center">
-                                <p class="text-base sm:text-lg font-bold text-rose-700">${pStat.overdue}</p>
-                                <p class="text-[11px] font-semibold text-rose-600">Overdue</p>
+                            <div class="p-2 sm:p-2.5 rounded-xl bg-rose-50/70 border border-rose-100 text-center">
+                                <p class="text-sm sm:text-lg font-bold text-rose-700">${pStat.overdue}</p>
+                                <p class="text-[10px] sm:text-[11px] font-semibold text-rose-600">Overdue</p>
                             </div>
                         </div>
 
                         <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center justify-between text-[11px] sm:text-xs">
                                 <span class="text-slate-500 font-medium">Progres</span>
                                 <span class="font-bold text-indigo-600">${completionPct}%</span>
                             </div>
                             <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-indigo-600 rounded-full" style="width:${completionPct}%"></div>
+                                <div class="h-full bg-indigo-600 rounded-full"${buildSafeStyleAttr({ width: `${completionPct}%` })}></div>
                             </div>
                         </div>
 
                         <div class="pt-2.5 border-t border-slate-100 space-y-1.5">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600">Task Overdue</p>
+                            <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-600">Task Overdue</p>
                             ${pStat.overdueTasks.length === 0
-                                ? `<p class="text-xs text-slate-400 italic">Tidak ada task overdue saat ini.</p>`
+                                ? `<p class="text-[11px] sm:text-xs text-slate-400 italic">Tidak ada task overdue saat ini.</p>`
                                 : pStat.overdueTasks.map(t => {
                                     const targetIso = normalizeDateISO(t.TargetDate);
                                     const targetMs = targetIso ? new Date(`${targetIso}T00:00:00`).getTime() : todayMs;
                                     const lateDays = Math.max(1, Math.round((todayMs - targetMs) / 86400000));
                                     return `
-                                    <div data-edit-task-id="${escapeHtml(t.ID)}" title="Klik untuk membuka detail task" class="group/item flex items-center justify-between gap-2 text-xs py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-rose-50/80 transition-colors">
+                                    <div data-edit-task-id="${escapeHtml(t.ID)}" title="Klik untuk membuka detail task" class="group/item flex items-center justify-between gap-2 text-[11px] sm:text-xs py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-rose-50/80 transition-colors">
                                         <div class="min-w-0">
                                             <p class="text-slate-700 group-hover/item:text-rose-700 font-medium truncate">${escapeHtml(t.Task)}</p>
-                                            <p class="text-[11px] text-slate-400">Masuk: ${formatDateDisplay(t.Tanggal)} • Target: ${formatDateDisplay(t.TargetDate)}</p>
+                                            <p class="text-[10px] sm:text-[11px] text-slate-400">Masuk: ${formatDateDisplay(t.Tanggal)} • Target: ${formatDateDisplay(t.TargetDate)}</p>
                                         </div>
-                                        <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200/80 text-[11px] font-bold shrink-0">Telat ${lateDays} hr</span>
+                                        <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200/80 text-[10px] sm:text-[11px] font-bold shrink-0">Telat ${lateDays} hr</span>
                                     </div>`;
                                 }).join('')}
                         </div>
                     </div>
 
-                    <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-indigo-600">
+                    <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-semibold text-indigo-600">
                         <span>Lihat Semua Pekerjaan</span>
                         <span>&rarr;</span>
                     </div>
                 </div>`;
             }).join('');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: gridEl });
         }
 
         function getSelectedDashboardPic() {
@@ -2867,7 +2930,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <th class="py-3 px-3 text-center font-semibold whitespace-nowrap bg-slate-100/80 text-slate-700 border-r border-slate-200/70">Selesai</th>
                     ${statusList.map(st => {
                         const stHex = normalizeHexColor(st.Warna, '#64748B');
-                        return `<th style="background-color:${hexToRgba(stHex, 0.16)};color:${stHex};" class="py-3 px-3 text-center font-bold whitespace-nowrap">${escapeHtml(st.Nama)}</th>`;
+                        return `<th${buildSafeStyleAttr({ 'background-color': hexToRgba(stHex, 0.16), color: stHex })} class="py-3 px-3 text-center font-bold whitespace-nowrap">${escapeHtml(st.Nama)}</th>`;
                     }).join('')}
                 `;
 
@@ -2902,10 +2965,10 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             const cnt = cStat.byStatus.get(String(st.Nama || '').trim().toLowerCase()) || 0;
                             statusTotals[sIdx] += cnt;
                             const badgeStyle = cnt > 0
-                                ? `background-color:${hexToRgba(st.Warna, 0.14)};color:${normalizeHexColor(st.Warna, '#334155')};`
+                                ? buildSafeStyleAttr({ 'background-color': hexToRgba(st.Warna, 0.14), color: normalizeHexColor(st.Warna, '#334155') })
                                 : '';
                             return `<td class="py-2.5 px-3 text-center">
-                                <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(cat)}|||${escapeHtml(st.Nama)}" style="${badgeStyle}" class="min-w-[28px] px-2 py-0.5 rounded-md font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
+                                <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(cat)}|||${escapeHtml(st.Nama)}"${badgeStyle} class="min-w-[28px] px-2 py-0.5 rounded-md font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
                             </td>`;
                         }).join('');
 
@@ -2962,8 +3025,8 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
                                 <i data-lucide="check-check" class="w-5 h-5"></i>
                             </div>
-                            <p class="text-[13px] font-semibold text-slate-700">Semua pekerjaan terkendali</p>
-                            <p class="text-xs text-slate-400">Tidak ada task overdue atau mendesak saat ini.</p>
+                            <p class="text-xs sm:text-[13px] font-semibold text-slate-700">Semua pekerjaan terkendali</p>
+                            <p class="text-[11px] sm:text-xs text-slate-400">Tidak ada task overdue atau mendesak saat ini.</p>
                         </div>`;
                 } else {
                     actionListEl.innerHTML = urgentList.slice(0, 12).map(t => {
@@ -2977,8 +3040,8 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                         return `
                         <div data-edit-task-id="${escapeHtml(t.ID)}" role="button" tabindex="0" class="p-3 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-start justify-between gap-3">
                             <div class="min-w-0 space-y-1">
-                                <p class="text-[13px] font-bold text-slate-800 truncate">${escapeHtml(t.Task)}</p>
-                                <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                <p class="text-xs sm:text-[13px] font-bold text-slate-800 truncate">${escapeHtml(t.Task)}</p>
+                                <div class="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-slate-500">
                                     <span class="font-semibold text-indigo-600">${escapeHtml(t.PIC || '-')}</span>
                                     <span>•</span>
                                     <span>Target: ${formatDateDisplay(t.TargetDate)}</span>
@@ -2986,7 +3049,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                                     <span>${Number(t.Progress || 0)}%</span>
                                 </div>
                             </div>
-                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border shrink-0 ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold border shrink-0 ${badgeClass}">${escapeHtml(badgeLabel)}</span>
                         </div>`;
                     }).join('');
                 }
@@ -2995,7 +3058,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             if (typeof lucide !== 'undefined' && dashEl) lucide.createIcons({ root: dashEl });
         }
 
-        // ==================== FILTER & DAFTAR PEKERJAAN (COLLAPSIBLE & SKELETON) ====================
+        // ==================== FILTER & DAFTAR PEKERJAAN (COLLAPSIBLE, SKELETON & PAGINASI 25-50) ====================
         function toggleMobileTaskFilters(forceState) {
             const wrapper = document.getElementById('tasks-filter-grid-wrapper');
             const btn = document.getElementById('mobile-filter-toggle-btn');
@@ -3055,6 +3118,33 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             updateMobileFilterBadge();
             tasksCurrentPage = 1;
             renderTasksTable();
+        }
+
+        function onTasksPageSizeChange(newSize) {
+            tasksPageSize = normalizePageSize(newSize);
+            tasksCurrentPage = 1;
+            SafeStorage.setItem(SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE, String(tasksPageSize), true);
+            renderTasksTable();
+            scrollTasksListToTop();
+        }
+
+        function goToTasksPage(targetPage, totalPages) {
+            const clamped = Math.min(Math.max(1, Number(targetPage || 1)), Math.max(1, Number(totalPages || 1)));
+            if (clamped === tasksCurrentPage) return;
+            tasksCurrentPage = clamped;
+            renderTasksTable();
+            scrollTasksListToTop();
+        }
+
+        function scrollTasksListToTop() {
+            const tableScroll = document.getElementById('tasks-table-scroll-area');
+            if (tableScroll && typeof tableScroll.scrollTo === 'function') {
+                tableScroll.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            const listContainer = document.getElementById('tasks-list-container');
+            if (listContainer && window.innerWidth < 1024 && typeof listContainer.scrollIntoView === 'function') {
+                listContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
 
         function renderTasksSkeleton(cardCount = 4, rowCount = 6) {
@@ -3279,6 +3369,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const quickLabel = document.getElementById('tasks-active-quickfilter-label');
             if (!tbody) return;
 
+            tasksPageSize = normalizePageSize(tasksPageSize);
             updateMobileFilterBadge();
 
             if (isTasksLoading && (db.Tasks || []).length === 0) {
@@ -3305,6 +3396,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const totalItems = filtered.length;
             const totalPages = Math.max(1, Math.ceil(totalItems / tasksPageSize));
             if (tasksCurrentPage > totalPages) tasksCurrentPage = totalPages;
+            if (tasksCurrentPage < 1) tasksCurrentPage = 1;
 
             const startIdx = (tasksCurrentPage - 1) * tasksPageSize;
             const pageItems = filtered.slice(startIdx, startIdx + tasksPageSize);
@@ -3333,29 +3425,29 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                     const subParts = [t.Kategori, t.Catatan].filter(Boolean).map(v => escapeHtml(v));
                     const refBadge = t.Reference
-                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[11px] font-medium">Ref: ${escapeHtml(t.Reference)}</span>`
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] sm:text-[11px] font-medium">Ref: ${escapeHtml(t.Reference)}</span>`
                         : '';
                     const actBadge = t.ActionPlan
-                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[11px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[10px] sm:text-[11px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
                         : '';
 
                     mobileHtmlList.push(`
-                    <div class="p-4 space-y-2.5 hover:bg-slate-50/80 transition-colors">
+                    <div class="p-3.5 space-y-2 hover:bg-slate-50/80 transition-colors">
                         <div class="flex items-start justify-between gap-2">
                             <div class="min-w-0 space-y-1">
                                 <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="font-mono text-[11px] font-semibold text-slate-400">${escapeHtml(t.ID)}</span>
-                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
-                                    ${over ? '<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Overdue</span>' : ''}
+                                    <span class="font-mono text-[10px] font-semibold text-slate-400">${escapeHtml(t.ID)}</span>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
+                                    ${over ? '<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-bold">Overdue</span>' : ''}
                                 </div>
                                 <p class="text-[13px] font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
-                                <p class="text-xs text-slate-500 line-clamp-2">${subParts.join(' • ') || '-'}</p>
+                                <p class="text-[11px] text-slate-500 line-clamp-2">${subParts.join(' • ') || '-'}</p>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" aria-label="Edit Task" class="p-2.5 rounded-xl text-slate-500 hover:text-indigo-600 bg-slate-100/80 hover:bg-indigo-50 transition-colors">
+                                <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" aria-label="Edit Task" class="p-2 rounded-xl text-slate-500 hover:text-indigo-600 bg-slate-100/80 hover:bg-indigo-50 transition-colors">
                                     <i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i>
                                 </button>
-                                <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" aria-label="Hapus Task" class="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 bg-slate-100/80 hover:bg-rose-50 transition-colors">
+                                <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" aria-label="Hapus Task" class="p-2 rounded-xl text-slate-500 hover:text-rose-600 bg-slate-100/80 hover:bg-rose-50 transition-colors">
                                     <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
                                 </button>
                             </div>
@@ -3363,21 +3455,21 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
                         ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5">${refBadge}${actBadge}</div>` : ''}
 
-                        <div class="flex items-center justify-between gap-2 pt-1 text-xs">
+                        <div class="flex items-center justify-between gap-2 pt-0.5 text-[11px]">
                             <div class="inline-flex items-center gap-1.5 min-w-0">
                                 <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
                                 <span class="font-medium text-slate-700 truncate">${escapeHtml(t.PIC || '-')}</span>
                             </div>
-                            <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0">${escapeHtml(t.Status || '-')}</span>
+                            <span${buildSafeStyleAttr({ 'background-color': hexToRgba(stHex, 0.14), color: stHex, 'border-color': hexToRgba(stHex, 0.35) })} class="px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0">${escapeHtml(t.Status || '-')}</span>
                         </div>
 
-                        <div class="flex items-center justify-between gap-3 pt-1 text-xs text-slate-500">
+                        <div class="flex items-center justify-between gap-3 pt-0.5 text-[11px] text-slate-500">
                             <span class="${over ? 'text-rose-600 font-bold' : ''}">Target: ${formatDateDisplay(t.TargetDate)}</span>
                             <div class="flex items-center gap-2">
-                                <div class="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-indigo-600 rounded-full" style="width:${prog}%"></div>
+                                <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-600 rounded-full"${buildSafeStyleAttr({ width: `${prog}%` })}></div>
                                 </div>
-                                <span class="font-bold text-slate-700 text-[11px]">${prog}%</span>
+                                <span class="font-bold text-slate-700 text-[10px]">${prog}%</span>
                             </div>
                         </div>
                     </div>`);
@@ -3403,12 +3495,12 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             ${over ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Overdue</span>' : ''}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
-                            <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(t.Status || '-')}</span>
+                            <span${buildSafeStyleAttr({ 'background-color': hexToRgba(stHex, 0.14), color: stHex, 'border-color': hexToRgba(stHex, 0.35) })} class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(t.Status || '-')}</span>
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-indigo-600 rounded-full" style="width:${prog}%"></div>
+                                    <div class="h-full bg-indigo-600 rounded-full"${buildSafeStyleAttr({ width: `${prog}%` })}></div>
                                 </div>
                                 <span class="font-bold text-slate-700 text-xs">${prog}%</span>
                             </div>
@@ -3431,13 +3523,23 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
             if (pagEl) {
                 const showingFrom = totalItems === 0 ? 0 : startIdx + 1;
-                const showingTo = Math.min(totalItems, startIdx + tasksPageSize);
+                const showingTo = Math.min(totalItems, startIdx + pageItems.length);
+                const pageSizeOptionsHtml = ALLOWED_PAGE_SIZES.map(sz =>
+                    `<option value="${sz}" ${tasksPageSize === sz ? 'selected' : ''}>${sz} / hal</option>`
+                ).join('');
+
                 pagEl.innerHTML = `
                     <span>Menampilkan <strong class="text-slate-700">${showingFrom}–${showingTo}</strong> dari <strong class="text-slate-700">${totalItems}</strong> task</span>
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" ${tasksCurrentPage <= 1 ? 'disabled' : ''} onclick="tasksCurrentPage=Math.max(1, tasksCurrentPage-1); renderTasksTable()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Sebelumnya</button>
-                        <span class="px-2 font-semibold text-slate-700">Hal ${tasksCurrentPage} / ${totalPages}</span>
-                        <button type="button" ${tasksCurrentPage >= totalPages ? 'disabled' : ''} onclick="tasksCurrentPage=Math.min(${totalPages}, tasksCurrentPage+1); renderTasksTable()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Berikutnya</button>
+                    <div class="flex flex-wrap items-center justify-center gap-2">
+                        <label for="tasks-page-size-select" class="sr-only">Jumlah item per halaman</label>
+                        <select id="tasks-page-size-select" aria-label="Jumlah item per halaman" onchange="onTasksPageSizeChange(this.value)" class="h-8 text-xs sm:text-[13px] font-semibold text-slate-700 border border-slate-300 bg-white rounded-lg px-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                            ${pageSizeOptionsHtml}
+                        </select>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" ${tasksCurrentPage <= 1 ? 'disabled' : ''} onclick="goToTasksPage(${tasksCurrentPage - 1}, ${totalPages})" class="h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Sebelumnya</button>
+                            <span class="px-2 font-semibold text-slate-700">Hal ${tasksCurrentPage} / ${totalPages}</span>
+                            <button type="button" ${tasksCurrentPage >= totalPages ? 'disabled' : ''} onclick="goToTasksPage(${tasksCurrentPage + 1}, ${totalPages})" class="h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Berikutnya</button>
+                        </div>
                     </div>`;
             }
 
@@ -3800,113 +3902,147 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                         <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
                         <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)} <span class="ml-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[11px]">${escapeHtml(getPicInitial(item))}</span></td>
                         <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.Divisi || '-')}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">${escapeHtml(item.Role || 'Staff')}</span></td>
-                        <td class="py-2.5 px-4 font-mono text-slate-600">${escapeHtml(item.Username || '-')}</td>
+                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700">${escapeHtml(item.Role || 'Staff')}</span></td>
+                        <td class="py-2.5 px-4 font-mono text-xs text-slate-600">${escapeHtml(item.Username || '-')}</td>
                         ${actions}
                     </tr>`;
                 }
                 if (currentMasterTab === 'Status') {
-                    const hex = normalizeHexColor(item.Warna, '#64748B');
-                    const isYes = normalizeCompletedFlag(item.Completed) === 'Yes';
+                    const hexColor = normalizeHexColor(item.Warna, '#64748B');
+                    const compFlag = normalizeCompletedFlag(item.Completed);
                     return `<tr class="hover:bg-slate-50">
                         <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4 font-mono"><span class="inline-block w-3 h-3 rounded-full mr-1.5 align-middle" style="background:${hex}"></span>${hex}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded font-bold ${isYes ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${isYes ? 'Yes' : 'No'}</span></td>
+                        <td class="py-2.5 px-4">
+                            <span${buildSafeStyleAttr({ 'background-color': hexToRgba(hexColor, 0.14), color: hexColor, 'border-color': hexToRgba(hexColor, 0.35) })} class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(item.Nama)}</span>
+                        </td>
+                        <td class="py-2.5 px-4">
+                            <span class="inline-flex items-center gap-2 font-mono text-xs font-semibold text-slate-700">
+                                <span${buildSafeStyleAttr({ 'background-color': hexColor })} class="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block"></span>
+                                ${escapeHtml(hexColor)}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-4">
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${compFlag === 'Yes' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}">${escapeHtml(compFlag)}</span>
+                        </td>
                         ${actions}
                     </tr>`;
                 }
-                const extraVal = currentMasterTab === 'Reference' ? item.Keterangan : item.KategoriTerkait;
+                if (currentMasterTab === 'Reference') {
+                    return `<tr class="hover:bg-slate-50">
+                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
+                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
+                        <td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.Keterangan || '-')}</td>
+                        ${actions}
+                    </tr>`;
+                }
                 return `<tr class="hover:bg-slate-50">
                     <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
                     <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                    <td class="py-2.5 px-4 text-slate-500">${escapeHtml(extraVal || '-')}</td>
+                    <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.KategoriTerkait || '-')}</td>
                     ${actions}
                 </tr>`;
             }).join('');
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: bodyEl });
+
+            const masterViewEl = document.getElementById('view-master');
+            if (typeof lucide !== 'undefined' && masterViewEl) lucide.createIcons({ root: masterViewEl });
         }
 
-        function syncColorPickerFromHex(val) {
-            const clean = normalizeHexColor(val, '');
-            if (clean) {
-                const picker = document.getElementById('master-input-colorpicker');
-                if (picker) picker.value = clean;
+        function syncColorPickerFromHex(hexVal) {
+            const picker = document.getElementById('master-input-colorpicker');
+            if (!picker) return;
+            const cleaned = String(hexVal || '').trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(cleaned)) {
+                picker.value = cleaned;
             }
         }
 
         function toggleMasterPasswordVisibility() {
-            const inp = document.getElementById('master-input-password');
-            const icon = document.getElementById('master-password-eye-icon');
-            if (!inp) return;
-            const isHidden = inp.type === 'password';
-            inp.type = isHidden ? 'text' : 'password';
-            if (icon) {
-                icon.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
-                if (typeof lucide !== 'undefined') lucide.createIcons({ root: inp.parentElement });
+            const pwdInput = document.getElementById('master-input-password');
+            const iconEl = document.getElementById('master-password-eye-icon');
+            if (!pwdInput) return;
+            const isHidden = pwdInput.type === 'password';
+            pwdInput.type = isHidden ? 'text' : 'password';
+            if (iconEl) {
+                iconEl.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ root: document.getElementById('master-pic-fields') || document.body });
+                }
             }
         }
 
         function openMasterModal(editIdx = -1) {
-            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
-                showToast('Akses ditolak: Staff tidak diizinkan mengubah Master Data.', 'error');
-                return;
-            }
             const modal = document.getElementById('master-modal');
-            const meta = MASTER_META[currentMasterTab] || MASTER_META.Kategori;
+            const form = document.getElementById('master-form');
+            if (!modal || !form) return;
+
+            form.reset();
+            const pwdInput = document.getElementById('master-input-password');
+            const pwdEye = document.getElementById('master-password-eye-icon');
+            if (pwdInput) pwdInput.type = 'password';
+            if (pwdEye) pwdEye.setAttribute('data-lucide', 'eye');
+
             document.getElementById('master-edit-index').value = editIdx;
-            document.getElementById('master-modal-title').textContent = editIdx >= 0 ? `Edit ${currentMasterTab}` : meta.btn;
+            const meta = MASTER_META[currentMasterTab] || MASTER_META.Kategori;
 
-            document.getElementById('master-kategori-fields').classList.toggle('hidden', currentMasterTab !== 'Kategori');
-            document.getElementById('master-pic-fields').classList.toggle('hidden', currentMasterTab !== 'PIC');
-            document.getElementById('master-status-fields').classList.toggle('hidden', currentMasterTab !== 'Status');
-            document.getElementById('master-extra-container').classList.toggle('hidden', currentMasterTab === 'Status');
-            document.getElementById('master-label-extra').textContent = meta.extraLabel || 'Keterangan';
+            const katFields = document.getElementById('master-kategori-fields');
+            const picFields = document.getElementById('master-pic-fields');
+            const statusFields = document.getElementById('master-status-fields');
+            const extraContainer = document.getElementById('master-extra-container');
 
-            const passInp = document.getElementById('master-input-password');
-            const passReqMark = document.getElementById('master-password-required-mark');
-            if (passInp) {
-                passInp.type = 'password';
-                passInp.placeholder = editIdx >= 0 ? 'Kosongkan jika tidak diubah' : 'Password...';
-            }
-            if (passReqMark) {
-                passReqMark.classList.toggle('hidden', editIdx >= 0);
-            }
+            katFields.classList.toggle('hidden', currentMasterTab !== 'Kategori');
+            picFields.classList.toggle('hidden', currentMasterTab !== 'PIC');
+            statusFields.classList.toggle('hidden', currentMasterTab !== 'Status');
+            extraContainer.classList.toggle('hidden', currentMasterTab === 'Status');
 
             if (currentMasterTab === 'Kategori') {
                 const dl = document.getElementById('master-group-datalist');
-                const groups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
-                if (dl) dl.innerHTML = groups.map(g => `<option value="${escapeHtml(g)}">`).join('');
+                const existingGroups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
+                if (dl) dl.innerHTML = existingGroups.map(g => `<option value="${escapeHtml(g)}"></option>`).join('');
             }
 
-            if (editIdx >= 0 && db[currentMasterTab][editIdx]) {
-                const it = db[currentMasterTab][editIdx];
-                document.getElementById('master-input-name').value = it.Nama || '';
+            if (meta.extraLabel) {
+                document.getElementById('master-label-extra').textContent = meta.extraLabel;
+            }
+
+            const pwdReqMark = document.getElementById('master-password-required-mark');
+            if (editIdx >= 0 && db[currentMasterTab] && db[currentMasterTab][editIdx]) {
+                const item = db[currentMasterTab][editIdx];
+                document.getElementById('master-modal-title').textContent = `Edit ${currentMasterTab}`;
+                document.getElementById('master-input-name').value = item.Nama || '';
+
                 if (currentMasterTab === 'Kategori') {
-                    document.getElementById('master-input-group').value = it.Group || '';
-                    document.getElementById('master-input-extra').value = it.Keterangan || '';
+                    document.getElementById('master-input-group').value = item.Group || '';
+                    document.getElementById('master-input-extra').value = item.Keterangan || '';
                 } else if (currentMasterTab === 'Priority') {
-                    document.getElementById('master-input-extra').value = it.SLA_Hari || '';
+                    document.getElementById('master-input-extra').value = item.SLA_Hari ?? '';
                 } else if (currentMasterTab === 'PIC') {
-                    document.getElementById('master-input-initial').value = it.Initial || '';
-                    document.getElementById('master-input-role').value = it.Role || 'Staff';
-                    document.getElementById('master-input-username').value = it.Username || '';
+                    document.getElementById('master-input-initial').value = item.Initial || getPicInitial(item);
+                    document.getElementById('master-input-role').value = item.Role || 'Staff';
+                    document.getElementById('master-input-username').value = item.Username || '';
                     document.getElementById('master-input-password').value = '';
-                    document.getElementById('master-input-extra').value = it.Divisi || '';
+                    document.getElementById('master-input-password').required = false;
+                    if (pwdReqMark) pwdReqMark.classList.add('hidden');
+                    document.getElementById('master-input-extra').value = item.Divisi || '';
                 } else if (currentMasterTab === 'Status') {
-                    const hex = normalizeHexColor(it.Warna, '#3B82F6');
-                    document.getElementById('master-input-color-hex').value = hex;
-                    document.getElementById('master-input-colorpicker').value = hex;
-                    document.getElementById('master-input-completed').value = normalizeCompletedFlag(it.Completed);
+                    const hexCol = normalizeHexColor(item.Warna, '#3B82F6');
+                    document.getElementById('master-input-color-hex').value = hexCol;
+                    document.getElementById('master-input-colorpicker').value = hexCol;
+                    document.getElementById('master-input-completed').value = normalizeCompletedFlag(item.Completed);
                 } else if (currentMasterTab === 'Reference') {
-                    document.getElementById('master-input-extra').value = it.Keterangan || '';
-                } else {
-                    document.getElementById('master-input-extra').value = it.KategoriTerkait || '';
+                    document.getElementById('master-input-extra').value = item.Keterangan || '';
+                } else if (currentMasterTab === 'ActionPlan') {
+                    document.getElementById('master-input-extra').value = item.KategoriTerkait || '';
                 }
             } else {
-                document.getElementById('master-form').reset();
-                document.getElementById('master-input-color-hex').value = '#3B82F6';
-                document.getElementById('master-input-colorpicker').value = '#3B82F6';
+                document.getElementById('master-modal-title').textContent = meta.btn;
+                if (currentMasterTab === 'PIC') {
+                    document.getElementById('master-input-password').required = true;
+                    if (pwdReqMark) pwdReqMark.classList.remove('hidden');
+                } else if (currentMasterTab === 'Status') {
+                    document.getElementById('master-input-color-hex').value = '#3B82F6';
+                    document.getElementById('master-input-colorpicker').value = '#3B82F6';
+                    document.getElementById('master-input-completed').value = 'No';
+                }
             }
 
             modal.classList.remove('hidden');
@@ -3920,104 +4056,95 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
         async function saveMasterItem(e) {
             e.preventDefault();
-            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
-                showToast('Akses ditolak: Staff tidak diizinkan mengubah Master Data.', 'error');
-                return;
-            }
             const editIdx = Number(document.getElementById('master-edit-index').value);
-            const nama = document.getElementById('master-input-name').value.trim();
-            const extra = document.getElementById('master-input-extra').value.trim();
             const list = db[currentMasterTab] || [];
+            const existing = editIdx >= 0 ? list[editIdx] : null;
+            const prefixMap = { Kategori: 'KAT', Priority: 'PRIO', PIC: 'PIC', Status: 'STS', Reference: 'REF', ActionPlan: 'ACT' };
+            const kode = existing?.Kode || `${prefixMap[currentMasterTab] || 'MST'}-${Date.now().toString().slice(-4)}`;
+            const nama = document.getElementById('master-input-name').value.trim();
+            if (!nama) return;
 
-            const isDuplicateName = list.some((it, idx) => idx !== editIdx && isSameText(it.Nama, nama));
+            const isDuplicateName = list.some((row, i) => i !== editIdx && isSameText(row.Nama, nama));
             if (isDuplicateName) {
                 showToast(`Nama "${nama}" sudah terdaftar pada Master ${currentMasterTab}.`, 'error');
                 return;
             }
 
-            const existing = editIdx >= 0 ? list[editIdx] : null;
-            const kode = existing?.Kode || `${currentMasterTab.slice(0, 3).toUpperCase()}-${String(list.length + 1).padStart(2, '0')}`;
+            const extraVal = document.getElementById('master-input-extra').value.trim();
+            let newItem = { Kode: kode, Nama: nama };
 
-            let newObj = { Kode: kode, Nama: nama };
             if (currentMasterTab === 'Kategori') {
-                newObj.Group = document.getElementById('master-input-group').value.trim();
-                newObj.Keterangan = extra;
-            } else if (currentMasterTab === 'Priority') {
-                newObj.SLA_Hari = extra || '1';
-            } else if (currentMasterTab === 'PIC') {
-                const usernameVal = document.getElementById('master-input-username').value.trim();
-                const passVal = document.getElementById('master-input-password').value.trim();
-
-                if (!usernameVal) {
-                    showToast('Username login wajib diisi.', 'error');
+                const grpVal = document.getElementById('master-input-group').value.trim();
+                if (!grpVal) {
+                    showToast('Group Kategori wajib diisi.', 'error');
                     return;
                 }
-                const isDupUser = list.some((it, idx) => idx !== editIdx && isSameText(it.Username, usernameVal));
+                newItem.Group = grpVal;
+                newItem.Keterangan = extraVal;
+            } else if (currentMasterTab === 'Priority') {
+                newItem.SLA_Hari = Number(extraVal || 0);
+            } else if (currentMasterTab === 'PIC') {
+                const rawInitial = (document.getElementById('master-input-initial').value || '').trim().toUpperCase();
+                const usernameVal = (document.getElementById('master-input-username').value || '').trim();
+                const isDupUser = usernameVal && list.some((row, i) => i !== editIdx && isSameText(row.Username, usernameVal));
                 if (isDupUser) {
                     showToast(`Username "${usernameVal}" sudah digunakan oleh PIC lain.`, 'error');
                     return;
                 }
-                if (editIdx < 0 && !passVal) {
-                    showToast('Password login wajib diisi untuk PIC baru.', 'error');
-                    return;
-                }
-
-                newObj.Initial = document.getElementById('master-input-initial').value.trim().toUpperCase();
-                newObj.Divisi = extra;
-                newObj.Role = document.getElementById('master-input-role').value;
-                newObj.Username = usernameVal;
-                if (passVal) newObj.Password = passVal;
+                newItem.Initial = rawInitial || getPicInitial(nama);
+                newItem.Divisi = extraVal;
+                newItem.Role = document.getElementById('master-input-role').value;
+                newItem.Username = usernameVal;
+                const pwdVal = document.getElementById('master-input-password').value.trim();
+                if (pwdVal) newItem.Password = pwdVal;
             } else if (currentMasterTab === 'Status') {
-                newObj.Warna = normalizeHexColor(document.getElementById('master-input-color-hex').value, '#3B82F6');
-                newObj.Completed = document.getElementById('master-input-completed').value;
+                const rawHex = document.getElementById('master-input-color-hex').value.trim();
+                newItem.Warna = normalizeHexColor(rawHex, '#3B82F6');
+                newItem.Completed = normalizeCompletedFlag(document.getElementById('master-input-completed').value);
             } else if (currentMasterTab === 'Reference') {
-                newObj.Keterangan = extra;
-            } else {
-                newObj.KategoriTerkait = extra;
+                newItem.Keterangan = extraVal;
+            } else if (currentMasterTab === 'ActionPlan') {
+                newItem.KategoriTerkait = extraVal;
             }
 
-            if (editIdx >= 0 && list[editIdx]) {
-                list[editIdx] = { ...list[editIdx], ...newObj };
+            if (editIdx >= 0 && existing) {
+                list[editIdx] = newItem;
             } else {
-                list.push(newObj);
+                list.push(newItem);
             }
             db[currentMasterTab] = list;
+
             saveToLocal();
             closeMasterModal();
             refreshAllViews();
-            await pushMasterDataToSheet(currentMasterTab);
+            await syncMasterSheetToGas(currentMasterTab, list);
         }
 
         function deleteMasterItem(idx) {
-            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
-                showToast('Akses ditolak: Staff tidak diizinkan menghapus Master Data.', 'error');
-                return;
-            }
             const list = db[currentMasterTab] || [];
-            const targetItem = list[idx];
-            if (!targetItem) return;
+            const target = list[idx];
+            if (!target) return;
 
             const modal = document.getElementById('confirm-modal');
-            const label = targetItem.Nama || targetItem.Kode || 'item ini';
-            document.getElementById('confirm-message').textContent = `Apakah Anda yakin ingin menghapus data ${currentMasterTab} "${label}"?`;
+            document.getElementById('confirm-message').textContent = `Hapus item "${target.Nama}" dari Master ${currentMasterTab}?`;
             const yesBtn = document.getElementById('confirm-yes-btn');
             yesBtn.onclick = async () => {
                 closeConfirmModal();
-                const targetTab = currentMasterTab;
-                const currentList = db[targetTab] || [];
-                if (!currentList[idx]) return;
-                currentList.splice(idx, 1);
-                db[targetTab] = currentList;
+                const updated = (db[currentMasterTab] || []).filter((_, i) => i !== idx);
+                db[currentMasterTab] = updated;
                 saveToLocal();
                 refreshAllViews();
-                await pushMasterDataToSheet(targetTab);
+                await syncMasterSheetToGas(currentMasterTab, updated);
             };
             modal.classList.remove('hidden');
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
         }
 
-        async function pushMasterDataToSheet(sheetName = currentMasterTab) {
-            if (!gasUrl || !sessionToken) return;
+        async function syncMasterSheetToGas(sheetName, items) {
+            if (!gasUrl || !sessionToken) {
+                showToast(`Master ${sheetName} diperbarui secara lokal.`, 'success');
+                return;
+            }
             setPendingSync(1);
             try {
                 const res = await fetch(gasUrl, {
@@ -4025,44 +4152,77 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     keepalive: true,
                     cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: 'SYNC_SHEET',
-                        token: sessionToken,
-                        sheetName: sheetName,
-                        items: db[sheetName] || []
-                    })
+                    body: JSON.stringify({ action: 'SYNC_SHEET', token: sessionToken, sheetName, items })
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
                     refreshAuthSessionExpiry();
-                    showToast(`Master ${sheetName} berhasil disinkronkan ke Google Sheet!`, 'success');
+                    showToast(`Master ${sheetName} tersinkron ke Spreadsheet!`, 'success');
                 } else {
-                    enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: db[sheetName] || [] });
-                    showToast(result.message || 'Gagal menyinkronkan Master Data.', 'error');
+                    enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: items });
+                    showToast(result.message || `Gagal sinkron Master ${sheetName}.`, 'error');
                 }
             } catch (err) {
-                enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: db[sheetName] || [] });
-                showToast('Perubahan tersimpan lokal (antrean sync aktif), gagal menyinkronkan ke Spreadsheet.', 'error');
+                enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: items });
+                showToast(`Gagal sinkron Master ${sheetName} ke Google Spreadsheet (antrean sync aktif).`, 'error');
             } finally {
                 setPendingSync(-1);
             }
         }
 
-        // ==================== EVENT DELEGATION UNTUK SECURITY & AKSESIBILITAS ====================
-        function bindStaticModalGuards() {
-            // Tutup dropdown profil saat klik di luar area profil
-            document.addEventListener('click', (e) => {
-                const wrapper = document.getElementById('top-profile-wrapper');
-                const dropdown = document.getElementById('top-profile-dropdown');
-                if (wrapper && dropdown && !dropdown.classList.contains('hidden') && !wrapper.contains(e.target)) {
-                    dropdown.classList.add('hidden');
-                }
-            });
+        async function syncWithGoogleSheets() {
+            if (!gasUrl || !sessionToken) {
+                showToast('Sesi belum aktif atau URL Spreadsheet belum terhubung.', 'error');
+                return;
+            }
+            if (unsyncedQueue.length > 0) {
+                await retryUnsyncedOperations();
+            }
+            showToast('Menyinkronkan data dari Google Spreadsheet...', 'info');
+            const ok = await fetchAuthorizedData(sessionToken, false);
+            if (ok) {
+                refreshAllViews();
+                showToast('Data berhasil disinkronkan dari Google Spreadsheet!', 'success');
+            }
+        }
 
-            // Static modal pulse saat klik backdrop
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const colorMap = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                info: 'bg-slate-800 text-white'
+            };
+            const toast = document.createElement('div');
+            toast.className = `${colorMap[type] || colorMap.info} px-4 py-3 rounded-xl shadow-lg text-xs sm:text-[13px] font-medium flex items-center gap-2.5 fade-in`;
+            const textSpan = document.createElement('span');
+            textSpan.textContent = String(message ?? '');
+            toast.appendChild(textSpan);
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.25s ease';
+                setTimeout(() => toast.remove(), 250);
+            }, 3400);
+        }
+
+        // ==================== EVENT DELEGATION & MODAL ACCESSIBILITY ====================
+        function getModalFocusableElements(modalEl) {
+            if (!modalEl) return [];
+            const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+            return Array.from(modalEl.querySelectorAll(selector)).filter(el => {
+                if (el.disabled || el.getAttribute('aria-hidden') === 'true') return false;
+                return el.offsetParent !== null || el.getClientRects().length > 0;
+            });
+        }
+
+        function setupModalInteractions() {
             document.querySelectorAll('[data-static-modal="true"]').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) {
                         const card = modal.firstElementChild;
                         if (card) {
                             card.classList.remove('modal-static-pulse');
@@ -4073,195 +4233,153 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 });
             });
 
-            // Focus trap & blokir Escape pada static modal yang sedang terbuka
-            document.addEventListener('keydown', (e) => {
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Tab') return;
                 const openModal = Array.from(document.querySelectorAll('[data-static-modal="true"]'))
+                    .reverse()
                     .find(m => !m.classList.contains('hidden'));
                 if (!openModal) return;
 
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    const card = openModal.firstElementChild;
-                    if (card) {
-                        card.classList.remove('modal-static-pulse');
-                        void card.offsetWidth;
-                        card.classList.add('modal-static-pulse');
-                    }
-                    return;
-                }
+                const focusables = getModalFocusableElements(openModal);
+                if (focusables.length === 0) return;
 
-                if (e.key === 'Tab') {
-                    const focusables = Array.from(
-                        openModal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')
-                    ).filter(el => el.offsetParent !== null);
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
 
-                    if (focusables.length === 0) return;
-                    const first = focusables[0];
-                    const last = focusables[focusables.length - 1];
-
-                    if (e.shiftKey && document.activeElement === first) {
-                        e.preventDefault();
+                if (event.shiftKey) {
+                    if (document.activeElement === first || !openModal.contains(document.activeElement)) {
+                        event.preventDefault();
                         last.focus();
-                    } else if (!e.shiftKey && document.activeElement === last) {
-                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === last || !openModal.contains(document.activeElement)) {
+                        event.preventDefault();
                         first.focus();
                     }
                 }
             });
         }
 
-        function bindDelegatedInteractions() {
-            const handleInteractiveEvent = (e) => {
-                const editTaskEl = e.target.closest('[data-edit-task-id]');
-                if (editTaskEl) {
-                    openTaskModal(editTaskEl.dataset.editTaskId || '');
+        function setupDelegatedActions() {
+            document.addEventListener('click', (event) => {
+                const editBtn = event.target.closest('[data-edit-task-id]');
+                if (editBtn) {
+                    event.stopPropagation();
+                    const taskId = editBtn.getAttribute('data-edit-task-id');
+                    if (taskId) openTaskModal(taskId);
                     return;
                 }
 
-                const deleteTaskEl = e.target.closest('[data-delete-task-id]');
-                if (deleteTaskEl) {
-                    confirmDeleteTask(deleteTaskEl.dataset.deleteTaskId || '');
+                const delBtn = event.target.closest('[data-delete-task-id]');
+                if (delBtn) {
+                    event.stopPropagation();
+                    const taskId = delBtn.getAttribute('data-delete-task-id');
+                    if (taskId) confirmDeleteTask(taskId);
                     return;
                 }
 
-                const drillEl = e.target.closest('[data-drill-mode]');
+                const masterEditBtn = event.target.closest('[data-master-edit-idx]');
+                if (masterEditBtn) {
+                    event.stopPropagation();
+                    const idx = Number(masterEditBtn.getAttribute('data-master-edit-idx'));
+                    if (!Number.isNaN(idx)) openMasterModal(idx);
+                    return;
+                }
+
+                const masterDelBtn = event.target.closest('[data-master-delete-idx]');
+                if (masterDelBtn) {
+                    event.stopPropagation();
+                    const idx = Number(masterDelBtn.getAttribute('data-master-delete-idx'));
+                    if (!Number.isNaN(idx)) deleteMasterItem(idx);
+                    return;
+                }
+
+                const drillEl = event.target.closest('[data-drill-mode]');
                 if (drillEl) {
-                    const mode = drillEl.dataset.drillMode || 'all';
-                    const val = drillEl.dataset.drillValue || '';
+                    const mode = drillEl.getAttribute('data-drill-mode') || 'all';
+                    const val = drillEl.getAttribute('data-drill-value') || '';
                     drillDownTasks(mode, val);
-                    return;
                 }
+            });
 
-                const editMasterEl = e.target.closest('[data-master-edit-idx]');
-                if (editMasterEl) {
-                    openMasterModal(Number(editMasterEl.dataset.masterEditIdx));
-                    return;
-                }
-
-                const deleteMasterEl = e.target.closest('[data-master-delete-idx]');
-                if (deleteMasterEl) {
-                    deleteMasterItem(Number(deleteMasterEl.dataset.masterDeleteIdx));
-                    return;
-                }
-            };
-
-            document.addEventListener('click', handleInteractiveEvent);
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    const activeEl = document.activeElement;
-                    if (activeEl && (activeEl.hasAttribute('data-drill-mode') || activeEl.hasAttribute('data-edit-task-id'))) {
-                        e.preventDefault();
-                        handleInteractiveEvent({ target: activeEl });
-                    }
-                }
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                const actionEl = event.target.closest('[data-drill-mode], [data-edit-task-id]');
+                if (!actionEl) return;
+                event.preventDefault();
+                actionEl.click();
             });
         }
 
-        // ==================== INTEGRASI & SINKRONISASI SHEET ====================
-        async function syncWithGoogleSheets() {
-            if (!gasUrl || !sessionToken) {
-                showToast('Sesi belum aktif atau URL Web App belum terhubung.', 'error');
-                return;
-            }
-            if (unsyncedQueue.length > 0) {
-                await retryUnsyncedOperations();
-            }
-            isTasksLoading = true;
-            if (activeView === 'tasks') renderTasksTable();
-            showToast('Menyinkronkan data dari Google Spreadsheet...', 'info');
-            try {
-                const ok = await fetchAuthorizedData(sessionToken, false);
-                if (ok) {
-                    applyUserSession();
-                    refreshAllViews();
-                    showToast('Data berhasil disinkronkan!', 'success');
-                }
-            } finally {
-                isTasksLoading = false;
-                if (activeView === 'tasks') renderTasksTable();
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            const colorMap = {
-                success: 'bg-emerald-600 text-white',
-                error: 'bg-rose-600 text-white',
-                info: 'bg-slate-800 text-white'
-            };
-            const el = document.createElement('div');
-            el.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 fade-in ${colorMap[type] || colorMap.info}`;
-            el.textContent = message;
-            container.appendChild(el);
-            setTimeout(() => {
-                el.style.opacity = '0';
-                el.style.transition = 'opacity 0.2s ease';
-                setTimeout(() => el.remove(), 220);
-            }, 3200);
-        }
-
-        window.resetAllTaskFilters = resetAllTaskFilters;
-        window.resetDashboardPicFilter = resetDashboardPicFilter;
-        window.populateFilterAndFormDropdowns = populateFilterAndFormDropdowns;
-        window.getFilteredTasks = getFilteredTasks;
-        window.renderTasksTable = renderTasksTable;
-        window.updateStickyTasksTableHeaderOffset = updateStickyTasksTableHeaderOffset;
-        window.addEventListener('resize', updateStickyTasksTableHeaderOffset);
-
-        window.addEventListener('beforeunload', (e) => {
-            if (pendingSyncCount > 0 || unsyncedQueue.length > 0) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-
+        // ==================== INITIALIZATION ====================
         window.addEventListener('DOMContentLoaded', async () => {
             SafeStorage._scrubLegacyUnsafeStorage();
-            bindDelegatedInteractions();
-            bindStaticModalGuards();
-            const verEl = document.getElementById('login-app-version');
-            if (verEl) verEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
+            setupModalInteractions();
+            setupDelegatedActions();
 
             await SafeStorage.hydrateKeys([
                 'taskflow_gas_url',
-                'taskflow_cached_db',
-                'taskflow_last_mutation_ts',
                 SESSION_STORAGE_KEYS.TOKEN,
                 SESSION_STORAGE_KEYS.USER_PROFILE,
                 SESSION_STORAGE_KEYS.EXPIRES_AT,
-                SESSION_STORAGE_KEYS.UNSYNCED_QUEUE
+                SESSION_STORAGE_KEYS.UNSYNCED_QUEUE,
+                SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE,
+                'taskflow_cached_db'
             ]);
 
+            tasksPageSize = normalizePageSize(SafeStorage.getItem(SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE));
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             const initialUrl = resolveInitialGasUrl();
-            const urlInp = document.getElementById('gatekeeper-url-input');
-            if (urlInp && initialUrl) urlInp.value = initialUrl;
+            const gateInput = document.getElementById('gatekeeper-url-input');
+            if (gateInput && initialUrl) gateInput.value = initialUrl;
 
-            const stickyFilterEl = document.getElementById('tasks-sticky-filter');
-            if (stickyFilterEl && typeof ResizeObserver !== 'undefined') {
-                const ro = new ResizeObserver(() => updateStickyTasksTableHeaderOffset());
-                ro.observe(stickyFilterEl);
-            }
-
-            if (restoreActiveSession()) {
+            const hasRestoredSession = restoreActiveSession();
+            if (hasRestoredSession && initialUrl) {
+                gasUrl = initialUrl;
+                isConnected = true;
                 enterMainApp();
-                fetchAuthorizedData(sessionToken, true).then(updated => {
-                    isTasksLoading = false;
-                    if (updated) {
-                        applyUserSession();
-                        refreshAllViews();
-                    } else if (activeView === 'tasks') {
-                        renderTasksTable();
-                    }
-                });
-                return;
-            }
-
-            if (initialUrl) {
+                if (unsyncedQueue.length > 0) {
+                    retryUnsyncedOperations();
+                } else {
+                    fetchAuthorizedData(sessionToken, true).then(updated => {
+                        if (updated) refreshAllViews(false);
+                    });
+                }
+            } else if (initialUrl) {
                 verifyAndConnect(initialUrl);
             } else {
-                lockApplication('');
+                lockApplication();
             }
+
+            window.addEventListener('click', (e) => {
+                const wrapper = document.getElementById('top-profile-wrapper');
+                const dropdown = document.getElementById('top-profile-dropdown');
+                if (dropdown && !dropdown.classList.contains('hidden')) {
+                    if (!wrapper || !wrapper.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                updateStickyTasksTableHeaderOffset();
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    updateStickyTasksTableHeaderOffset();
+                    if (sessionToken && gasUrl && pendingSyncCount === 0) {
+                        if (unsyncedQueue.length > 0) {
+                            retryUnsyncedOperations();
+                        } else {
+                            fetchAuthorizedData(sessionToken, true).then(updated => {
+                                if (updated) refreshAllViews(false);
+                            });
+                        }
+                    }
+                }
+            });
         });
     </script>
 </body>

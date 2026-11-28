@@ -2,16 +2,17 @@
 <!--
 ============================================================================
 TASK FLOW - ENTERPRISE TASK MANAGEMENT (FRONTEND WEB APP)
-Versi Frontend : v1.2.15
+Versi Frontend : v1.3.2
 Tanggal Update : 28 November 2026
-Kompatibel dengan Backend Google Apps Script v1.2.15
-Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
-                 update grafik Chart.js tanpa destroy ulang, lazy startup
-                 rendering, proteksi CSV formula injection, focus trap modal,
-                 penyesuaian otomatis tinggi filter sticky Daftar Pekerjaan,
-                 penguatan escapeHtml & sanitasi konteks, paginasi 25-50 item,
-                 skala font proporsional, serta tinggi seragam input,
-                 dropdown, dan button.
+Kompatibel dengan Backend Google Apps Script v1.3.1+
+Catatan Update :
+  - Melengkapi seluruh modul JavaScript yang terpotong pada v1.2.15.
+  - Menggabungkan performa in-place Chart.js update (tanpa flicker destroy),
+    single-pass O(N) aggregation, paginasi 25-50 item, focus trap modal,
+    dan penyesuaian tinggi sticky filter otomatis.
+  - Hardening SEC-01: Menghapus penyimpanan password dari Master PIC dan
+    seluruh browser storage (SafeStorage), serta memisahkan pengelolaan
+    password ke modal khusus (SET_PASSWORD).
 ============================================================================
 -->
 <html lang="id">
@@ -136,7 +137,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         </div>
     </div>
 
-    <!-- Login Screen (Membaca dari Tabel PIC di Google Spreadsheet) -->
+    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 w-screen min-h-[100dvh] overflow-y-auto z-[90] hidden bg-[#090C18] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-[400px] overflow-hidden fade-in my-auto">
             <div class="px-6 pt-7 pb-6 sm:pt-8 sm:pb-7 bg-[#090B16] text-white text-center border-b border-slate-800/80">
@@ -175,14 +176,14 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-[11px] sm:text-xs font-medium text-slate-400 tracking-wide">Version v1.2.15</span>
+                    <span id="login-app-version" class="text-[11px] sm:text-xs font-medium text-slate-400 tracking-wide">Version v1.3.2</span>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- ==================== MODAL: TAMBAH / EDIT MASTER DATA ==================== -->
-    <div id="master-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div id="master-modal" data-static-modal="true" role="dialog" aria-modal="true" aria-labelledby="master-modal-title" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90dvh] sm:max-h-[90vh] my-auto flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <h3 id="master-modal-title" class="text-[15px] sm:text-base font-bold text-slate-800">Tambah Master Data</h3>
@@ -208,7 +209,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     </div>
                 </div>
 
-                <!-- Field Khusus Master PIC (Initial + Role + Username + Password) -->
+                <!-- Field Khusus Master PIC (Initial + Role + Username — Password dikelola terpisah via SEC-01) -->
                 <div id="master-pic-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -224,20 +225,13 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username Login <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password Login <span id="master-password-required-mark" class="text-rose-500">*</span></label>
-                            <div class="relative">
-                                <input type="password" id="master-input-password" autocomplete="new-password" placeholder="Password..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg pl-3 pr-9 focus:outline-none focus:border-indigo-500">
-                                <button type="button" onclick="toggleMasterPasswordVisibility()" aria-label="Tampilkan atau sembunyikan password" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
-                                    <i id="master-password-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div>
+                        <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username Login <span class="text-rose-500">*</span></label>
+                        <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5 text-[11px] sm:text-xs text-slate-600">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                        <span>Kredensial password tidak disimpan pada Master PIC. Gunakan tombol <strong>Atur Password</strong> (ikon kunci) pada tabel PIC untuk menetapkan atau mereset password akun.</span>
                     </div>
                 </div>
 
@@ -274,14 +268,64 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         </div>
     </div>
 
+    <!-- ==================== MODAL: ATUR / RESET PASSWORD TERPISAH (SEC-01) ==================== -->
+    <div id="password-reset-modal" data-static-modal="true" role="dialog" aria-modal="true" aria-labelledby="pwd-modal-title" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90dvh] my-auto flex flex-col overflow-hidden fade-in">
+            <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <i data-lucide="key-round" class="w-4 h-4"></i>
+                    </span>
+                    <div class="min-w-0">
+                        <h3 id="pwd-modal-title" class="text-[15px] sm:text-base font-bold text-slate-800 truncate">Atur / Reset Password</h3>
+                        <p id="pwd-modal-subtitle" class="text-[11px] sm:text-xs text-slate-500 truncate">Kredensial di-hash PBKDF2-SHA512 di server</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePasswordResetModal()" aria-label="Tutup modal password" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="password-reset-form" onsubmit="submitPasswordReset(event)" class="p-5 sm:p-6 space-y-4">
+                <input type="hidden" id="pwd-target-username" value="">
+                <input type="hidden" id="pwd-require-current" value="false">
+
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                    <span class="text-slate-500 font-medium">Akun Target:</span>
+                    <span id="pwd-target-display" class="font-bold text-slate-800">-</span>
+                </div>
+
+                <div id="pwd-current-group" class="hidden">
+                    <label for="pwd-input-current" class="block text-xs font-semibold text-slate-700 mb-1.5">Password Saat Ini <span class="text-rose-500">*</span></label>
+                    <input type="password" id="pwd-input-current" autocomplete="current-password" placeholder="Masukkan password saat ini..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label for="pwd-input-new" class="block text-xs font-semibold text-slate-700 mb-1.5">Password Baru (Min. 8 karakter) <span class="text-rose-500">*</span></label>
+                    <input type="password" id="pwd-input-new" minlength="8" required autocomplete="new-password" placeholder="Minimal 8 karakter..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label for="pwd-input-confirm" class="block text-xs font-semibold text-slate-700 mb-1.5">Konfirmasi Password Baru <span class="text-rose-500">*</span></label>
+                    <input type="password" id="pwd-input-confirm" minlength="8" required autocomplete="new-password" placeholder="Ulangi password baru..." class="tf-ctrl-input w-full text-[12px] sm:text-[13px] border border-slate-300 rounded-lg px-3 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
+                    <button type="button" onclick="closePasswordResetModal()" class="tf-ctrl-btn w-full sm:w-auto px-4 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" id="pwd-submit-btn" class="tf-ctrl-btn w-full sm:w-auto px-5 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ==================== MODAL: KONFIRMASI HAPUS ==================== -->
-    <div id="confirm-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div id="confirm-modal" data-static-modal="true" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm my-auto p-6 text-center space-y-4 fade-in">
             <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
                 <i data-lucide="alert-triangle" class="w-6 h-6"></i>
             </div>
             <div>
-                <h4 class="text-[15px] sm:text-base font-bold text-slate-800">Konfirmasi Hapus</h4>
+                <h4 id="confirm-modal-title" class="text-[15px] sm:text-base font-bold text-slate-800">Konfirmasi Hapus</h4>
                 <p id="confirm-message" class="text-[12px] sm:text-[13px] text-slate-500 mt-1.5 leading-relaxed">Apakah Anda yakin ingin menghapus data ini?</p>
             </div>
             <div class="flex gap-2.5 justify-center pt-2">
@@ -292,7 +336,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     </div>
 
     <!-- ==================== MODAL: MY PROFILE ==================== -->
-    <div id="profile-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div id="profile-modal" data-static-modal="true" role="dialog" aria-modal="true" aria-labelledby="profile-modal-name" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90dvh] my-auto flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 sm:py-5 bg-[#090B16] text-white flex items-center justify-between border-b border-slate-800">
                 <div class="flex items-center gap-3.5 min-w-0">
@@ -334,7 +378,11 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                     <span id="profile-modal-task-stats" class="text-[11px] sm:text-xs font-bold text-indigo-700">0 Completed / 0 Total</span>
                 </div>
 
-                <div class="pt-2 flex justify-end gap-2">
+                <div class="pt-2 flex flex-col-reverse sm:flex-row justify-between gap-2">
+                    <button type="button" onclick="openOwnPasswordModal()" class="tf-ctrl-btn w-full sm:w-auto px-4 inline-flex items-center justify-center gap-1.5 text-[12px] sm:text-[13px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors">
+                        <i data-lucide="key-round" class="w-4 h-4"></i>
+                        <span>Ubah Password</span>
+                    </button>
                     <button type="button" onclick="closeProfileModal()" class="tf-ctrl-btn w-full sm:w-auto px-5 inline-flex items-center justify-center text-[12px] sm:text-[13px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                         Tutup
                     </button>
@@ -344,7 +392,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
     </div>
 
     <!-- ==================== MODAL: TAMBAH / EDIT TASK ==================== -->
-    <div id="task-modal" data-static-modal="true" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div id="task-modal" data-static-modal="true" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] my-auto flex flex-col overflow-hidden fade-in">
             <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <h3 id="task-modal-title" class="text-[15px] sm:text-base font-bold text-slate-800">Tambah Task Baru</h3>
@@ -526,6 +574,10 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                             <button type="button" onclick="openProfileModal()" class="w-full px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
                                 <i data-lucide="user-circle" class="w-4 h-4 text-slate-400"></i>
                                 <span>My Profile</span>
+                            </button>
+                            <button type="button" onclick="openOwnPasswordModal()" class="w-full px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                                <i data-lucide="key-round" class="w-4 h-4 text-amber-500"></i>
+                                <span>Ubah Password</span>
                             </button>
                             <button type="button" onclick="handleLogout()" class="w-full px-4 py-2.5 text-left text-[13px] font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5">
                                 <i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i>
@@ -1128,10 +1180,23 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
-            APP_VERSION: 'v1.2.15',
+            APP_VERSION: 'v1.3.2',
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             SESSION_TTL_MS: 6 * 60 * 60 * 1000
         };
+
+        // SEC-01: Bersihkan field sensitif Password/Hash/Salt dari objek PIC sebelum disimpan di browser
+        function stripSensitivePicFields(picList) {
+            if (!Array.isArray(picList)) return [];
+            return picList.map(item => {
+                if (!item || typeof item !== 'object') return item;
+                const clean = { ...item };
+                delete clean.Password;
+                delete clean.PasswordHash;
+                delete clean.Salt;
+                return clean;
+            });
+        }
 
         // Origin-Isolated Hybrid Safe Storage (Tanpa menyimpan token/cache di URL hash atau window.name)
         const SafeStorage = {
@@ -1327,7 +1392,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         let tasksCurrentPage = 1;
         let tasksPageSize = 25;
         let tasksSpecialFilter = '';
-        let pendingDeleteTaskId = null;
+        let pendingDeleteCallback = null;
         let picChart = null;
         let statusChart = null;
         let priorityChart = null;
@@ -1338,6 +1403,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         let activeView = 'dashboard';
         let isMobileFilterOpen = false;
         let isTasksLoading = false;
+        let lastFocusedBeforeModal = null;
         let dirtyViews = {
             dashboard: true,
             tasks: true,
@@ -1381,6 +1447,13 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         }
 
         function saveUnsyncedQueue() {
+            const sanitized = unsyncedQueue.map(op => {
+                if (op && op.type === 'SYNC_SHEET' && op.key === 'PIC') {
+                    return { ...op, payload: stripSensitivePicFields(op.payload) };
+                }
+                return op;
+            });
+            unsyncedQueue = sanitized;
             if (unsyncedQueue.length > 0) {
                 SafeStorage.setItem(SESSION_STORAGE_KEYS.UNSYNCED_QUEUE, JSON.stringify(unsyncedQueue), true);
             } else {
@@ -1390,12 +1463,15 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         }
 
         function enqueueUnsyncedOp(op) {
-            if (op.type === 'SAVE_TASK' || op.type === 'DELETE_TASK') {
-                unsyncedQueue = unsyncedQueue.filter(item => !(item.type === 'SAVE_TASK' || item.type === 'DELETE_TASK') || item.key !== op.key);
-            } else if (op.type === 'SYNC_SHEET') {
-                unsyncedQueue = unsyncedQueue.filter(item => item.type !== 'SYNC_SHEET' || item.key !== op.key);
+            const safeOp = (op && op.type === 'SYNC_SHEET' && op.key === 'PIC')
+                ? { ...op, payload: stripSensitivePicFields(op.payload) }
+                : op;
+            if (safeOp.type === 'SAVE_TASK' || safeOp.type === 'DELETE_TASK') {
+                unsyncedQueue = unsyncedQueue.filter(item => !(item.type === 'SAVE_TASK' || item.type === 'DELETE_TASK') || item.key !== safeOp.key);
+            } else if (safeOp.type === 'SYNC_SHEET') {
+                unsyncedQueue = unsyncedQueue.filter(item => item.type !== 'SYNC_SHEET' || item.key !== safeOp.key);
             }
-            unsyncedQueue.push(op);
+            unsyncedQueue.push(safeOp);
             saveUnsyncedQueue();
             updateSidebarConnectionStatus('error');
         }
@@ -1429,7 +1505,9 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                         } else if (op.type === 'DELETE_TASK') {
                             payload = { action: 'DELETE_TASK', token: sessionToken, id: op.key };
                         } else if (op.type === 'SYNC_SHEET') {
-                            payload = { action: 'SYNC_SHEET', token: sessionToken, sheetName: op.key, items: db[op.key] || op.payload || [] };
+                            const rawItems = db[op.key] || op.payload || [];
+                            const cleanItems = op.key === 'PIC' ? stripSensitivePicFields(rawItems) : rawItems;
+                            payload = { action: 'SYNC_SHEET', token: sessionToken, sheetName: op.key, items: cleanItems };
                         }
                         if (!payload) continue;
 
@@ -1552,6 +1630,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
         }
 
         function saveToLocal() {
+            db.PIC = stripSensitivePicFields(db.PIC);
             SafeStorage.setItem('taskflow_cached_db', JSON.stringify(db), true);
         }
 
@@ -1560,7 +1639,11 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 const raw = SafeStorage.getItem('taskflow_cached_db');
                 if (raw) {
                     const parsed = JSON.parse(raw);
+                    const hadLegacyPassword = Array.isArray(parsed?.PIC) && parsed.PIC.some(p => p && ('Password' in p || 'PasswordHash' in p || 'Salt' in p));
                     db = normalizeIncomingDatabase(parsed);
+                    if (hadLegacyPassword) {
+                        saveToLocal();
+                    }
                 }
             } catch (e) {}
         }
@@ -1570,7 +1653,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             if (!raw || typeof raw !== 'object') return res;
             Object.keys(EMPTY_DB).forEach(key => {
                 if (Array.isArray(raw[key])) {
-                    res[key] = raw[key];
+                    res[key] = key === 'PIC' ? stripSensitivePicFields(raw[key]) : raw[key];
                 }
             });
             return res;
@@ -1614,7 +1697,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             sessionToken = token;
             try {
                 const uRaw = SafeStorage.getItem(SESSION_STORAGE_KEYS.USER_PROFILE);
-                if (uRaw) currentUser = JSON.parse(uRaw);
+                if (uRaw) currentUser = buildCompactSessionUser(JSON.parse(uRaw));
             } catch (e) {
                 currentUser = null;
             }
@@ -1638,7 +1721,13 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const btn = document.getElementById('login-submit-btn');
             if (u) u.disabled = disabled;
             if (p) p.disabled = disabled;
-            if (btn) btn.disabled = disabled;
+            if (btn) {
+                btn.disabled = disabled;
+                btn.innerHTML = disabled
+                    ? '<span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span><span>Memverifikasi Akun...</span>'
+                    : '<i data-lucide="log-in" class="w-4 h-4"></i><span>Masuk ke Aplikasi</span>';
+                if (!disabled && typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+            }
         }
 
         function showLoginScreen() {
@@ -1943,13 +2032,33 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             }
         }
 
+        function openModalWithFocusTrap(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return null;
+            lastFocusedBeforeModal = document.activeElement;
+            modal.classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
+            requestAnimationFrame(() => {
+                const focusables = modal.querySelectorAll('button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+                if (focusables.length > 0) focusables[0].focus();
+            });
+            return modal;
+        }
+
+        function hideModalAndRestoreFocus(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('hidden');
+            if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === 'function') {
+                try { lastFocusedBeforeModal.focus(); } catch (e) {}
+                lastFocusedBeforeModal = null;
+            }
+        }
+
         function openProfileModal() {
             const dropdown = document.getElementById('top-profile-dropdown');
             if (dropdown) dropdown.classList.add('hidden');
 
-            const modal = document.getElementById('profile-modal');
-            if (!modal || !currentUser) return;
-
+            if (!currentUser) return;
             const name = currentUser.Nama || currentUser.Username || 'User';
             document.getElementById('profile-modal-avatar').textContent = getPicInitial(currentUser);
             document.getElementById('profile-modal-name').textContent = name;
@@ -1963,13 +2072,110 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const myDone = myTasks.filter(t => isTaskCompleted(t)).length;
             document.getElementById('profile-modal-task-stats').textContent = `${myDone} Completed / ${myTasks.length} Total`;
 
-            modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
+            openModalWithFocusTrap('profile-modal');
         }
 
         function closeProfileModal() {
-            const modal = document.getElementById('profile-modal');
-            if (modal) modal.classList.add('hidden');
+            hideModalAndRestoreFocus('profile-modal');
+        }
+
+        // ==================== ALUR TERPISAH: ATUR / RESET PASSWORD (SEC-01) ====================
+        function openOwnPasswordModal() {
+            const dropdown = document.getElementById('top-profile-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            closeProfileModal();
+            if (!currentUser || !currentUser.Username) return;
+            openPasswordResetModal(currentUser.Username, currentUser.Nama || currentUser.Username, true);
+        }
+
+        function openPasswordResetModal(targetUsername, targetNama = '', requireCurrent = false) {
+            const form = document.getElementById('password-reset-form');
+            if (!form) return;
+            form.reset();
+
+            const isAdmin = currentUser && isSameText(currentUser.Role, 'Admin');
+            const mustAskCurrent = Boolean(requireCurrent && !isAdmin);
+
+            document.getElementById('pwd-target-username').value = targetUsername;
+            document.getElementById('pwd-require-current').value = String(mustAskCurrent);
+            document.getElementById('pwd-target-display').textContent = `${targetNama || targetUsername} (@${targetUsername})`;
+
+            const currentGroup = document.getElementById('pwd-current-group');
+            const currentInput = document.getElementById('pwd-input-current');
+            if (currentGroup && currentInput) {
+                currentGroup.classList.toggle('hidden', !mustAskCurrent);
+                currentInput.required = mustAskCurrent;
+            }
+
+            openModalWithFocusTrap('password-reset-modal');
+        }
+
+        function closePasswordResetModal() {
+            const form = document.getElementById('password-reset-form');
+            if (form) form.reset();
+            hideModalAndRestoreFocus('password-reset-modal');
+        }
+
+        async function submitPasswordReset(e) {
+            e.preventDefault();
+            if (!gasUrl || !sessionToken) {
+                showToast('Sesi tidak valid atau server belum terhubung.', 'error');
+                return;
+            }
+
+            const targetUsername = document.getElementById('pwd-target-username').value.trim();
+            const requireCurrent = document.getElementById('pwd-require-current').value === 'true';
+            const currentPassword = document.getElementById('pwd-input-current').value;
+            const newPassword = document.getElementById('pwd-input-new').value;
+            const confirmPassword = document.getElementById('pwd-input-confirm').value;
+
+            if (newPassword.length < 8) {
+                showToast('Password baru minimal 8 karakter.', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showToast('Konfirmasi password baru tidak cocok.', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('pwd-submit-btn');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Simpan Password';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="inline-flex items-center gap-2"><span class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span><span>Menyimpan...</span></span>';
+            }
+            setPendingSync(1);
+
+            try {
+                const res = await fetch(gasUrl, {
+                    method: 'POST',
+                    cache: 'no-store',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'SET_PASSWORD',
+                        token: sessionToken,
+                        targetUsername,
+                        currentPassword: requireCurrent ? currentPassword : '',
+                        newPassword
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    closePasswordResetModal();
+                    refreshAuthSessionExpiry();
+                    showToast(result.message || 'Password berhasil diperbarui!', 'success');
+                } else {
+                    showToast(result.message || 'Gagal memperbarui password.', 'error');
+                }
+            } catch (err) {
+                showToast('Gagal menghubungi server untuk memperbarui password.', 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+                setPendingSync(-1);
+            }
         }
 
         function openMobileSidebar() {
@@ -1982,6 +2188,18 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const backdrop = document.getElementById('mobile-sidebar-backdrop');
             if (sidebar) sidebar.classList.add('-translate-x-full');
             if (backdrop) backdrop.classList.add('hidden');
+        }
+
+        function updateStickyTasksTableHeaderOffset() {
+            const stickyFilter = document.getElementById('tasks-sticky-filter');
+            const thead = document.getElementById('tasks-table-head');
+            if (!stickyFilter || !thead) return;
+            if (window.innerWidth >= 1024) {
+                thead.style.top = '0px';
+            } else {
+                const h = stickyFilter.offsetHeight || 0;
+                thead.style.top = `${64 + h}px`;
+            }
         }
 
         function switchView(viewName) {
@@ -2040,7 +2258,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
         function drillDownTasks(mode, value = '') {
             const selectedDashPic = getSelectedDashboardPic();
-            resetAllTaskFilters();
+            resetAllTaskFilters(false);
 
             if (selectedDashPic) {
                 setSelectValueSafe('filter-pic', selectedDashPic);
@@ -2081,7 +2299,6 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 return;
             }
 
-            // Lazy View Rendering: hanya render ulang halaman yang sedang aktif
             if (activeView === 'dashboard') {
                 renderDashboard();
                 dirtyViews.dashboard = false;
@@ -2097,6 +2314,98 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             } else if (activeView === 'master') {
                 renderMasterTable();
                 dirtyViews.master = false;
+            }
+        }
+
+        function setSelectValueSafe(selectId, targetVal, fallbackLabelSuffix = 'Arsip') {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            Array.from(sel.querySelectorAll('option[data-legacy-option="true"]')).forEach(opt => opt.remove());
+
+            if (!targetVal) {
+                sel.value = '';
+                return;
+            }
+            const opts = Array.from(sel.options);
+            const matched = opts.find(o => isSameText(o.value, targetVal));
+            if (matched) {
+                sel.value = matched.value;
+            } else {
+                const legacyOpt = document.createElement('option');
+                legacyOpt.value = targetVal;
+                legacyOpt.textContent = `${targetVal} (${fallbackLabelSuffix})`;
+                legacyOpt.setAttribute('data-legacy-option', 'true');
+                sel.appendChild(legacyOpt);
+                sel.value = targetVal;
+            }
+        }
+
+        function populateFilterAndFormDropdowns() {
+            const fillSelect = (id, items, defaultLabel) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const prev = el.value;
+                el.innerHTML = defaultLabel !== null ? `<option value="">${escapeHtml(defaultLabel)}</option>` : '';
+                (items || []).forEach(item => {
+                    const val = typeof item === 'string' ? item : (item.Nama || '');
+                    if (!val) return;
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    el.appendChild(opt);
+                });
+                if (prev) setSelectValueSafe(id, prev);
+            };
+
+            fillSelect('filter-kategori', db.Kategori, 'Semua Kategori');
+            fillSelect('filter-priority', db.Priority, 'Semua Priority');
+            fillSelect('filter-pic', db.PIC, 'Semua PIC');
+            fillSelect('filter-status', db.Status, 'Semua Status');
+            fillSelect('filter-reference', db.Reference, 'Semua Reference');
+            fillSelect('filter-actionplan', db.ActionPlan, 'Semua Action Plan');
+
+            fillSelect('task-input-kategori', db.Kategori, null);
+            fillSelect('task-input-priority', db.Priority, null);
+            fillSelect('task-input-pic', db.PIC, null);
+            fillSelect('task-input-status', db.Status, null);
+            fillSelect('task-input-reference', db.Reference, '-- Tanpa Reference --');
+            fillSelect('task-input-actionplan', db.ActionPlan, '-- Tanpa Action Plan --');
+
+            const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
+
+            ['dashboard-pic-filter', 'report-pic-filter'].forEach(selId => {
+                const el = document.getElementById(selId);
+                if (!el) return;
+                const prev = el.value;
+                el.innerHTML = '<option value="">Semua PIC</option>';
+                (db.PIC || []).forEach(p => {
+                    if (!p.Nama) return;
+                    const opt = document.createElement('option');
+                    opt.value = p.Nama;
+                    opt.textContent = p.Nama;
+                    el.appendChild(opt);
+                });
+                if (isStaff && currentUser.Nama) {
+                    setSelectValueSafe(selId, currentUser.Nama);
+                    el.disabled = true;
+                } else {
+                    el.disabled = false;
+                    if (prev) setSelectValueSafe(selId, prev);
+                }
+            });
+
+            const rekapGroupEl = document.getElementById('rekap-filter-group');
+            if (rekapGroupEl) {
+                const prevGroup = rekapGroupEl.value;
+                const groups = [...new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean))];
+                rekapGroupEl.innerHTML = '<option value="">Semua Group</option>';
+                groups.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g;
+                    opt.textContent = g;
+                    rekapGroupEl.appendChild(opt);
+                });
+                if (prevGroup) setSelectValueSafe('rekap-filter-group', prevGroup);
             }
         }
 
@@ -2565,7 +2874,7 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 headers.join(','),
                 ...tasks.map(t => headers.map(h => sanitizeCsvCell(t[h])).join(','))
             ];
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -2620,10 +2929,6 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             document.getElementById('kpi-done-pct').textContent = total ? `${Math.round((doneCount / total) * 100)}% selesai` : '0% selesai';
             document.getElementById('kpi-progress').textContent = inProgressCount;
             document.getElementById('kpi-overdue').textContent = agg.overdueCount;
-
-            const statusList = (db.Status && db.Status.length > 0)
-                ? db.Status
-                : Array.from(new Set(tasks.map(t => String(t.Status || '').trim()).filter(Boolean))).map(name => getStatusConfig(name));
 
             // 1. Chart Beban Kerja per PIC (Single-Pass O(N) & In-place Update)
             const picCanvas = document.getElementById('chart-pic');
@@ -2881,352 +3186,212 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                                     if (prioNames[idx]) drillDownTasks('priority', prioNames[idx]);
                                 }
                             },
-                            plugins: { legend: { display: false } },
-                            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: { beginAtZero: true, ticks: { precision: 0 } },
+                                y: { grid: { display: false } }
+                            }
                         }
                     });
                 }
             }
 
-            // 4. Matriks Rekapitulasi Task per Kategori & Status (Single-Pass + Delegated Click)
-            const rekapHead = document.getElementById('rekap-kategori-head');
-            const rekapBody = document.getElementById('rekap-kategori-body');
-            const rekapFoot = document.getElementById('rekap-kategori-foot');
-            const rekapCountEl = document.getElementById('rekap-kategori-count');
-            const rekapGroupSel = document.getElementById('rekap-filter-group');
-            const rekapShowEmptyEl = document.getElementById('rekap-show-empty');
-            if (rekapHead && rekapBody) {
-                if (rekapGroupSel) {
-                    const prevGrp = rekapGroupSel.value;
-                    const groups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
-                    rekapGroupSel.innerHTML = '<option value="">Semua Group</option>' +
-                        groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
-                    if (prevGrp && groups.includes(prevGrp)) rekapGroupSel.value = prevGrp;
-                }
+            // 4. Tabel Rekapitulasi per Kategori & Status
+            renderDashboardCategoryMatrix(agg);
 
-                const selectedGroup = rekapGroupSel ? rekapGroupSel.value : '';
-                const showEmpty = rekapShowEmptyEl ? rekapShowEmptyEl.checked : true;
+            // 5. Daftar Perlu Ditindaklanjuti (Overdue / Due Soon H-3 / Urgent)
+            renderDashboardActionRequired(tasks, today);
 
-                const catGroupMap = {};
-                (db.Kategori || []).forEach(k => {
-                    const cName = String(k.Nama || '').trim();
-                    if (cName) catGroupMap[cName.toLowerCase()] = String(k.Group || '').trim();
-                });
-
-                const allCategories = Array.from(new Set([
-                    ...(db.Kategori || []).map(k => String(k.Nama || '').trim()),
-                    ...tasks.map(t => String(t.Kategori || '').trim())
-                ].filter(Boolean)));
-
-                const filteredCategories = allCategories.filter(cat => {
-                    if (!selectedGroup) return true;
-                    const grp = catGroupMap[cat.toLowerCase()] || '';
-                    return isSameText(grp, selectedGroup);
-                });
-
-                rekapHead.innerHTML = `
-                    <th class="sticky left-0 z-10 bg-slate-50 py-3 px-4 font-semibold border-r border-slate-200/70">Kategori</th>
-                    <th class="py-3 px-3 text-center font-semibold whitespace-nowrap bg-slate-100/80 text-slate-700">Total</th>
-                    <th class="py-3 px-3 text-center font-semibold whitespace-nowrap bg-slate-100/80 text-slate-700 border-r border-slate-200/70">Selesai</th>
-                    ${statusList.map(st => {
-                        const stHex = normalizeHexColor(st.Warna, '#64748B');
-                        return `<th${buildSafeStyleAttr({ 'background-color': hexToRgba(stHex, 0.16), color: stHex })} class="py-3 px-3 text-center font-bold whitespace-nowrap">${escapeHtml(st.Nama)}</th>`;
-                    }).join('')}
-                `;
-
-                const statusTotals = statusList.map(() => 0);
-                let grandTotalTasks = 0;
-                let grandDoneTasks = 0;
-
-                const categoryRows = filteredCategories.map(cat => {
-                    const cStat = agg.byCategory.get(cat.toLowerCase()) || { total: 0, done: 0, byStatus: new Map() };
-                    return {
-                        cat,
-                        cStat,
-                        total: cStat.total,
-                        done: cStat.done,
-                        pct: cStat.total ? Math.round((cStat.done / cStat.total) * 100) : 0
-                    };
-                })
-                .filter(row => showEmpty || row.total > 0)
-                .sort((a, b) => b.total - a.total || b.done - a.done || a.cat.localeCompare(b.cat));
-
-                if (rekapCountEl) rekapCountEl.textContent = `${categoryRows.length} Kategori`;
-
-                if (categoryRows.length === 0) {
-                    rekapBody.innerHTML = `<tr><td colspan="${statusList.length + 3}" class="py-6 text-center text-slate-400">Tidak ada data kategori yang sesuai dengan filter.</td></tr>`;
-                    if (rekapFoot) rekapFoot.innerHTML = '';
-                } else {
-                    rekapBody.innerHTML = categoryRows.map(({ cat, cStat, total: rowTotal, done: rowDone, pct }) => {
-                        grandTotalTasks += rowTotal;
-                        grandDoneTasks += rowDone;
-
-                        const statusCells = statusList.map((st, sIdx) => {
-                            const cnt = cStat.byStatus.get(String(st.Nama || '').trim().toLowerCase()) || 0;
-                            statusTotals[sIdx] += cnt;
-                            const badgeStyle = cnt > 0
-                                ? buildSafeStyleAttr({ 'background-color': hexToRgba(st.Warna, 0.14), color: normalizeHexColor(st.Warna, '#334155') })
-                                : '';
-                            return `<td class="py-2.5 px-3 text-center">
-                                <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(cat)}|||${escapeHtml(st.Nama)}"${badgeStyle} class="min-w-[28px] px-2 py-0.5 rounded-md font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
-                            </td>`;
-                        }).join('');
-
-                        return `<tr class="hover:bg-slate-50">
-                            <td class="sticky left-0 z-10 bg-white py-2.5 px-4 font-semibold text-slate-800 whitespace-nowrap border-r border-slate-100">
-                                <button type="button" data-drill-mode="kategori" data-drill-value="${escapeHtml(cat)}" class="hover:text-indigo-600 text-left">${escapeHtml(cat)}</button>
-                            </td>
-                            <td class="py-2.5 px-3 text-center font-bold text-slate-800 bg-slate-50/50">${rowTotal}</td>
-                            <td class="py-2.5 px-3 text-center font-bold bg-slate-50/50 border-r border-slate-100 ${pct === 100 ? 'text-emerald-600' : 'text-indigo-600'}">${pct}%</td>
-                            ${statusCells}
-                        </tr>`;
-                    }).join('');
-
-                    if (rekapFoot) {
-                        const grandPct = grandTotalTasks ? Math.round((grandDoneTasks / grandTotalTasks) * 100) : 0;
-                        const totalStatusCells = statusList.map((st, sIdx) => {
-                            const cnt = statusTotals[sIdx];
-                            return `<td class="py-3 px-3 text-center">
-                                <button type="button" data-drill-mode="status" data-drill-value="${escapeHtml(st.Nama)}" class="min-w-[28px] px-2 py-0.5 rounded-md font-extrabold text-slate-800 hover:bg-slate-200/70">${cnt}</button>
-                            </td>`;
-                        }).join('');
-
-                        rekapFoot.innerHTML = `<tr>
-                            <td class="sticky left-0 z-10 bg-slate-100 py-3 px-4 font-extrabold text-slate-900 whitespace-nowrap border-r border-slate-200">
-                                <button type="button" data-drill-mode="all" class="hover:text-indigo-600 text-left">TOTAL</button>
-                            </td>
-                            <td class="py-3 px-3 text-center font-extrabold text-slate-900">${grandTotalTasks}</td>
-                            <td class="py-3 px-3 text-center font-extrabold text-emerald-700 border-r border-slate-200">${grandPct}%</td>
-                            ${totalStatusCells}
-                        </tr>`;
-                    }
-                }
-            }
-
-            // 5. Panel Task Perlu Ditindaklanjuti
-            const actionListEl = document.getElementById('action-required-list');
-            const actionCountEl = document.getElementById('action-required-count');
-            if (actionListEl) {
-                const threeDaysAhead = getTodayOffset(3);
-                const urgentList = tasks.filter(t => {
-                    if (isTaskCompleted(t)) return false;
-                    const target = normalizeDateISO(t.TargetDate);
-                    const isOver = target && target < today;
-                    const isDueSoon = target && target >= today && target <= threeDaysAhead;
-                    const isUrgentPrio = ['urgent', 'high'].includes(String(t.Priority || '').trim().toLowerCase());
-                    return isOver || isDueSoon || isUrgentPrio;
-                }).sort((a, b) => normalizeDateISO(a.TargetDate).localeCompare(normalizeDateISO(b.TargetDate)));
-
-                if (actionCountEl) actionCountEl.textContent = `${urgentList.length} Task`;
-
-                if (urgentList.length === 0) {
-                    actionListEl.innerHTML = `
-                        <div class="col-span-full py-8 text-center space-y-1.5">
-                            <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                                <i data-lucide="check-check" class="w-5 h-5"></i>
-                            </div>
-                            <p class="text-xs sm:text-[13px] font-semibold text-slate-700">Semua pekerjaan terkendali</p>
-                            <p class="text-[11px] sm:text-xs text-slate-400">Tidak ada task overdue atau mendesak saat ini.</p>
-                        </div>`;
-                } else {
-                    actionListEl.innerHTML = urgentList.slice(0, 12).map(t => {
-                        const target = normalizeDateISO(t.TargetDate);
-                        const isOver = target && target < today;
-                        const badgeClass = isOver
-                            ? 'bg-rose-50 text-rose-700 border-rose-200'
-                            : 'bg-amber-50 text-amber-700 border-amber-200';
-                        const badgeLabel = isOver ? 'Overdue' : (target && target <= threeDaysAhead ? 'Due Soon' : t.Priority);
-
-                        return `
-                        <div data-edit-task-id="${escapeHtml(t.ID)}" role="button" tabindex="0" class="p-3 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-start justify-between gap-3">
-                            <div class="min-w-0 space-y-1">
-                                <p class="text-xs sm:text-[13px] font-bold text-slate-800 truncate">${escapeHtml(t.Task)}</p>
-                                <div class="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-slate-500">
-                                    <span class="font-semibold text-indigo-600">${escapeHtml(t.PIC || '-')}</span>
-                                    <span>•</span>
-                                    <span>Target: ${formatDateDisplay(t.TargetDate)}</span>
-                                    <span>•</span>
-                                    <span>${Number(t.Progress || 0)}%</span>
-                                </div>
-                            </div>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold border shrink-0 ${badgeClass}">${escapeHtml(badgeLabel)}</span>
-                        </div>`;
-                    }).join('');
-                }
-            }
-            const dashEl = document.getElementById('view-dashboard');
-            if (typeof lucide !== 'undefined' && dashEl) lucide.createIcons({ root: dashEl });
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: document.getElementById('view-dashboard') });
         }
 
-        // ==================== FILTER & DAFTAR PEKERJAAN (COLLAPSIBLE, SKELETON & PAGINASI 25-50) ====================
+        function renderDashboardCategoryMatrix(agg) {
+            const headEl = document.getElementById('rekap-kategori-head');
+            const bodyEl = document.getElementById('rekap-kategori-body');
+            const footEl = document.getElementById('rekap-kategori-foot');
+            const countBadge = document.getElementById('rekap-kategori-count');
+            if (!headEl || !bodyEl || !footEl) return;
+
+            const selectedGroup = (document.getElementById('rekap-filter-group')?.value || '').trim();
+            const showEmpty = document.getElementById('rekap-show-empty')?.checked ?? true;
+            const statuses = db.Status || [];
+
+            headEl.innerHTML = `
+                <th class="py-3 px-4 font-semibold">Kategori</th>
+                <th class="py-3 px-3 font-semibold hidden sm:table-cell">Group</th>
+                ${statuses.map(st => {
+                    const hex = normalizeHexColor(st.Warna, '#64748B');
+                    return `<th class="py-3 px-3 text-center font-semibold">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full"${buildSafeStyleAttr({ 'background-color': hex })}></span>
+                            <span>${escapeHtml(st.Nama)}</span>
+                        </span>
+                    </th>`;
+                }).join('')}
+                <th class="py-3 px-4 text-right font-semibold">Total</th>
+            `;
+
+            const colTotals = new Array(statuses.length).fill(0);
+            let grandTotal = 0;
+            const rowsHtml = [];
+            let displayedCatCount = 0;
+
+            (db.Kategori || []).forEach(cat => {
+                if (selectedGroup && !isSameText(cat.Group, selectedGroup)) return;
+                const catKey = String(cat.Nama || '').trim().toLowerCase();
+                const cStat = agg.byCategory.get(catKey);
+                let rowSum = 0;
+
+                const cells = statuses.map((st, idx) => {
+                    const stKey = String(st.Nama || '').trim().toLowerCase();
+                    const cnt = cStat ? (cStat.byStatus.get(stKey) || 0) : 0;
+                    rowSum += cnt;
+                    colTotals[idx] += cnt;
+                    if (cnt === 0) {
+                        return `<td class="py-2.5 px-3 text-center text-slate-300">0</td>`;
+                    }
+                    const compositeVal = `${cat.Nama}|||${st.Nama}`;
+                    return `<td class="py-2.5 px-3 text-center">
+                        <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(compositeVal)}" class="inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-md font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                            ${cnt}
+                        </button>
+                    </td>`;
+                });
+
+                if (!showEmpty && rowSum === 0) return;
+                displayedCatCount++;
+                grandTotal += rowSum;
+
+                rowsHtml.push(`
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-2.5 px-4 font-semibold text-slate-800">
+                            <button type="button" data-drill-mode="kategori" data-drill-value="${escapeHtml(cat.Nama)}" class="text-left hover:text-indigo-600 transition-colors">
+                                ${escapeHtml(cat.Nama)}
+                            </button>
+                        </td>
+                        <td class="py-2.5 px-3 text-slate-500 hidden sm:table-cell">${escapeHtml(cat.Group || '-')}</td>
+                        ${cells.join('')}
+                        <td class="py-2.5 px-4 text-right font-bold text-slate-800">${rowSum}</td>
+                    </tr>
+                `);
+            });
+
+            if (countBadge) countBadge.textContent = `${displayedCatCount} Kategori`;
+
+            bodyEl.innerHTML = rowsHtml.length
+                ? rowsHtml.join('')
+                : `<tr><td colspan="${statuses.length + 3}" class="py-8 text-center text-slate-400">Tidak ada data kategori yang sesuai filter.</td></tr>`;
+
+            footEl.innerHTML = `
+                <tr>
+                    <td class="py-3 px-4">Total Keseluruhan</td>
+                    <td class="py-3 px-3 hidden sm:table-cell">-</td>
+                    ${colTotals.map(tot => `<td class="py-3 px-3 text-center">${tot}</td>`).join('')}
+                    <td class="py-3 px-4 text-right text-indigo-700">${grandTotal}</td>
+                </tr>
+            `;
+        }
+
+        function renderDashboardActionRequired(tasks, today) {
+            const container = document.getElementById('action-required-list');
+            const badge = document.getElementById('action-required-count');
+            if (!container) return;
+
+            const h3Limit = getTodayOffset(3);
+            const urgentItems = [];
+
+            tasks.forEach(t => {
+                if (isTaskCompleted(t)) return;
+                const overdue = isTaskOverdue(t, today);
+                const targetIso = normalizeDateISO(t.TargetDate);
+                const isDueSoon = Boolean(targetIso && targetIso >= today && targetIso <= h3Limit);
+                const isUrgent = isSameText(t.Priority, 'Urgent') || isSameText(t.Priority, 'High');
+
+                if (overdue || isDueSoon || isUrgent) {
+                    urgentItems.push({ task: t, overdue, isDueSoon, targetIso });
+                }
+            });
+
+            urgentItems.sort((a, b) => {
+                if (a.overdue !== b.overdue) return a.overdue ? -1 : 1;
+                return (a.targetIso || '9999-12-31').localeCompare(b.targetIso || '9999-12-31');
+            });
+
+            if (badge) badge.textContent = `${urgentItems.length} Task`;
+
+            if (!urgentItems.length) {
+                container.innerHTML = `
+                    <div class="col-span-full py-8 text-center text-slate-400">
+                        <p class="font-medium text-slate-600">Semua pekerjaan dalam kondisi terkendali!</p>
+                        <p class="text-xs mt-1">Tidak ada task overdue maupun mendekati tenggat waktu.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = urgentItems.map(({ task, overdue, isDueSoon }) => {
+                const badgeClass = overdue
+                    ? 'bg-rose-100 text-rose-700 border-rose-200'
+                    : (isDueSoon ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-indigo-100 text-indigo-700 border-indigo-200');
+                const badgeLabel = overdue ? 'OVERDUE' : (isDueSoon ? 'DUE SOON' : 'HIGH PRIORITY');
+
+                return `
+                    <div data-edit-task-id="${escapeHtml(task.ID)}" role="button" tabindex="0" class="p-3 rounded-xl border border-slate-200/90 hover:border-indigo-300 hover:bg-slate-50/80 cursor-pointer transition-all flex items-start justify-between gap-2.5">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${badgeClass}">${badgeLabel}</span>
+                                <span class="text-[11px] font-mono text-slate-400">${escapeHtml(task.ID)}</span>
+                            </div>
+                            <p class="text-[12px] sm:text-[13px] font-bold text-slate-800 mt-1 line-clamp-1">${escapeHtml(task.Task)}</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">PIC: <strong class="text-slate-700">${escapeHtml(task.PIC || '-')}</strong> &bull; Target: <strong class="${overdue ? 'text-rose-600' : 'text-slate-700'}">${escapeHtml(formatDateDisplay(task.TargetDate))}</strong></p>
+                        </div>
+                        <span class="text-xs font-bold text-indigo-600 shrink-0">${Number(task.Progress || 0)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== VIEW 2: DAFTAR PEKERJAAN & PAGINASI 25-50 ====================
         function toggleMobileTaskFilters(forceState) {
             const wrapper = document.getElementById('tasks-filter-grid-wrapper');
             const btn = document.getElementById('mobile-filter-toggle-btn');
-            if (!wrapper) return;
-
-            isMobileFilterOpen = typeof forceState === 'boolean'
-                ? forceState
-                : wrapper.classList.contains('hidden');
-
+            if (!wrapper || !btn) return;
+            isMobileFilterOpen = typeof forceState === 'boolean' ? forceState : wrapper.classList.contains('hidden');
             wrapper.classList.toggle('hidden', !isMobileFilterOpen);
             wrapper.classList.toggle('grid', isMobileFilterOpen);
-            if (btn) {
-                btn.setAttribute('aria-expanded', String(isMobileFilterOpen));
-            }
-            updateMobileFilterBadge();
+            btn.setAttribute('aria-expanded', String(isMobileFilterOpen));
             requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
         }
 
-        function updateMobileFilterBadge() {
+        function updateMobileFilterBadgeCount() {
             const badge = document.getElementById('mobile-filter-badge');
-            const btn = document.getElementById('mobile-filter-toggle-btn');
-            const clearSearchBtn = document.getElementById('btn-clear-search');
-            const searchVal = (document.getElementById('filter-search')?.value || '').trim();
+            if (!badge) return;
+            const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
+            const ids = ['filter-kategori', 'filter-priority', 'filter-status', 'filter-reference', 'filter-actionplan'];
+            if (!isStaff) ids.push('filter-pic');
 
-            if (clearSearchBtn) {
-                clearSearchBtn.classList.toggle('hidden', searchVal.length === 0);
-            }
-
-            const filterIds = ['filter-kategori', 'filter-priority', 'filter-status', 'filter-reference', 'filter-actionplan'];
-            const picEl = document.getElementById('filter-pic');
-            if (picEl && !picEl.disabled) {
-                filterIds.push('filter-pic');
-            }
-
-            let activeCount = filterIds.reduce((cnt, id) => cnt + (document.getElementById(id)?.value ? 1 : 0), 0);
+            let activeCount = ids.reduce((acc, id) => {
+                const v = (document.getElementById(id)?.value || '').trim();
+                return acc + (v ? 1 : 0);
+            }, 0);
             if (tasksSpecialFilter) activeCount++;
 
-            if (badge) {
+            if (activeCount > 0) {
                 badge.textContent = String(activeCount);
-                badge.classList.toggle('hidden', activeCount === 0);
-            }
-            if (btn) {
-                const isHighlighted = isMobileFilterOpen || activeCount > 0;
-                btn.classList.toggle('border-indigo-500', isHighlighted);
-                btn.classList.toggle('bg-indigo-50/70', isHighlighted);
-                btn.classList.toggle('text-indigo-700', isHighlighted);
-                btn.classList.toggle('border-slate-300', !isHighlighted);
-                btn.classList.toggle('bg-white', !isHighlighted);
-                btn.classList.toggle('text-slate-700', !isHighlighted);
-            }
-        }
-
-        function clearTasksSearchInput() {
-            const searchEl = document.getElementById('filter-search');
-            if (!searchEl) return;
-            searchEl.value = '';
-            updateMobileFilterBadge();
-            tasksCurrentPage = 1;
-            renderTasksTable();
-        }
-
-        function onTasksPageSizeChange(newSize) {
-            tasksPageSize = normalizePageSize(newSize);
-            tasksCurrentPage = 1;
-            SafeStorage.setItem(SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE, String(tasksPageSize), true);
-            renderTasksTable();
-            scrollTasksListToTop();
-        }
-
-        function goToTasksPage(targetPage, totalPages) {
-            const clamped = Math.min(Math.max(1, Number(targetPage || 1)), Math.max(1, Number(totalPages || 1)));
-            if (clamped === tasksCurrentPage) return;
-            tasksCurrentPage = clamped;
-            renderTasksTable();
-            scrollTasksListToTop();
-        }
-
-        function scrollTasksListToTop() {
-            const tableScroll = document.getElementById('tasks-table-scroll-area');
-            if (tableScroll && typeof tableScroll.scrollTo === 'function') {
-                tableScroll.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-            const listContainer = document.getElementById('tasks-list-container');
-            if (listContainer && window.innerWidth < 1024 && typeof listContainer.scrollIntoView === 'function') {
-                listContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        function renderTasksSkeleton(cardCount = 4, rowCount = 6) {
-            const mobileCardsEl = document.getElementById('tasks-mobile-cards');
-            const tbody = document.getElementById('tasks-table-body');
-            const pagEl = document.getElementById('tasks-pagination');
-
-            if (mobileCardsEl) {
-                mobileCardsEl.innerHTML = Array.from({ length: cardCount }).map(() => `
-                    <div class="p-4 space-y-3 animate-pulse" aria-hidden="true">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="space-y-2 flex-1">
-                                <div class="flex items-center gap-1.5">
-                                    <div class="h-3.5 w-16 bg-slate-200 rounded"></div>
-                                    <div class="h-4 w-14 bg-slate-200 rounded"></div>
-                                </div>
-                                <div class="h-4 w-11/12 bg-slate-200 rounded"></div>
-                                <div class="h-3 w-2/3 bg-slate-100 rounded"></div>
-                            </div>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <div class="w-9 h-9 bg-slate-100 rounded-xl"></div>
-                                <div class="w-9 h-9 bg-slate-100 rounded-xl"></div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between gap-2 pt-1">
-                            <div class="flex items-center gap-1.5">
-                                <div class="w-5 h-5 rounded-full bg-slate-200"></div>
-                                <div class="h-3.5 w-24 bg-slate-200 rounded"></div>
-                            </div>
-                            <div class="h-5 w-20 bg-slate-200 rounded-full"></div>
-                        </div>
-                        <div class="flex items-center justify-between gap-3 pt-1">
-                            <div class="h-3 w-28 bg-slate-100 rounded"></div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-20 h-1.5 bg-slate-200 rounded-full"></div>
-                                <div class="h-3 w-8 bg-slate-200 rounded"></div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            if (tbody) {
-                tbody.innerHTML = Array.from({ length: rowCount }).map(() => `
-                    <tr class="animate-pulse" aria-hidden="true">
-                        <td class="py-3.5 px-4"><div class="h-3.5 w-16 bg-slate-200 rounded"></div></td>
-                        <td class="py-3.5 px-4 space-y-1.5">
-                            <div class="h-4 w-64 bg-slate-200 rounded"></div>
-                            <div class="h-3 w-40 bg-slate-100 rounded"></div>
-                        </td>
-                        <td class="py-3.5 px-4"><div class="h-5 w-16 bg-slate-200 rounded-lg"></div></td>
-                        <td class="py-3.5 px-4">
-                            <div class="inline-flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-slate-200"></div>
-                                <div class="h-3.5 w-24 bg-slate-200 rounded"></div>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4"><div class="h-3.5 w-24 bg-slate-200 rounded"></div></td>
-                        <td class="py-3.5 px-4"><div class="h-5 w-20 bg-slate-200 rounded-full"></div></td>
-                        <td class="py-3.5 px-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 bg-slate-200 rounded-full"></div>
-                                <div class="h-3 w-8 bg-slate-200 rounded"></div>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-right">
-                            <div class="inline-flex items-center gap-1">
-                                <div class="w-7 h-7 bg-slate-100 rounded-lg"></div>
-                                <div class="w-7 h-7 bg-slate-100 rounded-lg"></div>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-
-            if (pagEl) {
-                pagEl.innerHTML = `<span class="text-slate-400">Memuat daftar pekerjaan dari Google Spreadsheet...</span>`;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
         }
 
         function onTasksSearchInput() {
-            updateMobileFilterBadge();
+            const input = document.getElementById('filter-search');
+            const clearBtn = document.getElementById('btn-clear-search');
+            if (clearBtn && input) {
+                clearBtn.classList.toggle('hidden', !input.value);
+            }
             clearTimeout(tasksSearchTimer);
             tasksSearchTimer = setTimeout(() => {
                 tasksCurrentPage = 1;
@@ -3234,375 +3399,347 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             }, 180);
         }
 
-        function onMasterSearchInput() {
-            clearTimeout(masterSearchTimer);
-            masterSearchTimer = setTimeout(() => {
-                renderMasterTable();
-            }, 180);
-        }
-
-        function updateStickyTasksTableHeaderOffset() {
-            const filterBar = document.getElementById('tasks-sticky-filter');
-            const tableHead = document.getElementById('tasks-table-head');
-            const mainEl = document.getElementById('main-viewport');
-            if (!filterBar || !tableHead) return;
-
-            const isDesktop = window.innerWidth >= 1024;
-            const tasksView = document.getElementById('view-tasks');
-            const isTasksVisible = tasksView && !tasksView.classList.contains('hidden');
-
-            if (mainEl) {
-                const isTasksDesktop = isTasksVisible && isDesktop;
-                mainEl.classList.toggle('lg:overflow-hidden', isTasksDesktop);
-                mainEl.classList.toggle('lg:overflow-y-auto', !isTasksDesktop);
-                mainEl.classList.toggle('lg:pb-3', isTasksDesktop);
-                mainEl.classList.toggle('lg:pb-10', !isTasksDesktop);
-            }
-
-            if (isDesktop) {
-                filterBar.style.top = '';
-                filterBar.style.marginTop = '';
-                filterBar.style.paddingTop = '';
-                tableHead.style.top = '0px';
-            } else {
-                const headerEl = document.querySelector('header');
-                const topOffset = headerEl ? headerEl.offsetHeight : 64;
-                filterBar.style.top = `${topOffset}px`;
-                const filterHeight = filterBar.offsetHeight || 0;
-                tableHead.style.top = `${topOffset + filterHeight}px`;
-            }
-        }
-
-        function populateFilterAndFormDropdowns() {
-            const fillSelect = (id, items, defaultLabel) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const prevVal = el.value;
-                const names = Array.from(new Set((items || []).map(x => String(x.Nama || '').trim()).filter(Boolean)));
-                let html = defaultLabel !== null ? `<option value="">${escapeHtml(defaultLabel)}</option>` : '';
-                html += names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
-                el.innerHTML = html;
-                if (prevVal && names.some(n => isSameText(n, prevVal))) {
-                    const matched = names.find(n => isSameText(n, prevVal));
-                    if (matched) el.value = matched;
-                }
-            };
-
-            fillSelect('dashboard-pic-filter', db.PIC, 'Semua PIC');
-            fillSelect('report-pic-filter', db.PIC, 'Semua PIC');
-            fillSelect('filter-kategori', db.Kategori, 'Semua Kategori');
-            fillSelect('filter-priority', db.Priority, 'Semua Priority');
-            fillSelect('filter-pic', db.PIC, 'Semua PIC');
-            fillSelect('filter-status', db.Status, 'Semua Status');
-            fillSelect('filter-reference', db.Reference, 'Semua Reference');
-            fillSelect('filter-actionplan', db.ActionPlan, 'Semua Action Plan');
-
-            fillSelect('task-input-kategori', db.Kategori, null);
-            fillSelect('task-input-priority', db.Priority, null);
-            fillSelect('task-input-pic', db.PIC, null);
-            fillSelect('task-input-status', db.Status, null);
-            fillSelect('task-input-reference', db.Reference, '-- Pilih Reference --');
-            fillSelect('task-input-actionplan', db.ActionPlan, '-- Pilih Action Plan --');
-        }
-
-        function resetAllTaskFilters() {
-            tasksSpecialFilter = '';
-            const filterIds = [
-                'filter-search',
-                'filter-kategori',
-                'filter-priority',
-                'filter-pic',
-                'filter-status',
-                'filter-reference',
-                'filter-actionplan'
-            ];
-            filterIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
+        function clearTasksSearchInput() {
+            const input = document.getElementById('filter-search');
+            const clearBtn = document.getElementById('btn-clear-search');
+            if (input) input.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
             tasksCurrentPage = 1;
             renderTasksTable();
         }
 
-        function getFilteredTasks() {
-            const q = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
-            const fKat = document.getElementById('filter-kategori')?.value || '';
-            const fPrio = document.getElementById('filter-priority')?.value || '';
-            const fPic = document.getElementById('filter-pic')?.value || '';
-            const fStatus = document.getElementById('filter-status')?.value || '';
-            const fRef = document.getElementById('filter-reference')?.value || '';
-            const fAct = document.getElementById('filter-actionplan')?.value || '';
-            const today = getTodayOffset(0);
+        function resetAllTaskFilters(shouldRender = true) {
+            const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
+            const searchEl = document.getElementById('filter-search');
+            const clearBtn = document.getElementById('btn-clear-search');
+            if (searchEl) searchEl.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
 
-            return getScopedTasks().filter(t => {
-                if (tasksSpecialFilter === 'completed' && !isTaskCompleted(t)) return false;
-                if (tasksSpecialFilter === 'inprogress' && isTaskCompleted(t)) return false;
-                if (tasksSpecialFilter === 'overdue' && !isTaskOverdue(t, today)) return false;
-                if (tasksSpecialFilter.startsWith('priority:')) {
-                    const targetPrio = tasksSpecialFilter.slice(9);
-                    if (!isSameText(t.Priority, targetPrio)) return false;
-                }
-
-                if (fKat && !isSameText(t.Kategori, fKat)) return false;
-                if (fPrio && !isSameText(t.Priority, fPrio)) return false;
-                if (fPic && !isSameText(t.PIC, fPic)) return false;
-                if (fStatus && !isSameText(t.Status, fStatus)) return false;
-                if (fRef && !isSameText(t.Reference, fRef)) return false;
-                if (fAct && !isSameText(t.ActionPlan, fAct)) return false;
-
-                if (q) {
-                    const haystack = [
-                        t.ID, t.Task, t.Kategori, t.Priority, t.PIC,
-                        t.Status, t.Reference, t.ActionPlan, t.Catatan
-                    ].map(v => String(v || '').toLowerCase()).join(' ');
-                    if (!haystack.includes(q)) return false;
-                }
-                return true;
+            ['filter-kategori', 'filter-priority', 'filter-status', 'filter-reference', 'filter-actionplan'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
             });
+
+            const picEl = document.getElementById('filter-pic');
+            if (picEl) {
+                if (isStaff && currentUser.Nama) {
+                    setSelectValueSafe('filter-pic', currentUser.Nama);
+                } else {
+                    picEl.value = '';
+                }
+            }
+
+            tasksSpecialFilter = '';
+            tasksCurrentPage = 1;
+            if (shouldRender) renderTasksTable();
         }
 
-        function renderTasksTable() {
+        function changeTasksPageSize(newSize) {
+            tasksPageSize = normalizePageSize(newSize);
+            tasksCurrentPage = 1;
+            SafeStorage.setItem(SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE, String(tasksPageSize), true);
+            renderTasksTable(true);
+        }
+
+        function goToTasksPage(targetPage) {
+            tasksCurrentPage = Math.max(1, Number(targetPage) || 1);
+            renderTasksTable(true);
+        }
+
+        function renderTasksTable(scrollToTop = false) {
             const tbody = document.getElementById('tasks-table-body');
-            const mobileCardsEl = document.getElementById('tasks-mobile-cards');
-            const pagEl = document.getElementById('tasks-pagination');
+            const mobileCards = document.getElementById('tasks-mobile-cards');
+            const paginationEl = document.getElementById('tasks-pagination');
             const quickBar = document.getElementById('tasks-active-quickfilter');
             const quickLabel = document.getElementById('tasks-active-quickfilter-label');
-            if (!tbody) return;
+            if (!tbody || !mobileCards || !paginationEl) return;
 
-            tasksPageSize = normalizePageSize(tasksPageSize);
-            updateMobileFilterBadge();
-
-            if (isTasksLoading && (db.Tasks || []).length === 0) {
-                renderTasksSkeleton();
-                requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
-                return;
-            }
+            updateMobileFilterBadgeCount();
 
             if (quickBar && quickLabel) {
                 if (tasksSpecialFilter) {
-                    const labelMap = {
-                        completed: 'Filter Cepat: Task Completed',
-                        inprogress: 'Filter Cepat: Task In Progress',
-                        overdue: 'Filter Cepat: Task Overdue'
+                    const labels = {
+                        completed: 'Filter Cepat: Hanya Task Completed',
+                        inprogress: 'Filter Cepat: Hanya Task In Progress',
+                        overdue: 'Filter Cepat: Hanya Task Overdue'
                     };
-                    quickLabel.textContent = labelMap[tasksSpecialFilter] || `Filter Cepat: ${tasksSpecialFilter.replace('priority:', 'Priority ')}`;
+                    quickLabel.textContent = labels[tasksSpecialFilter] || 'Filter Cepat Aktif';
                     quickBar.classList.remove('hidden');
                 } else {
                     quickBar.classList.add('hidden');
                 }
             }
 
-            const filtered = getFilteredTasks();
+            const q = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
+            const fKat = (document.getElementById('filter-kategori')?.value || '').trim();
+            const fPrio = (document.getElementById('filter-priority')?.value || '').trim();
+            const fPic = (document.getElementById('filter-pic')?.value || '').trim();
+            const fStat = (document.getElementById('filter-status')?.value || '').trim();
+            const fRef = (document.getElementById('filter-reference')?.value || '').trim();
+            const fAct = (document.getElementById('filter-actionplan')?.value || '').trim();
+            const today = getTodayOffset(0);
+
+            const filtered = getScopedTasks().filter(t => {
+                if (tasksSpecialFilter === 'completed' && !isTaskCompleted(t)) return false;
+                if (tasksSpecialFilter === 'inprogress' && isTaskCompleted(t)) return false;
+                if (tasksSpecialFilter === 'overdue' && !isTaskOverdue(t, today)) return false;
+
+                if (fKat && !isSameText(t.Kategori, fKat)) return false;
+                if (fPrio && !isSameText(t.Priority, fPrio)) return false;
+                if (fPic && !isSameText(t.PIC, fPic)) return false;
+                if (fStat && !isSameText(t.Status, fStat)) return false;
+                if (fRef && !isSameText(t.Reference, fRef)) return false;
+                if (fAct && !isSameText(t.ActionPlan, fAct)) return false;
+
+                if (q) {
+                    const hay = `${t.ID || ''} ${t.Task || ''} ${t.Kategori || ''} ${t.PIC || ''} ${t.Catatan || ''} ${t.Reference || ''} ${t.ActionPlan || ''}`.toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            });
+
             const totalItems = filtered.length;
             const totalPages = Math.max(1, Math.ceil(totalItems / tasksPageSize));
             if (tasksCurrentPage > totalPages) tasksCurrentPage = totalPages;
             if (tasksCurrentPage < 1) tasksCurrentPage = 1;
 
             const startIdx = (tasksCurrentPage - 1) * tasksPageSize;
-            const pageItems = filtered.slice(startIdx, startIdx + tasksPageSize);
-            const today = getTodayOffset(0);
+            const endIdx = Math.min(startIdx + tasksPageSize, totalItems);
+            const pageItems = filtered.slice(startIdx, endIdx);
 
-            if (pageItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400">Tidak ada pekerjaan yang sesuai dengan filter saat ini.</td></tr>`;
-                if (mobileCardsEl) {
-                    mobileCardsEl.innerHTML = `<div class="py-10 px-4 text-center text-xs text-slate-400">Tidak ada pekerjaan yang sesuai dengan filter saat ini.</div>`;
-                }
+            if (totalItems === 0) {
+                const emptyHtml = `
+                    <div class="py-12 px-4 text-center text-slate-400">
+                        <p class="font-semibold text-slate-600">Tidak ada pekerjaan yang ditemukan</p>
+                        <p class="text-xs mt-1">Ubah filter pencarian atau klik "Tambah Task" untuk membuat pekerjaan baru.</p>
+                    </div>
+                `;
+                mobileCards.innerHTML = emptyHtml;
+                tbody.innerHTML = `<tr><td colspan="8">${emptyHtml}</td></tr>`;
             } else {
-                const mobileHtmlList = [];
-                tbody.innerHTML = pageItems.map(t => {
+                const desktopRows = [];
+                const mobileRows = [];
+
+                pageItems.forEach(t => {
                     const stCfg = getStatusConfig(t.Status);
                     const stHex = stCfg.Warna;
-                    const over = isTaskOverdue(t, today);
+                    const stBg = hexToRgba(stHex, 0.14);
+                    const overdue = isTaskOverdue(t, today);
                     const prog = Math.min(100, Math.max(0, Number(t.Progress || 0)));
-                    const prioLower = String(t.Priority || '').trim().toLowerCase();
-                    const prioBadge = prioLower === 'urgent'
+
+                    const prioLower = String(t.Priority || '').toLowerCase();
+                    const prioBadgeClass = prioLower.includes('urgent') || prioLower.includes('critical')
                         ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : prioLower === 'high'
+                        : (prioLower.includes('high')
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
-                            : prioLower === 'medium'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : 'bg-slate-100 text-slate-600 border-slate-200';
+                            : 'bg-slate-100 text-slate-700 border-slate-200');
 
-                    const subParts = [t.Kategori, t.Catatan].filter(Boolean).map(v => escapeHtml(v));
-                    const refBadge = t.Reference
-                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] sm:text-[11px] font-medium">Ref: ${escapeHtml(t.Reference)}</span>`
-                        : '';
-                    const actBadge = t.ActionPlan
-                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[10px] sm:text-[11px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
-                        : '';
+                    const metaTags = [];
+                    if (t.Kategori) metaTags.push(`<span class="text-slate-600 font-medium">${escapeHtml(t.Kategori)}</span>`);
+                    if (t.Reference) metaTags.push(`<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-semibold">Ref: ${escapeHtml(t.Reference)}</span>`);
+                    if (t.ActionPlan) metaTags.push(`<span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 text-[10px] font-semibold">Plan: ${escapeHtml(t.ActionPlan)}</span>`);
+                    if (t.Catatan) metaTags.push(`<span class="text-slate-400 italic truncate max-w-[260px]">${escapeHtml(t.Catatan)}</span>`);
 
-                    mobileHtmlList.push(`
-                    <div class="p-3.5 space-y-2 hover:bg-slate-50/80 transition-colors">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0 space-y-1">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="font-mono text-[10px] font-semibold text-slate-400">${escapeHtml(t.ID)}</span>
-                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
-                                    ${over ? '<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-bold">Overdue</span>' : ''}
+                    desktopRows.push(`
+                        <tr class="hover:bg-slate-50/90 transition-colors">
+                            <td class="py-3 px-4 font-mono text-xs font-bold text-slate-600 whitespace-nowrap">${escapeHtml(t.ID)}</td>
+                            <td class="py-3 px-4">
+                                <p class="font-semibold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
+                                <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">
+                                    ${metaTags.join('<span class="text-slate-300">&bull;</span>')}
                                 </div>
-                                <p class="text-[13px] font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
-                                <p class="text-[11px] text-slate-500 line-clamp-2">${subParts.join(' • ') || '-'}</p>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${prioBadgeClass}">${escapeHtml(t.Priority || '-')}</span>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <div class="inline-flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
+                                    <span class="font-medium text-slate-700">${escapeHtml(t.PIC || '-')}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="font-medium ${overdue ? 'text-rose-600 font-bold' : 'text-slate-700'}">${escapeHtml(formatDateDisplay(t.TargetDate))}</span>
+                                ${overdue ? '<span class="block text-[10px] font-bold text-rose-600">OVERDUE</span>' : ''}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border"${buildSafeStyleAttr({ 'background-color': stBg, color: stHex, 'border-color': hexToRgba(stHex, 0.35) })}>
+                                    <span class="w-1.5 h-1.5 rounded-full"${buildSafeStyleAttr({ 'background-color': stHex })}></span>
+                                    <span>${escapeHtml(stCfg.Nama)}</span>
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <div class="w-24">
+                                    <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                                        <span>${prog}%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full transition-all"${buildSafeStyleAttr({ width: `${prog}%`, 'background-color': stHex })}></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center justify-end gap-1">
+                                    <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" title="Edit Task" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    </button>
+                                    <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" title="Hapus Task" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `);
+
+                    mobileRows.push(`
+                        <div class="p-3.5 space-y-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-[11px] font-mono font-bold text-slate-500">${escapeHtml(t.ID)}</span>
+                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${prioBadgeClass}">${escapeHtml(t.Priority || '-')}</span>
+                                        ${overdue ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">OVERDUE</span>' : ''}
+                                    </div>
+                                    <p class="text-[13px] font-bold text-slate-800 mt-1 leading-snug">${escapeHtml(t.Task)}</p>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" aria-label="Edit Task" class="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    </button>
+                                    <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" aria-label="Hapus Task" class="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1 shrink-0">
-                                <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" aria-label="Edit Task" class="p-2 rounded-xl text-slate-500 hover:text-indigo-600 bg-slate-100/80 hover:bg-indigo-50 transition-colors">
-                                    <i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i>
-                                </button>
-                                <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" aria-label="Hapus Task" class="p-2 rounded-xl text-slate-500 hover:text-rose-600 bg-slate-100/80 hover:bg-rose-50 transition-colors">
-                                    <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
-                                </button>
+                            <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                ${metaTags.join('')}
+                            </div>
+                            <div class="flex items-center justify-between gap-2 pt-1 text-[11px] text-slate-600">
+                                <span>PIC: <strong>${escapeHtml(t.PIC || '-')}</strong></span>
+                                <span>Target: <strong class="${overdue ? 'text-rose-600' : ''}">${escapeHtml(formatDateDisplay(t.TargetDate))}</strong></span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 pt-1">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border"${buildSafeStyleAttr({ 'background-color': stBg, color: stHex, 'border-color': hexToRgba(stHex, 0.35) })}>
+                                    <span class="w-1.5 h-1.5 rounded-full"${buildSafeStyleAttr({ 'background-color': stHex })}></span>
+                                    <span>${escapeHtml(stCfg.Nama)}</span>
+                                </span>
+                                <div class="flex items-center gap-2 flex-1 max-w-[140px]">
+                                    <div class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full"${buildSafeStyleAttr({ width: `${prog}%`, 'background-color': stHex })}></div>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-slate-700">${prog}%</span>
+                                </div>
                             </div>
                         </div>
+                    `);
+                });
 
-                        ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5">${refBadge}${actBadge}</div>` : ''}
+                tbody.innerHTML = desktopRows.join('');
+                mobileCards.innerHTML = mobileRows.join('');
+            }
 
-                        <div class="flex items-center justify-between gap-2 pt-0.5 text-[11px]">
-                            <div class="inline-flex items-center gap-1.5 min-w-0">
-                                <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
-                                <span class="font-medium text-slate-700 truncate">${escapeHtml(t.PIC || '-')}</span>
-                            </div>
-                            <span${buildSafeStyleAttr({ 'background-color': hexToRgba(stHex, 0.14), color: stHex, 'border-color': hexToRgba(stHex, 0.35) })} class="px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0">${escapeHtml(t.Status || '-')}</span>
-                        </div>
+            const rangeText = totalItems === 0
+                ? 'Menampilkan 0 dari 0 task'
+                : `Menampilkan <strong>${startIdx + 1}&ndash;${endIdx}</strong> dari <strong>${totalItems}</strong> task`;
 
-                        <div class="flex items-center justify-between gap-3 pt-0.5 text-[11px] text-slate-500">
-                            <span class="${over ? 'text-rose-600 font-bold' : ''}">Target: ${formatDateDisplay(t.TargetDate)}</span>
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-indigo-600 rounded-full"${buildSafeStyleAttr({ width: `${prog}%` })}></div>
-                                </div>
-                                <span class="font-bold text-slate-700 text-[10px]">${prog}%</span>
-                            </div>
-                        </div>
-                    </div>`);
+            paginationEl.innerHTML = `
+                <div class="text-slate-600">${rangeText}</div>
+                <div class="flex items-center gap-2 flex-wrap justify-center">
+                    <label for="tasks-page-size-select" class="text-slate-500">Tampilkan:</label>
+                    <select id="tasks-page-size-select" onchange="changeTasksPageSize(this.value)" aria-label="Jumlah item per halaman" class="h-8 text-[11px] sm:text-xs font-semibold text-slate-700 border border-slate-300 rounded-lg px-2 bg-white focus:outline-none focus:border-indigo-500">
+                        <option value="25" ${tasksPageSize === 25 ? 'selected' : ''}>25 / hal</option>
+                        <option value="50" ${tasksPageSize === 50 ? 'selected' : ''}>50 / hal</option>
+                    </select>
+                    <div class="inline-flex items-center gap-1.5 ml-1">
+                        <button type="button" onclick="goToTasksPage(${tasksCurrentPage - 1})" ${tasksCurrentPage <= 1 ? 'disabled' : ''} class="h-8 px-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-[11px] sm:text-xs font-semibold text-slate-700 transition-colors">
+                            &larr; Sebelumnya
+                        </button>
+                        <span class="px-2 font-semibold text-slate-700">Hal ${tasksCurrentPage} / ${totalPages}</span>
+                        <button type="button" onclick="goToTasksPage(${tasksCurrentPage + 1})" ${tasksCurrentPage >= totalPages ? 'disabled' : ''} class="h-8 px-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-[11px] sm:text-xs font-semibold text-slate-700 transition-colors">
+                            Berikutnya &rarr;
+                        </button>
+                    </div>
+                </div>
+            `;
 
-                    return `<tr class="hover:bg-slate-50/90 transition-colors">
-                        <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-500 whitespace-nowrap">${escapeHtml(t.ID)}</td>
-                        <td class="py-3 px-4 min-w-[240px]">
-                            <p class="font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
-                            <p class="text-xs text-slate-400 mt-0.5 line-clamp-1">${subParts.join(' • ') || '-'}</p>
-                            ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5 mt-1">${refBadge}${actBadge}</div>` : ''}
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <div class="inline-flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
-                                <span class="font-medium text-slate-700">${escapeHtml(t.PIC || '-')}</span>
-                            </div>
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="font-medium ${over ? 'text-rose-600 font-bold' : 'text-slate-600'}">${formatDateDisplay(t.TargetDate)}</span>
-                            ${over ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Overdue</span>' : ''}
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <span${buildSafeStyleAttr({ 'background-color': hexToRgba(stHex, 0.14), color: stHex, 'border-color': hexToRgba(stHex, 0.35) })} class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(t.Status || '-')}</span>
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-indigo-600 rounded-full"${buildSafeStyleAttr({ width: `${prog}%` })}></div>
-                                </div>
-                                <span class="font-bold text-slate-700 text-xs">${prog}%</span>
-                            </div>
-                        </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap">
-                            <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" title="Edit Task" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
-                                <i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i>
-                            </button>
-                            <button type="button" data-delete-task-id="${escapeHtml(t.ID)}" title="Hapus Task" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i>
-                            </button>
-                        </td>
-                    </tr>`;
-                }).join('');
-
-                if (mobileCardsEl) {
-                    mobileCardsEl.innerHTML = mobileHtmlList.join('');
+            if (scrollToTop) {
+                const tableScroll = document.getElementById('tasks-table-scroll-area');
+                if (tableScroll) tableScroll.scrollTo({ top: 0, behavior: 'smooth' });
+                const listContainer = document.getElementById('tasks-list-container');
+                if (listContainer && window.innerWidth < 1024) {
+                    listContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }
 
-            if (pagEl) {
-                const showingFrom = totalItems === 0 ? 0 : startIdx + 1;
-                const showingTo = Math.min(totalItems, startIdx + pageItems.length);
-                const pageSizeOptionsHtml = ALLOWED_PAGE_SIZES.map(sz =>
-                    `<option value="${sz}" ${tasksPageSize === sz ? 'selected' : ''}>${sz} / hal</option>`
-                ).join('');
-
-                pagEl.innerHTML = `
-                    <span>Menampilkan <strong class="text-slate-700">${showingFrom}–${showingTo}</strong> dari <strong class="text-slate-700">${totalItems}</strong> task</span>
-                    <div class="flex flex-wrap items-center justify-center gap-2">
-                        <label for="tasks-page-size-select" class="sr-only">Jumlah item per halaman</label>
-                        <select id="tasks-page-size-select" aria-label="Jumlah item per halaman" onchange="onTasksPageSizeChange(this.value)" class="h-8 text-xs sm:text-[13px] font-semibold text-slate-700 border border-slate-300 bg-white rounded-lg px-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer">
-                            ${pageSizeOptionsHtml}
-                        </select>
-                        <div class="flex items-center gap-1.5">
-                            <button type="button" ${tasksCurrentPage <= 1 ? 'disabled' : ''} onclick="goToTasksPage(${tasksCurrentPage - 1}, ${totalPages})" class="h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Sebelumnya</button>
-                            <span class="px-2 font-semibold text-slate-700">Hal ${tasksCurrentPage} / ${totalPages}</span>
-                            <button type="button" ${tasksCurrentPage >= totalPages ? 'disabled' : ''} onclick="goToTasksPage(${tasksCurrentPage + 1}, ${totalPages})" class="h-8 px-3 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100">Berikutnya</button>
-                        </div>
-                    </div>`;
-            }
-
-            const tasksViewEl = document.getElementById('view-tasks');
-            if (typeof lucide !== 'undefined' && tasksViewEl) lucide.createIcons({ root: tasksViewEl });
             requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: document.getElementById('tasks-list-container') });
+        }
+
+        // ==================== TASK MODAL & CRUD ====================
+        function generateNextTaskId() {
+            let maxNum = 0;
+            (db.Tasks || []).forEach(t => {
+                const match = String(t.ID || '').match(/(\d+)$/);
+                if (match) {
+                    const n = parseInt(match[1], 10);
+                    if (n > maxNum) maxNum = n;
+                }
+            });
+            return `TSK-${String(maxNum + 1).padStart(4, '0')}`;
         }
 
         function onTaskStatusChange() {
-            const stVal = document.getElementById('task-input-status')?.value || '';
-            const progInp = document.getElementById('task-input-progress');
-            const progLbl = document.getElementById('task-progress-label');
-            if (!progInp || !progLbl) return;
+            const stName = document.getElementById('task-input-status')?.value || '';
+            const stCfg = getStatusConfig(stName);
+            const progInput = document.getElementById('task-input-progress');
+            const progLabel = document.getElementById('task-progress-label');
+            if (!progInput || !progLabel) return;
 
-            if (getStatusConfig(stVal).Completed === 'Yes') {
-                progInp.value = 100;
-                progLbl.textContent = '100%';
-            } else if (Number(progInp.value || 0) === 100) {
-                progInp.value = 95;
-                progLbl.textContent = '95%';
+            if (stCfg.Completed === 'Yes') {
+                progInput.value = '100';
+                progLabel.textContent = '100%';
+            } else if (Number(progInput.value) === 100) {
+                progInput.value = '80';
+                progLabel.textContent = '80%';
             }
         }
 
         function onTaskProgressInput(val) {
             const num = Number(val || 0);
-            const progLbl = document.getElementById('task-progress-label');
-            if (progLbl) progLbl.textContent = `${num}%`;
-        }
+            const progLabel = document.getElementById('task-progress-label');
+            if (progLabel) progLabel.textContent = `${num}%`;
 
-        // Pencocokan nilai dropdown case-insensitive + pertahankan nilai lama jika sudah diarsipkan dari Master
-        function setSelectValueSafe(selectId, rawVal) {
-            const sel = document.getElementById(selectId);
-            if (!sel) return;
-            const target = String(rawVal ?? '').trim();
-            if (!target) {
-                sel.value = '';
-                return;
-            }
-            const matchedOpt = Array.from(sel.options).find(o => isSameText(o.value, target));
-            if (matchedOpt) {
-                sel.value = matchedOpt.value;
-            } else {
-                const archiveOpt = document.createElement('option');
-                archiveOpt.value = target;
-                archiveOpt.textContent = `${target} (Arsip)`;
-                sel.appendChild(archiveOpt);
-                sel.value = target;
+            const stSelect = document.getElementById('task-input-status');
+            if (!stSelect) return;
+            const currentCfg = getStatusConfig(stSelect.value);
+
+            if (num === 100 && currentCfg.Completed !== 'Yes') {
+                const completedSt = (db.Status || []).find(s => normalizeCompletedFlag(s.Completed) === 'Yes');
+                if (completedSt) stSelect.value = completedSt.Nama;
+            } else if (num < 100 && currentCfg.Completed === 'Yes') {
+                const openSt = (db.Status || []).find(s => normalizeCompletedFlag(s.Completed) !== 'Yes');
+                if (openSt) stSelect.value = openSt.Nama;
             }
         }
 
         function openTaskModal(taskId = '') {
-            populateFilterAndFormDropdowns();
-            const modal = document.getElementById('task-modal');
             const form = document.getElementById('task-form');
-            if (!modal || !form) return;
+            const titleEl = document.getElementById('task-modal-title');
+            if (!form) return;
+
+            populateFilterAndFormDropdowns();
+            form.reset();
 
             const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
             const picSelect = document.getElementById('task-input-pic');
 
             if (taskId) {
                 const existing = (db.Tasks || []).find(t => String(t.ID) === String(taskId));
-                if (!existing) return;
-                document.getElementById('task-modal-title').textContent = `Edit Task (${existing.ID})`;
+                if (!existing) {
+                    showToast('Data task tidak ditemukan.', 'error');
+                    return;
+                }
+                titleEl.textContent = `Edit Task (${existing.ID})`;
                 document.getElementById('task-edit-id').value = existing.ID;
                 document.getElementById('task-input-tanggal').value = normalizeDateISO(existing.Tanggal) || getTodayOffset(0);
                 document.getElementById('task-input-targetdate').value = normalizeDateISO(existing.TargetDate) || getTodayOffset(3);
@@ -3611,560 +3748,505 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
                 setSelectValueSafe('task-input-priority', existing.Priority);
                 setSelectValueSafe('task-input-pic', existing.PIC);
                 setSelectValueSafe('task-input-status', existing.Status);
-                const prog = Number(existing.Progress || 0);
-                document.getElementById('task-input-progress').value = prog;
-                document.getElementById('task-progress-label').textContent = `${prog}%`;
                 setSelectValueSafe('task-input-reference', existing.Reference);
                 setSelectValueSafe('task-input-actionplan', existing.ActionPlan);
                 document.getElementById('task-input-catatan').value = existing.Catatan || '';
+
+                const prog = Math.min(100, Math.max(0, Number(existing.Progress || 0)));
+                document.getElementById('task-input-progress').value = String(prog);
+                document.getElementById('task-progress-label').textContent = `${prog}%`;
             } else {
-                form.reset();
-                document.getElementById('task-modal-title').textContent = 'Tambah Task Baru';
+                titleEl.textContent = 'Tambah Task Baru';
                 document.getElementById('task-edit-id').value = '';
                 document.getElementById('task-input-tanggal').value = getTodayOffset(0);
                 document.getElementById('task-input-targetdate').value = getTodayOffset(3);
-                document.getElementById('task-input-progress').value = 0;
-                document.getElementById('task-progress-label').textContent = '0%';
-                if (isStaff && currentUser?.Nama) {
+                if (isStaff && currentUser.Nama) {
                     setSelectValueSafe('task-input-pic', currentUser.Nama);
                 }
+                const defaultOpen = (db.Status || []).find(s => normalizeCompletedFlag(s.Completed) !== 'Yes');
+                if (defaultOpen) setSelectValueSafe('task-input-status', defaultOpen.Nama);
+                document.getElementById('task-input-progress').value = '0';
+                document.getElementById('task-progress-label').textContent = '0%';
             }
 
-            if (picSelect) picSelect.disabled = Boolean(isStaff);
-            modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
+            if (picSelect) {
+                picSelect.disabled = Boolean(isStaff);
+            }
+
+            openModalWithFocusTrap('task-modal');
         }
 
         function closeTaskModal() {
-            const modal = document.getElementById('task-modal');
-            if (modal) modal.classList.add('hidden');
+            hideModalAndRestoreFocus('task-modal');
         }
 
         async function saveTask(e) {
             e.preventDefault();
-            const existingId = (document.getElementById('task-edit-id').value || '').trim();
-            const taskId = existingId || `TSK-${Date.now().toString().slice(-6)}`;
-            const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
-
-            const tglInput = document.getElementById('task-input-tanggal').value;
+            const editId = document.getElementById('task-edit-id').value.trim();
+            const tanggal = document.getElementById('task-input-tanggal').value;
             const targetDate = document.getElementById('task-input-targetdate').value;
-            if (tglInput && targetDate && targetDate < tglInput) {
+            const taskDesc = document.getElementById('task-input-task').value.trim();
+            const kategori = document.getElementById('task-input-kategori').value;
+            const priority = document.getElementById('task-input-priority').value;
+            const pic = document.getElementById('task-input-pic').value;
+            const status = document.getElementById('task-input-status').value;
+            const reference = document.getElementById('task-input-reference').value;
+            const actionPlan = document.getElementById('task-input-actionplan').value;
+            const catatan = document.getElementById('task-input-catatan').value.trim();
+            let progress = Number(document.getElementById('task-input-progress').value || 0);
+
+            if (targetDate && tanggal && targetDate < tanggal) {
                 showToast('Target Date tidak boleh lebih awal dari Tanggal Input.', 'error');
                 return;
             }
 
-            const statusVal = document.getElementById('task-input-status').value;
-            const isDoneStatus = getStatusConfig(statusVal).Completed === 'Yes';
-            let progressVal = Number(document.getElementById('task-input-progress').value || 0);
-
-            if (isDoneStatus) {
-                progressVal = 100;
-            } else if (progressVal >= 100) {
-                progressVal = 95;
+            const stCfg = getStatusConfig(status);
+            if (stCfg.Completed === 'Yes') {
+                progress = 100;
             }
 
-            const idx = (db.Tasks || []).findIndex(t => String(t.ID) === String(taskId));
-            const prevTask = idx !== -1 ? db.Tasks[idx] : null;
-            const completedDateVal = isDoneStatus
-                ? (normalizeDateISO(prevTask?.CompletedDate) || getTodayOffset(0))
-                : '';
+            const existing = editId ? (db.Tasks || []).find(t => String(t.ID) === editId) : null;
+            let completedDate = existing ? normalizeDateISO(existing.CompletedDate) : '';
+            if (stCfg.Completed === 'Yes') {
+                if (!completedDate) completedDate = getTodayOffset(0);
+            } else {
+                completedDate = '';
+            }
 
             const taskObj = {
-                ID: taskId,
-                Tanggal: tglInput,
-                Kategori: document.getElementById('task-input-kategori').value,
-                Task: document.getElementById('task-input-task').value.trim(),
-                Priority: document.getElementById('task-input-priority').value,
-                PIC: isStaff ? currentUser.Nama : document.getElementById('task-input-pic').value,
+                ID: editId || generateNextTaskId(),
+                Tanggal: tanggal,
+                Kategori: kategori,
+                Task: taskDesc,
+                Priority: priority,
+                PIC: pic,
                 TargetDate: targetDate,
-                Status: statusVal,
-                Progress: progressVal,
-                Reference: document.getElementById('task-input-reference').value,
-                ActionPlan: document.getElementById('task-input-actionplan').value,
-                Catatan: document.getElementById('task-input-catatan').value.trim(),
-                CompletedDate: completedDateVal
+                Status: status,
+                Progress: progress,
+                Reference: reference,
+                ActionPlan: actionPlan,
+                Catatan: catatan,
+                CompletedDate: completedDate
             };
 
-            if (idx !== -1) {
-                db.Tasks[idx] = taskObj;
+            if (!Array.isArray(db.Tasks)) db.Tasks = [];
+            if (editId) {
+                const idx = db.Tasks.findIndex(t => String(t.ID) === editId);
+                if (idx !== -1) db.Tasks[idx] = taskObj;
+                else db.Tasks.unshift(taskObj);
             } else {
                 db.Tasks.unshift(taskObj);
             }
 
             saveToLocal();
             closeTaskModal();
-            refreshAllViews();
+            refreshAllViews(false);
+            showToast(editId ? `Task ${taskObj.ID} diperbarui.` : `Task ${taskObj.ID} ditambahkan.`, 'success');
 
             if (gasUrl && sessionToken) {
                 setPendingSync(1);
                 try {
                     const res = await fetch(gasUrl, {
                         method: 'POST',
-                        keepalive: true,
                         cache: 'no-store',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: 'SAVE_TASK', token: sessionToken, data: taskObj })
                     });
                     const result = await res.json();
-                    if (result.status === 'success') {
-                        refreshAuthSessionExpiry();
-                        showToast(existingId ? 'Perubahan task tersimpan di Spreadsheet!' : 'Task baru tersimpan di Spreadsheet!', 'success');
-                    } else {
-                        enqueueUnsyncedOp({ type: 'SAVE_TASK', key: taskId, payload: taskObj });
-                        showToast(result.message || 'Gagal menyinkronkan task ke Spreadsheet.', 'error');
+                    if (result.status !== 'success') {
+                        throw new Error(result.message || 'Gagal sinkronisasi task.');
                     }
+                    refreshAuthSessionExpiry();
                 } catch (err) {
-                    enqueueUnsyncedOp({ type: 'SAVE_TASK', key: taskId, payload: taskObj });
-                    showToast('Task tersimpan lokal (antrean sync aktif), namun gagal terhubung ke Spreadsheet.', 'error');
+                    enqueueUnsyncedOp({ type: 'SAVE_TASK', key: taskObj.ID, payload: taskObj });
+                    showToast('Tersimpan lokal, namun gagal dikirim ke Sheet. Gunakan tombol Kirim Ulang.', 'error');
                 } finally {
                     setPendingSync(-1);
                 }
-            } else {
-                showToast(existingId ? 'Task berhasil diperbarui!' : 'Task baru berhasil ditambahkan!', 'success');
             }
         }
 
-        function confirmDeleteTask(taskId) {
-            pendingDeleteTaskId = taskId;
-            const modal = document.getElementById('confirm-modal');
-            document.getElementById('confirm-message').textContent = `Apakah Anda yakin ingin menghapus task ${taskId}?`;
+        function openConfirmModal(message, onConfirm) {
+            const msgEl = document.getElementById('confirm-message');
             const yesBtn = document.getElementById('confirm-yes-btn');
-            yesBtn.onclick = async () => {
-                const targetId = pendingDeleteTaskId;
+            if (!msgEl || !yesBtn) return;
+
+            msgEl.textContent = message;
+            pendingDeleteCallback = onConfirm;
+            yesBtn.onclick = () => {
+                const cb = pendingDeleteCallback;
                 closeConfirmModal();
-                if (!targetId) return;
-
-                db.Tasks = (db.Tasks || []).filter(t => String(t.ID) !== String(targetId));
-                saveToLocal();
-                refreshAllViews();
-
-                if (gasUrl && sessionToken) {
-                    setPendingSync(1);
-                    try {
-                        const res = await fetch(gasUrl, {
-                            method: 'POST',
-                            keepalive: true,
-                            cache: 'no-store',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: 'DELETE_TASK', token: sessionToken, id: targetId })
-                        });
-                        const result = await res.json();
-                        if (result.status === 'success') {
-                            refreshAuthSessionExpiry();
-                            showToast('Task berhasil dihapus permanen di Spreadsheet!', 'success');
-                        } else {
-                            enqueueUnsyncedOp({ type: 'DELETE_TASK', key: targetId });
-                            showToast(result.message || 'Gagal menghapus task di Spreadsheet.', 'error');
-                        }
-                    } catch (err) {
-                        enqueueUnsyncedOp({ type: 'DELETE_TASK', key: targetId });
-                        showToast('Gagal menghapus task di Google Spreadsheet (antrean sync aktif).', 'error');
-                    } finally {
-                        setPendingSync(-1);
-                    }
-                } else {
-                    showToast('Task berhasil dihapus.', 'success');
-                }
+                if (typeof cb === 'function') cb();
             };
-            modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
+            openModalWithFocusTrap('confirm-modal');
         }
 
         function closeConfirmModal() {
-            pendingDeleteTaskId = null;
-            const modal = document.getElementById('confirm-modal');
-            if (modal) modal.classList.add('hidden');
+            pendingDeleteCallback = null;
+            hideModalAndRestoreFocus('confirm-modal');
         }
 
-        // ==================== MASTER DATA MANAGEMENT ====================
+        function promptDeleteTask(taskId) {
+            const target = (db.Tasks || []).find(t => String(t.ID) === String(taskId));
+            const label = target ? `${target.ID} — "${target.Task}"` : taskId;
+            openConfirmModal(`Apakah Anda yakin ingin menghapus task ${label}?`, () => deleteTaskConfirmed(taskId));
+        }
+
+        async function deleteTaskConfirmed(taskId) {
+            db.Tasks = (db.Tasks || []).filter(t => String(t.ID) !== String(taskId));
+            saveToLocal();
+            refreshAllViews(false);
+            showToast(`Task ${taskId} telah dihapus.`, 'info');
+
+            if (gasUrl && sessionToken) {
+                setPendingSync(1);
+                try {
+                    const res = await fetch(gasUrl, {
+                        method: 'POST',
+                        cache: 'no-store',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'DELETE_TASK', token: sessionToken, id: taskId })
+                    });
+                    const result = await res.json();
+                    if (result.status !== 'success') {
+                        throw new Error(result.message || 'Gagal menghapus task di server.');
+                    }
+                    refreshAuthSessionExpiry();
+                } catch (err) {
+                    enqueueUnsyncedOp({ type: 'DELETE_TASK', key: taskId, payload: { id: taskId } });
+                    showToast('Terhapus lokal, namun gagal sinkron ke Sheet. Klik Kirim Ulang.', 'error');
+                } finally {
+                    setPendingSync(-1);
+                }
+            }
+        }
+
+        // ==================== VIEW 5: MASTER DATA & RESET PASSWORD PIC ====================
         const MASTER_META = {
-            Kategori: { title: 'Master Data: Kategori', desc: 'Kelola kategori dan pengelompokan pekerjaan.', btn: 'Tambah Kategori', extraLabel: 'Keterangan' },
-            Priority: { title: 'Master Data: Priority', desc: 'Kelola tingkat prioritas dan target SLA (hari).', btn: 'Tambah Priority', extraLabel: 'SLA Hari (Angka)' },
-            PIC: { title: 'Master Data: PIC & User', desc: 'Kelola anggota tim, initial, role akses, dan kredensial login.', btn: 'Tambah PIC', extraLabel: 'Divisi / Departemen' },
-            Status: { title: 'Master Data: Status', desc: 'Kelola status alur kerja, warna badge, dan penanda selesai.', btn: 'Tambah Status', extraLabel: '' },
-            Reference: { title: 'Master Data: Reference', desc: 'Kelola daftar referensi sumber pekerjaan.', btn: 'Tambah Reference', extraLabel: 'Keterangan' },
-            ActionPlan: { title: 'Master Data: Action Plan', desc: 'Kelola template rencana tindak lanjut.', btn: 'Tambah Action Plan', extraLabel: 'Kategori Terkait' }
+            Kategori: { title: 'Master Data: Kategori', desc: 'Kelola daftar referensi kategori pekerjaan.', addLabel: 'Tambah Kategori', prefix: 'KAT', extraLabel: 'Keterangan' },
+            Priority: { title: 'Master Data: Priority', desc: 'Kelola tingkat prioritas dan target SLA hari.', addLabel: 'Tambah Priority', prefix: 'PRIO', extraLabel: 'SLA (Hari)' },
+            PIC: { title: 'Master Data: PIC & User', desc: 'Kelola anggota tim & hak akses (kredensial password dikelola terpisah).', addLabel: 'Tambah PIC', prefix: 'PIC', extraLabel: 'Divisi' },
+            Status: { title: 'Master Data: Status', desc: 'Kelola tahapan status task beserta warna dan penanda selesai.', addLabel: 'Tambah Status', prefix: 'STS', extraLabel: '' },
+            Reference: { title: 'Master Data: Reference', desc: 'Kelola sumber referensi atau dokumen acuan pekerjaan.', addLabel: 'Tambah Reference', prefix: 'REF', extraLabel: 'Keterangan' },
+            ActionPlan: { title: 'Master Data: Action Plan', desc: 'Kelola template rencana tindak lanjut pekerjaan.', addLabel: 'Tambah Action Plan', prefix: 'ACT', extraLabel: 'Kategori Terkait' }
         };
 
         function switchMasterTab(tabName) {
             currentMasterTab = tabName;
             document.querySelectorAll('.master-tab-btn').forEach(btn => {
-                const active = btn.dataset.mtab === tabName;
-                btn.classList.toggle('border-indigo-600', active);
-                btn.classList.toggle('text-indigo-600', active);
-                btn.classList.toggle('border-transparent', !active);
-                btn.classList.toggle('text-slate-500', !active);
+                const isTarget = btn.getAttribute('data-mtab') === tabName;
+                btn.classList.toggle('border-indigo-600', isTarget);
+                btn.classList.toggle('text-indigo-600', isTarget);
+                btn.classList.toggle('border-transparent', !isTarget);
+                btn.classList.toggle('text-slate-500', !isTarget);
             });
 
             const meta = MASTER_META[tabName] || MASTER_META.Kategori;
-            const titleEl = document.getElementById('master-title');
-            if (titleEl) titleEl.textContent = meta.title;
-            const descEl = document.getElementById('master-desc');
-            if (descEl) descEl.textContent = meta.desc;
-            const btnEl = document.getElementById('master-add-btn-label');
-            if (btnEl) btnEl.textContent = meta.btn;
+            document.getElementById('master-title').textContent = meta.title;
+            document.getElementById('master-desc').textContent = meta.desc;
+            document.getElementById('master-add-btn-label').textContent = meta.addLabel;
 
-            const searchInp = document.getElementById('master-filter-search');
-            const roleSel = document.getElementById('master-filter-role');
-            const compSel = document.getElementById('master-filter-completed');
-            const grpSel = document.getElementById('master-filter-group');
-            const grid = document.getElementById('master-filter-grid');
+            const roleFilter = document.getElementById('master-filter-role');
+            const compFilter = document.getElementById('master-filter-completed');
+            const groupFilter = document.getElementById('master-filter-group');
+            const filterGrid = document.getElementById('master-filter-grid');
 
-            if (searchInp) searchInp.value = '';
-            if (roleSel) { roleSel.value = ''; roleSel.classList.toggle('hidden', tabName !== 'PIC'); }
-            if (compSel) { compSel.value = ''; compSel.classList.toggle('hidden', tabName !== 'Status'); }
-            if (grpSel) {
-                grpSel.value = '';
-                grpSel.classList.toggle('hidden', tabName !== 'Kategori');
-                if (tabName === 'Kategori') {
-                    const groups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
-                    grpSel.innerHTML = '<option value="">Semua Group</option>' + groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
-                }
+            roleFilter.classList.toggle('hidden', tabName !== 'PIC');
+            compFilter.classList.toggle('hidden', tabName !== 'Status');
+            groupFilter.classList.toggle('hidden', tabName !== 'Kategori');
+
+            if (tabName === 'Kategori') {
+                const groups = [...new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean))];
+                groupFilter.innerHTML = '<option value="">Semua Group</option>' + groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
             }
-            if (grid) {
-                const hasSubFilter = ['PIC', 'Status', 'Kategori'].includes(tabName);
-                grid.className = hasSubFilter ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' : 'grid grid-cols-1 gap-2.5';
-            }
+
+            const hasSubFilter = (tabName === 'PIC' || tabName === 'Status' || tabName === 'Kategori');
+            filterGrid.classList.toggle('sm:grid-cols-2', hasSubFilter);
+            filterGrid.classList.toggle('grid-cols-1', !hasSubFilter);
 
             renderMasterTable();
+        }
+
+        function onMasterSearchInput() {
+            clearTimeout(masterSearchTimer);
+            masterSearchTimer = setTimeout(() => renderMasterTable(), 160);
+        }
+
+        function syncColorPickerFromHex(val) {
+            const picker = document.getElementById('master-input-colorpicker');
+            if (!picker) return;
+            const norm = normalizeHexColor(val, '');
+            if (/^#[0-9A-F]{6}$/.test(norm)) picker.value = norm;
         }
 
         function renderMasterTable() {
             const headEl = document.getElementById('master-table-head');
             const bodyEl = document.getElementById('master-table-body');
-            const countEl = document.getElementById('master-count-label');
+            const countLabel = document.getElementById('master-count-label');
             if (!headEl || !bodyEl) return;
 
-            const items = db[currentMasterTab] || [];
             const q = (document.getElementById('master-filter-search')?.value || '').trim().toLowerCase();
-            const roleFilter = document.getElementById('master-filter-role')?.value || '';
-            const compFilter = document.getElementById('master-filter-completed')?.value || '';
-            const grpFilter = document.getElementById('master-filter-group')?.value || '';
+            const fRole = (document.getElementById('master-filter-role')?.value || '').trim();
+            const fComp = (document.getElementById('master-filter-completed')?.value || '').trim();
+            const fGroup = (document.getElementById('master-filter-group')?.value || '').trim();
 
-            const indexed = items.map((item, idx) => ({ item, idx })).filter(({ item }) => {
-                if (currentMasterTab === 'PIC' && roleFilter && !isSameText(item.Role, roleFilter)) return false;
-                if (currentMasterTab === 'Status' && compFilter && normalizeCompletedFlag(item.Completed) !== compFilter) return false;
-                if (currentMasterTab === 'Kategori' && grpFilter && !isSameText(item.Group, grpFilter)) return false;
+            if (currentMasterTab === 'Kategori') {
+                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama Kategori</th><th class="py-3 px-4">Group</th><th class="py-3 px-4">Keterangan</th><th class="py-3 px-4 text-right">Aksi</th>`;
+            } else if (currentMasterTab === 'Priority') {
+                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama Priority</th><th class="py-3 px-4">SLA (Hari)</th><th class="py-3 px-4 text-right">Aksi</th>`;
+            } else if (currentMasterTab === 'PIC') {
+                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama PIC</th><th class="py-3 px-4">Initial</th><th class="py-3 px-4">Divisi</th><th class="py-3 px-4">Role</th><th class="py-3 px-4">Username</th><th class="py-3 px-4 text-right">Aksi</th>`;
+            } else if (currentMasterTab === 'Status') {
+                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama Status</th><th class="py-3 px-4">Warna</th><th class="py-3 px-4">Completed</th><th class="py-3 px-4 text-right">Aksi</th>`;
+            } else if (currentMasterTab === 'Reference') {
+                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama Reference</th><th class="py-3 px-4">Keterangan</th><th class="py-3 px-4 text-right">Aksi</th>`;
+            } else {
+                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama Action Plan</th><th class="py-3 px-4">Kategori Terkait</th><th class="py-3 px-4 text-right">Aksi</th>`;
+            }
+
+            const allItems = db[currentMasterTab] || [];
+            const indexedItems = allItems.map((item, origIdx) => ({ item, origIdx })).filter(({ item }) => {
+                if (currentMasterTab === 'PIC' && fRole && !isSameText(item.Role, fRole)) return false;
+                if (currentMasterTab === 'Status' && fComp && normalizeCompletedFlag(item.Completed) !== fComp) return false;
+                if (currentMasterTab === 'Kategori' && fGroup && !isSameText(item.Group, fGroup)) return false;
                 if (q) {
-                    const hay = JSON.stringify(item).toLowerCase();
+                    const hay = Object.values(item).join(' ').toLowerCase();
                     if (!hay.includes(q)) return false;
                 }
                 return true;
             });
 
-            if (countEl) countEl.textContent = indexed.length;
+            if (countLabel) countLabel.textContent = String(indexedItems.length);
 
-            if (currentMasterTab === 'Kategori') {
-                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama Kategori</th><th class="py-3 px-4">Group</th><th class="py-3 px-4">Keterangan</th><th class="py-3 px-4 text-right">Aksi</th>`;
-            } else if (currentMasterTab === 'Priority') {
-                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Priority</th><th class="py-3 px-4">SLA (Hari)</th><th class="py-3 px-4 text-right">Aksi</th>`;
-            } else if (currentMasterTab === 'PIC') {
-                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Nama &amp; Initial</th><th class="py-3 px-4">Divisi</th><th class="py-3 px-4">Role</th><th class="py-3 px-4">Username</th><th class="py-3 px-4 text-right">Aksi</th>`;
-            } else if (currentMasterTab === 'Status') {
-                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Status</th><th class="py-3 px-4">Warna HEXA</th><th class="py-3 px-4">Completed</th><th class="py-3 px-4 text-right">Aksi</th>`;
-            } else if (currentMasterTab === 'Reference') {
-                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Reference</th><th class="py-3 px-4">Keterangan</th><th class="py-3 px-4 text-right">Aksi</th>`;
-            } else {
-                headEl.innerHTML = `<th class="py-3 px-4">Kode</th><th class="py-3 px-4">Action Plan</th><th class="py-3 px-4">Kategori Terkait</th><th class="py-3 px-4 text-right">Aksi</th>`;
-            }
-
-            if (indexed.length === 0) {
-                bodyEl.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Belum ada data pada tabel ${escapeHtml(currentMasterTab)}.</td></tr>`;
+            if (!indexedItems.length) {
+                bodyEl.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada data pada master ini.</td></tr>`;
                 return;
             }
 
-            bodyEl.innerHTML = indexed.map(({ item, idx }) => {
-                const actions = `
-                    <td class="py-2.5 px-4 text-right whitespace-nowrap">
-                        <button type="button" data-master-edit-idx="${idx}" title="Edit Item" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i></button>
-                        <button type="button" data-master-delete-idx="${idx}" title="Hapus Item" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"><i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i></button>
-                    </td>`;
+            bodyEl.innerHTML = indexedItems.map(({ item, origIdx }) => {
+                const actionBtns = `
+                    <div class="inline-flex items-center justify-end gap-1">
+                        ${currentMasterTab === 'PIC' && item.Username ? `
+                            <button type="button" data-reset-pwd-user="${escapeHtml(item.Username)}" data-reset-pwd-name="${escapeHtml(item.Nama || item.Username)}" title="Atur / Reset Password" class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors">
+                                <i data-lucide="key-round" class="w-4 h-4"></i>
+                            </button>
+                        ` : ''}
+                        <button type="button" data-master-edit-idx="${origIdx}" title="Edit Item" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        <button type="button" data-master-delete-idx="${origIdx}" title="Hapus Item" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
 
                 if (currentMasterTab === 'Kategori') {
-                    return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">${escapeHtml(item.Group || '-')}</span></td>
-                        <td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.Keterangan || '-')}</td>
-                        ${actions}
-                    </tr>`;
+                    return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode)}</td><td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td><td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.Group || '-')}</td><td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.Keterangan || '-')}</td><td class="py-2.5 px-4 text-right">${actionBtns}</td></tr>`;
                 }
                 if (currentMasterTab === 'Priority') {
-                    return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.SLA_Hari || '0')} Hari</td>
-                        ${actions}
-                    </tr>`;
+                    return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode)}</td><td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td><td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.SLA_Hari ?? '-')} Hari</td><td class="py-2.5 px-4 text-right">${actionBtns}</td></tr>`;
                 }
                 if (currentMasterTab === 'PIC') {
-                    return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)} <span class="ml-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[11px]">${escapeHtml(getPicInitial(item))}</span></td>
-                        <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.Divisi || '-')}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700">${escapeHtml(item.Role || 'Staff')}</span></td>
-                        <td class="py-2.5 px-4 font-mono text-xs text-slate-600">${escapeHtml(item.Username || '-')}</td>
-                        ${actions}
-                    </tr>`;
+                    return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode)}</td><td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td><td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold text-xs">${escapeHtml(item.Initial || '-')}</span></td><td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.Divisi || '-')}</td><td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-xs">${escapeHtml(item.Role || 'Staff')}</span></td><td class="py-2.5 px-4 font-mono text-xs text-slate-600">${escapeHtml(item.Username || '-')}</td><td class="py-2.5 px-4 text-right">${actionBtns}</td></tr>`;
                 }
                 if (currentMasterTab === 'Status') {
-                    const hexColor = normalizeHexColor(item.Warna, '#64748B');
-                    const compFlag = normalizeCompletedFlag(item.Completed);
-                    return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4">
-                            <span${buildSafeStyleAttr({ 'background-color': hexToRgba(hexColor, 0.14), color: hexColor, 'border-color': hexToRgba(hexColor, 0.35) })} class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(item.Nama)}</span>
-                        </td>
-                        <td class="py-2.5 px-4">
-                            <span class="inline-flex items-center gap-2 font-mono text-xs font-semibold text-slate-700">
-                                <span${buildSafeStyleAttr({ 'background-color': hexColor })} class="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block"></span>
-                                ${escapeHtml(hexColor)}
-                            </span>
-                        </td>
-                        <td class="py-2.5 px-4">
-                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${compFlag === 'Yes' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}">${escapeHtml(compFlag)}</span>
-                        </td>
-                        ${actions}
-                    </tr>`;
+                    const hex = normalizeHexColor(item.Warna, '#64748B');
+                    const comp = normalizeCompletedFlag(item.Completed);
+                    return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode)}</td><td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td><td class="py-2.5 px-4"><span class="inline-flex items-center gap-1.5 font-mono text-xs"><span class="w-3.5 h-3.5 rounded border border-slate-300"${buildSafeStyleAttr({ 'background-color': hex })}></span>${escapeHtml(hex)}</span></td><td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold ${comp === 'Yes' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}">${comp}</span></td><td class="py-2.5 px-4 text-right">${actionBtns}</td></tr>`;
                 }
                 if (currentMasterTab === 'Reference') {
-                    return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.Keterangan || '-')}</td>
-                        ${actions}
-                    </tr>`;
+                    return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode)}</td><td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td><td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.Keterangan || '-')}</td><td class="py-2.5 px-4 text-right">${actionBtns}</td></tr>`;
                 }
-                return `<tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                    <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                    <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.KategoriTerkait || '-')}</td>
-                    ${actions}
-                </tr>`;
+                return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode)}</td><td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td><td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.KategoriTerkait || '-')}</td><td class="py-2.5 px-4 text-right">${actionBtns}</td></tr>`;
             }).join('');
 
-            const masterViewEl = document.getElementById('view-master');
-            if (typeof lucide !== 'undefined' && masterViewEl) lucide.createIcons({ root: masterViewEl });
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: bodyEl });
         }
 
-        function syncColorPickerFromHex(hexVal) {
-            const picker = document.getElementById('master-input-colorpicker');
-            if (!picker) return;
-            const cleaned = String(hexVal || '').trim();
-            if (/^#[0-9A-Fa-f]{6}$/.test(cleaned)) {
-                picker.value = cleaned;
-            }
-        }
-
-        function toggleMasterPasswordVisibility() {
-            const pwdInput = document.getElementById('master-input-password');
-            const iconEl = document.getElementById('master-password-eye-icon');
-            if (!pwdInput) return;
-            const isHidden = pwdInput.type === 'password';
-            pwdInput.type = isHidden ? 'text' : 'password';
-            if (iconEl) {
-                iconEl.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons({ root: document.getElementById('master-pic-fields') || document.body });
-                }
-            }
-        }
-
-        function openMasterModal(editIdx = -1) {
-            const modal = document.getElementById('master-modal');
+        function openMasterModal(editIndex = -1) {
             const form = document.getElementById('master-form');
-            if (!modal || !form) return;
+            if (!form) return;
 
             form.reset();
-            const pwdInput = document.getElementById('master-input-password');
-            const pwdEye = document.getElementById('master-password-eye-icon');
-            if (pwdInput) pwdInput.type = 'password';
-            if (pwdEye) pwdEye.setAttribute('data-lucide', 'eye');
-
-            document.getElementById('master-edit-index').value = editIdx;
-            const meta = MASTER_META[currentMasterTab] || MASTER_META.Kategori;
+            document.getElementById('master-edit-index').value = String(editIndex);
 
             const katFields = document.getElementById('master-kategori-fields');
             const picFields = document.getElementById('master-pic-fields');
             const statusFields = document.getElementById('master-status-fields');
             const extraContainer = document.getElementById('master-extra-container');
+            const extraLabel = document.getElementById('master-label-extra');
+            const extraInput = document.getElementById('master-input-extra');
 
             katFields.classList.toggle('hidden', currentMasterTab !== 'Kategori');
             picFields.classList.toggle('hidden', currentMasterTab !== 'PIC');
             statusFields.classList.toggle('hidden', currentMasterTab !== 'Status');
             extraContainer.classList.toggle('hidden', currentMasterTab === 'Status');
 
+            const meta = MASTER_META[currentMasterTab] || MASTER_META.Kategori;
+            document.getElementById('master-modal-title').textContent = editIndex >= 0
+                ? `Edit ${currentMasterTab}`
+                : meta.addLabel;
+            if (extraLabel && meta.extraLabel) extraLabel.textContent = meta.extraLabel;
+
             if (currentMasterTab === 'Kategori') {
                 const dl = document.getElementById('master-group-datalist');
-                const existingGroups = Array.from(new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean)));
-                if (dl) dl.innerHTML = existingGroups.map(g => `<option value="${escapeHtml(g)}"></option>`).join('');
+                const groups = [...new Set((db.Kategori || []).map(k => String(k.Group || '').trim()).filter(Boolean))];
+                if (dl) dl.innerHTML = groups.map(g => `<option value="${escapeHtml(g)}"></option>`).join('');
             }
 
-            if (meta.extraLabel) {
-                document.getElementById('master-label-extra').textContent = meta.extraLabel;
-            }
-
-            const pwdReqMark = document.getElementById('master-password-required-mark');
-            if (editIdx >= 0 && db[currentMasterTab] && db[currentMasterTab][editIdx]) {
-                const item = db[currentMasterTab][editIdx];
-                document.getElementById('master-modal-title').textContent = `Edit ${currentMasterTab}`;
+            if (editIndex >= 0 && db[currentMasterTab] && db[currentMasterTab][editIndex]) {
+                const item = db[currentMasterTab][editIndex];
                 document.getElementById('master-input-name').value = item.Nama || '';
-
                 if (currentMasterTab === 'Kategori') {
                     document.getElementById('master-input-group').value = item.Group || '';
-                    document.getElementById('master-input-extra').value = item.Keterangan || '';
+                    extraInput.value = item.Keterangan || '';
                 } else if (currentMasterTab === 'Priority') {
-                    document.getElementById('master-input-extra').value = item.SLA_Hari ?? '';
+                    extraInput.value = item.SLA_Hari ?? '';
                 } else if (currentMasterTab === 'PIC') {
-                    document.getElementById('master-input-initial').value = item.Initial || getPicInitial(item);
+                    document.getElementById('master-input-initial').value = item.Initial || '';
                     document.getElementById('master-input-role').value = item.Role || 'Staff';
                     document.getElementById('master-input-username').value = item.Username || '';
-                    document.getElementById('master-input-password').value = '';
-                    document.getElementById('master-input-password').required = false;
-                    if (pwdReqMark) pwdReqMark.classList.add('hidden');
-                    document.getElementById('master-input-extra').value = item.Divisi || '';
+                    extraInput.value = item.Divisi || '';
                 } else if (currentMasterTab === 'Status') {
-                    const hexCol = normalizeHexColor(item.Warna, '#3B82F6');
-                    document.getElementById('master-input-color-hex').value = hexCol;
-                    document.getElementById('master-input-colorpicker').value = hexCol;
+                    const hex = normalizeHexColor(item.Warna, '#3B82F6');
+                    document.getElementById('master-input-color-hex').value = hex;
+                    document.getElementById('master-input-colorpicker').value = hex;
                     document.getElementById('master-input-completed').value = normalizeCompletedFlag(item.Completed);
                 } else if (currentMasterTab === 'Reference') {
-                    document.getElementById('master-input-extra').value = item.Keterangan || '';
-                } else if (currentMasterTab === 'ActionPlan') {
-                    document.getElementById('master-input-extra').value = item.KategoriTerkait || '';
-                }
-            } else {
-                document.getElementById('master-modal-title').textContent = meta.btn;
-                if (currentMasterTab === 'PIC') {
-                    document.getElementById('master-input-password').required = true;
-                    if (pwdReqMark) pwdReqMark.classList.remove('hidden');
-                } else if (currentMasterTab === 'Status') {
-                    document.getElementById('master-input-color-hex').value = '#3B82F6';
-                    document.getElementById('master-input-colorpicker').value = '#3B82F6';
-                    document.getElementById('master-input-completed').value = 'No';
+                    extraInput.value = item.Keterangan || '';
+                } else {
+                    extraInput.value = item.KategoriTerkait || '';
                 }
             }
 
-            modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
+            openModalWithFocusTrap('master-modal');
         }
 
         function closeMasterModal() {
-            const modal = document.getElementById('master-modal');
-            if (modal) modal.classList.add('hidden');
+            hideModalAndRestoreFocus('master-modal');
+        }
+
+        function generateNextMasterCode(tabName) {
+            const prefix = (MASTER_META[tabName]?.prefix) || 'MST';
+            let maxNum = 0;
+            (db[tabName] || []).forEach(item => {
+                const m = String(item.Kode || '').match(/(\d+)$/);
+                if (m) {
+                    const n = parseInt(m[1], 10);
+                    if (n > maxNum) maxNum = n;
+                }
+            });
+            return `${prefix}-${String(maxNum + 1).padStart(3, '0')}`;
         }
 
         async function saveMasterItem(e) {
             e.preventDefault();
-            const editIdx = Number(document.getElementById('master-edit-index').value);
-            const list = db[currentMasterTab] || [];
-            const existing = editIdx >= 0 ? list[editIdx] : null;
-            const prefixMap = { Kategori: 'KAT', Priority: 'PRIO', PIC: 'PIC', Status: 'STS', Reference: 'REF', ActionPlan: 'ACT' };
-            const kode = existing?.Kode || `${prefixMap[currentMasterTab] || 'MST'}-${Date.now().toString().slice(-4)}`;
-            const nama = document.getElementById('master-input-name').value.trim();
-            if (!nama) return;
+            const editIndex = parseInt(document.getElementById('master-edit-index').value, 10);
+            const nameVal = document.getElementById('master-input-name').value.trim();
+            const extraVal = document.getElementById('master-input-extra').value.trim();
 
-            const isDuplicateName = list.some((row, i) => i !== editIdx && isSameText(row.Nama, nama));
-            if (isDuplicateName) {
-                showToast(`Nama "${nama}" sudah terdaftar pada Master ${currentMasterTab}.`, 'error');
+            if (!nameVal) {
+                showToast('Nama item wajib diisi.', 'error');
                 return;
             }
 
-            const extraVal = document.getElementById('master-input-extra').value.trim();
-            let newItem = { Kode: kode, Nama: nama };
+            const list = db[currentMasterTab] || [];
+            const duplicateName = list.some((it, idx) => idx !== editIndex && isSameText(it.Nama, nameVal));
+            if (duplicateName) {
+                showToast(`Nama "${nameVal}" sudah terdaftar di ${currentMasterTab}.`, 'error');
+                return;
+            }
+
+            const existing = editIndex >= 0 ? list[editIndex] : null;
+            const kode = existing?.Kode || generateNextMasterCode(currentMasterTab);
+            let newItem = { Kode: kode, Nama: nameVal };
 
             if (currentMasterTab === 'Kategori') {
-                const grpVal = document.getElementById('master-input-group').value.trim();
-                if (!grpVal) {
+                const grp = document.getElementById('master-input-group').value.trim();
+                if (!grp) {
                     showToast('Group Kategori wajib diisi.', 'error');
                     return;
                 }
-                newItem.Group = grpVal;
+                newItem.Group = grp;
                 newItem.Keterangan = extraVal;
             } else if (currentMasterTab === 'Priority') {
-                newItem.SLA_Hari = Number(extraVal || 0);
+                newItem.SLA_Hari = extraVal ? Number(extraVal) : 3;
             } else if (currentMasterTab === 'PIC') {
-                const rawInitial = (document.getElementById('master-input-initial').value || '').trim().toUpperCase();
-                const usernameVal = (document.getElementById('master-input-username').value || '').trim();
-                const isDupUser = usernameVal && list.some((row, i) => i !== editIdx && isSameText(row.Username, usernameVal));
-                if (isDupUser) {
-                    showToast(`Username "${usernameVal}" sudah digunakan oleh PIC lain.`, 'error');
+                const initialVal = document.getElementById('master-input-initial').value.trim().toUpperCase();
+                const roleVal = document.getElementById('master-input-role').value;
+                const usernameVal = document.getElementById('master-input-username').value.trim();
+                if (!initialVal || !usernameVal) {
+                    showToast('Initial dan Username wajib diisi untuk PIC.', 'error');
                     return;
                 }
-                newItem.Initial = rawInitial || getPicInitial(nama);
+                const dupUser = list.some((it, idx) => idx !== editIndex && isSameText(it.Username, usernameVal));
+                if (dupUser) {
+                    showToast(`Username "${usernameVal}" sudah digunakan PIC lain.`, 'error');
+                    return;
+                }
+                newItem.Initial = initialVal;
                 newItem.Divisi = extraVal;
-                newItem.Role = document.getElementById('master-input-role').value;
+                newItem.Role = roleVal;
                 newItem.Username = usernameVal;
-                const pwdVal = document.getElementById('master-input-password').value.trim();
-                if (pwdVal) newItem.Password = pwdVal;
             } else if (currentMasterTab === 'Status') {
-                const rawHex = document.getElementById('master-input-color-hex').value.trim();
-                newItem.Warna = normalizeHexColor(rawHex, '#3B82F6');
+                newItem.Warna = normalizeHexColor(document.getElementById('master-input-color-hex').value, '#3B82F6');
                 newItem.Completed = normalizeCompletedFlag(document.getElementById('master-input-completed').value);
             } else if (currentMasterTab === 'Reference') {
                 newItem.Keterangan = extraVal;
-            } else if (currentMasterTab === 'ActionPlan') {
+            } else {
                 newItem.KategoriTerkait = extraVal;
             }
 
-            if (editIdx >= 0 && existing) {
-                list[editIdx] = newItem;
-            } else {
-                list.push(newItem);
-            }
-            db[currentMasterTab] = list;
+            if (editIndex >= 0) list[editIndex] = newItem;
+            else list.push(newItem);
 
+            db[currentMasterTab] = currentMasterTab === 'PIC' ? stripSensitivePicFields(list) : list;
             saveToLocal();
             closeMasterModal();
-            refreshAllViews();
-            await syncMasterSheetToGas(currentMasterTab, list);
+            refreshAllViews(false);
+            showToast(`Master ${currentMasterTab} berhasil disimpan.`, 'success');
+
+            await syncMasterSheetToGas(currentMasterTab);
         }
 
-        function deleteMasterItem(idx) {
+        function promptDeleteMasterItem(idx) {
             const list = db[currentMasterTab] || [];
-            const target = list[idx];
-            if (!target) return;
-
-            const modal = document.getElementById('confirm-modal');
-            document.getElementById('confirm-message').textContent = `Hapus item "${target.Nama}" dari Master ${currentMasterTab}?`;
-            const yesBtn = document.getElementById('confirm-yes-btn');
-            yesBtn.onclick = async () => {
-                closeConfirmModal();
-                const updated = (db[currentMasterTab] || []).filter((_, i) => i !== idx);
-                db[currentMasterTab] = updated;
+            const item = list[idx];
+            if (!item) return;
+            openConfirmModal(`Hapus "${item.Nama}" dari Master ${currentMasterTab}?`, async () => {
+                list.splice(idx, 1);
+                db[currentMasterTab] = list;
                 saveToLocal();
-                refreshAllViews();
-                await syncMasterSheetToGas(currentMasterTab, updated);
-            };
-            modal.classList.remove('hidden');
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: modal });
+                refreshAllViews(false);
+                showToast(`Item "${item.Nama}" dihapus.`, 'info');
+                await syncMasterSheetToGas(currentMasterTab);
+            });
         }
 
-        async function syncMasterSheetToGas(sheetName, items) {
-            if (!gasUrl || !sessionToken) {
-                showToast(`Master ${sheetName} diperbarui secara lokal.`, 'success');
-                return;
-            }
+        async function syncMasterSheetToGas(sheetName) {
+            if (!gasUrl || !sessionToken) return;
+            const items = sheetName === 'PIC' ? stripSensitivePicFields(db[sheetName]) : (db[sheetName] || []);
             setPendingSync(1);
             try {
                 const res = await fetch(gasUrl, {
                     method: 'POST',
-                    keepalive: true,
                     cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'SYNC_SHEET', token: sessionToken, sheetName, items })
+                    body: JSON.stringify({
+                        action: 'SYNC_SHEET',
+                        token: sessionToken,
+                        sheetName,
+                        items
+                    })
                 });
                 const result = await res.json();
-                if (result.status === 'success') {
-                    refreshAuthSessionExpiry();
-                    showToast(`Master ${sheetName} tersinkron ke Spreadsheet!`, 'success');
-                } else {
-                    enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: items });
-                    showToast(result.message || `Gagal sinkron Master ${sheetName}.`, 'error');
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'Gagal sinkronisasi master data.');
                 }
+                refreshAuthSessionExpiry();
             } catch (err) {
                 enqueueUnsyncedOp({ type: 'SYNC_SHEET', key: sheetName, payload: items });
-                showToast(`Gagal sinkron Master ${sheetName} ke Google Spreadsheet (antrean sync aktif).`, 'error');
+                showToast(`Perubahan ${sheetName} tersimpan lokal, gagal dikirim ke Sheet.`, 'error');
             } finally {
                 setPendingSync(-1);
             }
@@ -4172,17 +4254,18 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
 
         async function syncWithGoogleSheets() {
             if (!gasUrl || !sessionToken) {
-                showToast('Sesi belum aktif atau URL Spreadsheet belum terhubung.', 'error');
+                showToast('Sesi tidak aktif.', 'error');
                 return;
             }
             if (unsyncedQueue.length > 0) {
                 await retryUnsyncedOperations();
             }
-            showToast('Menyinkronkan data dari Google Spreadsheet...', 'info');
+            showToast('Menyinkronkan data terbaru dari Spreadsheet...', 'info');
             const ok = await fetchAuthorizedData(sessionToken, false);
             if (ok) {
-                refreshAllViews();
-                showToast('Data berhasil disinkronkan dari Google Spreadsheet!', 'success');
+                applyUserSession();
+                refreshAllViews(false);
+                showToast('Data berhasil disinkronkan dengan Google Spreadsheet!', 'success');
             }
         }
 
@@ -4190,196 +4273,141 @@ Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
             const container = document.getElementById('toast-container');
             if (!container) return;
 
-            const colorMap = {
-                success: 'bg-emerald-600 text-white',
-                error: 'bg-rose-600 text-white',
-                info: 'bg-slate-800 text-white'
+            const colors = {
+                success: 'bg-emerald-600 text-white border-emerald-700',
+                error: 'bg-rose-600 text-white border-rose-700',
+                info: 'bg-slate-800 text-white border-slate-900'
             };
-            const toast = document.createElement('div');
-            toast.className = `${colorMap[type] || colorMap.info} px-4 py-3 rounded-xl shadow-lg text-xs sm:text-[13px] font-medium flex items-center gap-2.5 fade-in`;
-            const textSpan = document.createElement('span');
-            textSpan.textContent = String(message ?? '');
-            toast.appendChild(textSpan);
-            container.appendChild(toast);
+            const el = document.createElement('div');
+            el.className = `px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-[13px] font-medium flex items-center gap-2.5 fade-in ${colors[type] || colors.info}`;
+            el.textContent = String(message || '');
+            container.appendChild(el);
 
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.25s ease';
-                setTimeout(() => toast.remove(), 250);
+                el.style.opacity = '0';
+                el.style.transition = 'opacity 0.25s ease';
+                setTimeout(() => el.remove(), 260);
             }, 3400);
         }
 
-        // ==================== EVENT DELEGATION & MODAL ACCESSIBILITY ====================
-        function getModalFocusableElements(modalEl) {
-            if (!modalEl) return [];
-            const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-            return Array.from(modalEl.querySelectorAll(selector)).filter(el => {
-                if (el.disabled || el.getAttribute('aria-hidden') === 'true') return false;
-                return el.offsetParent !== null || el.getClientRects().length > 0;
-            });
-        }
+        // ==================== EVENT DELEGATION, KEYBOARD & INITIALIZATION ====================
+        document.addEventListener('click', e => {
+            const dropdown = document.getElementById('top-profile-dropdown');
+            const wrapper = document.getElementById('top-profile-wrapper');
+            if (dropdown && !dropdown.classList.contains('hidden') && wrapper && !wrapper.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
 
-        function setupModalInteractions() {
-            document.querySelectorAll('[data-static-modal="true"]').forEach(modal => {
-                modal.addEventListener('click', (event) => {
-                    if (event.target === modal) {
-                        const card = modal.firstElementChild;
-                        if (card) {
-                            card.classList.remove('modal-static-pulse');
-                            void card.offsetWidth;
-                            card.classList.add('modal-static-pulse');
-                        }
-                    }
-                });
-            });
+            const editTaskBtn = e.target.closest('[data-edit-task-id]');
+            if (editTaskBtn) {
+                e.stopPropagation();
+                const id = editTaskBtn.getAttribute('data-edit-task-id');
+                if (id) openTaskModal(id);
+                return;
+            }
 
-            document.addEventListener('keydown', (event) => {
-                if (event.key !== 'Tab') return;
-                const openModal = Array.from(document.querySelectorAll('[data-static-modal="true"]'))
-                    .reverse()
-                    .find(m => !m.classList.contains('hidden'));
-                if (!openModal) return;
+            const delTaskBtn = e.target.closest('[data-delete-task-id]');
+            if (delTaskBtn) {
+                e.stopPropagation();
+                const id = delTaskBtn.getAttribute('data-delete-task-id');
+                if (id) promptDeleteTask(id);
+                return;
+            }
 
-                const focusables = getModalFocusableElements(openModal);
-                if (focusables.length === 0) return;
+            const drillBtn = e.target.closest('[data-drill-mode]');
+            if (drillBtn) {
+                const mode = drillBtn.getAttribute('data-drill-mode');
+                drillDownTasks(mode, drillBtn.getAttribute('data-drill-value') || '');
+                return;
+            }
 
-                const first = focusables[0];
-                const last = focusables[focusables.length - 1];
+            const resetPwdBtn = e.target.closest('[data-reset-pwd-user]');
+            if (resetPwdBtn) {
+                const uname = resetPwdBtn.getAttribute('data-reset-pwd-user') || '';
+                const nama = resetPwdBtn.getAttribute('data-reset-pwd-name') || uname;
+                if (uname) openPasswordResetModal(uname, nama, false);
+                return;
+            }
 
-                if (event.shiftKey) {
-                    if (document.activeElement === first || !openModal.contains(document.activeElement)) {
-                        event.preventDefault();
-                        last.focus();
-                    }
-                } else {
-                    if (document.activeElement === last || !openModal.contains(document.activeElement)) {
-                        event.preventDefault();
-                        first.focus();
-                    }
+            const masterEditBtn = e.target.closest('[data-master-edit-idx]');
+            if (masterEditBtn) {
+                const idx = parseInt(masterEditBtn.getAttribute('data-master-edit-idx'), 10);
+                if (!isNaN(idx)) openMasterModal(idx);
+                return;
+            }
+
+            const masterDelBtn = e.target.closest('[data-master-delete-idx]');
+            if (masterDelBtn) {
+                const idx = parseInt(masterDelBtn.getAttribute('data-master-delete-idx'), 10);
+                if (!isNaN(idx)) promptDeleteMasterItem(idx);
+                return;
+            }
+
+            const staticModal = e.target.closest('[data-static-modal="true"]');
+            if (staticModal && e.target === staticModal) {
+                const dialog = staticModal.firstElementChild;
+                if (dialog) {
+                    dialog.classList.remove('modal-static-pulse');
+                    void dialog.offsetWidth;
+                    dialog.classList.add('modal-static-pulse');
                 }
-            });
-        }
+            }
+        });
 
-        function setupDelegatedActions() {
-            document.addEventListener('click', (event) => {
-                const editBtn = event.target.closest('[data-edit-task-id]');
-                if (editBtn) {
-                    event.stopPropagation();
-                    const taskId = editBtn.getAttribute('data-edit-task-id');
-                    if (taskId) openTaskModal(taskId);
-                    return;
-                }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeTaskModal();
+                closeMasterModal();
+                closePasswordResetModal();
+                closeProfileModal();
+                closeConfirmModal();
+                closeMobileSidebar();
+            } else if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches('[role="button"][data-drill-mode]')) {
+                e.preventDefault();
+                e.target.click();
+            }
+        });
 
-                const delBtn = event.target.closest('[data-delete-task-id]');
-                if (delBtn) {
-                    event.stopPropagation();
-                    const taskId = delBtn.getAttribute('data-delete-task-id');
-                    if (taskId) confirmDeleteTask(taskId);
-                    return;
-                }
+        window.addEventListener('resize', () => {
+            updateStickyTasksTableHeaderOffset();
+        });
 
-                const masterEditBtn = event.target.closest('[data-master-edit-idx]');
-                if (masterEditBtn) {
-                    event.stopPropagation();
-                    const idx = Number(masterEditBtn.getAttribute('data-master-edit-idx'));
-                    if (!Number.isNaN(idx)) openMasterModal(idx);
-                    return;
-                }
-
-                const masterDelBtn = event.target.closest('[data-master-delete-idx]');
-                if (masterDelBtn) {
-                    event.stopPropagation();
-                    const idx = Number(masterDelBtn.getAttribute('data-master-delete-idx'));
-                    if (!Number.isNaN(idx)) deleteMasterItem(idx);
-                    return;
-                }
-
-                const drillEl = event.target.closest('[data-drill-mode]');
-                if (drillEl) {
-                    const mode = drillEl.getAttribute('data-drill-mode') || 'all';
-                    const val = drillEl.getAttribute('data-drill-value') || '';
-                    drillDownTasks(mode, val);
-                }
-            });
-
-            document.addEventListener('keydown', (event) => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-                const actionEl = event.target.closest('[data-drill-mode], [data-edit-task-id]');
-                if (!actionEl) return;
-                event.preventDefault();
-                actionEl.click();
-            });
-        }
-
-        // ==================== INITIALIZATION ====================
-        window.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             SafeStorage._scrubLegacyUnsafeStorage();
-            setupModalInteractions();
-            setupDelegatedActions();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
 
             await SafeStorage.hydrateKeys([
                 'taskflow_gas_url',
+                'taskflow_cached_db',
                 SESSION_STORAGE_KEYS.TOKEN,
                 SESSION_STORAGE_KEYS.USER_PROFILE,
                 SESSION_STORAGE_KEYS.EXPIRES_AT,
                 SESSION_STORAGE_KEYS.UNSYNCED_QUEUE,
-                SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE,
-                'taskflow_cached_db'
+                SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE
             ]);
 
-            tasksPageSize = normalizePageSize(SafeStorage.getItem(SESSION_STORAGE_KEYS.TASKS_PAGE_SIZE));
-
-            if (typeof lucide !== 'undefined') lucide.createIcons();
             const initialUrl = resolveInitialGasUrl();
-            const gateInput = document.getElementById('gatekeeper-url-input');
-            if (gateInput && initialUrl) gateInput.value = initialUrl;
+            const urlInput = document.getElementById('gatekeeper-url-input');
+            if (urlInput && initialUrl) urlInput.value = initialUrl;
 
-            const hasRestoredSession = restoreActiveSession();
-            if (hasRestoredSession && initialUrl) {
+            if (initialUrl && restoreActiveSession() && currentUser) {
                 gasUrl = initialUrl;
                 isConnected = true;
                 enterMainApp();
-                if (unsyncedQueue.length > 0) {
-                    retryUnsyncedOperations();
-                } else {
-                    fetchAuthorizedData(sessionToken, true).then(updated => {
-                        if (updated) refreshAllViews(false);
-                    });
-                }
-            } else if (initialUrl) {
+                fetchAuthorizedData(sessionToken, true).then(updated => {
+                    if (updated) {
+                        applyUserSession();
+                        refreshAllViews(false);
+                    }
+                });
+                return;
+            }
+
+            if (initialUrl) {
                 verifyAndConnect(initialUrl);
             } else {
                 lockApplication();
             }
-
-            window.addEventListener('click', (e) => {
-                const wrapper = document.getElementById('top-profile-wrapper');
-                const dropdown = document.getElementById('top-profile-dropdown');
-                if (dropdown && !dropdown.classList.contains('hidden')) {
-                    if (!wrapper || !wrapper.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
-                }
-            });
-
-            window.addEventListener('resize', () => {
-                updateStickyTasksTableHeaderOffset();
-            });
-
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    updateStickyTasksTableHeaderOffset();
-                    if (sessionToken && gasUrl && pendingSyncCount === 0) {
-                        if (unsyncedQueue.length > 0) {
-                            retryUnsyncedOperations();
-                        } else {
-                            fetchAuthorizedData(sessionToken, true).then(updated => {
-                                if (updated) refreshAllViews(false);
-                            });
-                        }
-                    }
-                }
-            });
         });
     </script>
 </body>

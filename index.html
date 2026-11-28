@@ -2,9 +2,13 @@
 <!--
 ============================================================================
 TASK FLOW - ENTERPRISE TASK MANAGEMENT (FRONTEND WEB APP)
-Versi Frontend : v1.2.13
+Versi Frontend : v1.2.15
 Tanggal Update : 28 November 2026
-Kompatibel dengan Backend Google Apps Script v1.2.13
+Kompatibel dengan Backend Google Apps Script v1.2.15
+Catatan Update : Sinkronisasi sesi unauthorized saat background refresh,
+                 update grafik Chart.js tanpa destroy ulang, lazy startup
+                 rendering, proteksi CSV formula injection, focus trap modal,
+                 & penyesuaian otomatis tinggi filter sticky Daftar Pekerjaan.
 ============================================================================
 -->
 <html lang="id">
@@ -16,10 +20,10 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Chart.js untuk Dashboard & Laporan -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons (Pinned Version untuk menghindari HTTP 302 redirect) -->
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <!-- Chart.js & DataLabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         html, body {
@@ -145,7 +149,7 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-xs font-medium text-slate-400 tracking-wide">Version v1.2.13</span>
+                    <span id="login-app-version" class="text-xs font-medium text-slate-400 tracking-wide">Version v1.2.15</span>
                 </div>
             </form>
         </div>
@@ -682,72 +686,89 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
 
                 <!-- ==================== VIEW 2: DAFTAR PEKERJAAN ==================== -->
                 <section id="view-tasks" class="hidden flex-col lg:h-full lg:overflow-hidden space-y-3">
-                    <div id="tasks-sticky-filter" class="sticky top-16 lg:static z-10 bg-slate-50 shrink-0">
-                        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+                    <div id="tasks-sticky-filter" class="sticky top-16 lg:static z-10 bg-slate-50/95 backdrop-blur-sm shrink-0">
+                        <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5 sm:space-y-3">
                             <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs sm:text-[13px] text-indigo-800">
                                 <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
                                 <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
                             </div>
 
-                            <!-- Baris 1: Kotak Pencarian, Toggle Filter Mobile, Tombol Reset & Tombol Tambah Task -->
-                            <div class="flex flex-col sm:flex-row gap-2.5">
-                                <div class="flex-1 relative">
-                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
-                                </div>
-                                <div class="flex items-center gap-2 shrink-0">
-                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" class="lg:hidden inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors">
-                                        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-                                        <span id="mobile-filter-toggle-label">Filter</span>
+                            <!-- Baris 1: Compact Search Bar + Toggle Filter Mobile (dengan Badge Counter) + Tambah Task -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 relative min-w-0">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-indigo-500">
+                                    <button type="button" id="btn-clear-search" onclick="clearTasksSearchInput()" aria-label="Hapus pencarian" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
                                     </button>
-                                    <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                                </div>
+                                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" aria-expanded="false" aria-controls="tasks-filter-grid-wrapper" class="lg:hidden inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-600"></i>
+                                        <span>Filter</span>
+                                        <span id="mobile-filter-badge" class="hidden inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold leading-none">0</span>
+                                    </button>
+                                    <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="hidden lg:inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                                         <span>Reset Filter</span>
                                     </button>
-                                    <button type="button" onclick="openTaskModal('')" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
+                                    <button type="button" onclick="openTaskModal('')" class="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
                                         <i data-lucide="plus" class="w-4 h-4"></i>
-                                        <span>Tambah Task</span>
+                                        <span class="sm:hidden">Task</span>
+                                        <span class="hidden sm:inline">Tambah Task</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- Baris 2: Grid 6 Filter (Kategori, Priority, PIC, Status, Reference, Action Plan) -->
-                            <div id="tasks-filter-grid-wrapper" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                            <!-- Baris 2: Collapsible Panel Filter (Tertutup di Mobile/Tablet secara default, Terbuka di Desktop) -->
+                            <div id="tasks-filter-grid-wrapper" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-2.5 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                                 <div>
                                     <label for="filter-kategori" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Kategori</label>
-                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Kategori</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="filter-priority" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Priority</label>
-                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Priority</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="filter-pic" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">PIC</label>
-                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua PIC</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="filter-status" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Status</label>
-                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Status</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="filter-reference" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Reference</label>
-                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Reference</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="filter-actionplan" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Action Plan</label>
-                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-slate-50 lg:bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Action Plan</option>
                                     </select>
+                                </div>
+
+                                <!-- Aksi Panel Filter Khusus Mobile & Tablet -->
+                                <div class="col-span-full lg:hidden flex items-center gap-2 pt-1">
+                                    <button type="button" onclick="resetAllTaskFilters()" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors">
+                                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                        <span>Reset Filter</span>
+                                    </button>
+                                    <button type="button" onclick="toggleMobileTaskFilters(false)" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition-colors">
+                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                        <span>Terapkan</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1055,7 +1076,7 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
 
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
-            APP_VERSION: 'v1.2.13',
+            APP_VERSION: 'v1.2.15',
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             SESSION_TTL_MS: 6 * 60 * 60 * 1000
         };
@@ -1255,6 +1276,8 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
         let pendingSyncCount = 0;
         let unsyncedQueue = [];
         let activeView = 'dashboard';
+        let isMobileFilterOpen = false;
+        let isTasksLoading = false;
         let dirtyViews = {
             dashboard: true,
             tasks: true,
@@ -1688,6 +1711,7 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                         db = normalizeIncomingDatabase(result.data);
                         saveToLocal();
                     } else {
+                        isTasksLoading = true;
                         await fetchAuthorizedData(result.token, false);
                     }
                     document.getElementById('login-password').value = '';
@@ -1701,13 +1725,20 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                 errMsg.textContent = 'Gagal memverifikasi login ke server. Periksa koneksi internet Anda.';
                 errBox.classList.remove('hidden');
             } finally {
+                isTasksLoading = false;
                 setLoginFormDisabled(false);
             }
         }
 
         async function fetchAuthorizedData(token, isBackgroundRefresh = false) {
-            if (!gasUrl || !token) return false;
-            if (isBackgroundRefresh && (pendingSyncCount > 0 || unsyncedQueue.length > 0)) return false;
+            if (!gasUrl || !token) {
+                isTasksLoading = false;
+                return false;
+            }
+            if (isBackgroundRefresh && (pendingSyncCount > 0 || unsyncedQueue.length > 0)) {
+                isTasksLoading = false;
+                return false;
+            }
 
             const lastMutationTs = Number(SafeStorage.getItem('taskflow_last_mutation_ts') || 0);
             if (isBackgroundRefresh && lastMutationTs > 0 && (Date.now() - lastMutationTs) < 8000) {
@@ -1731,24 +1762,68 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                         currentUser = buildCompactSessionUser(result.user);
                         SafeStorage.setItem(SESSION_STORAGE_KEYS.USER_PROFILE, JSON.stringify(currentUser), true);
                     }
-                    refreshAuthSessionExpiry();
                     saveToLocal();
+                    refreshAuthSessionExpiry();
                     updateSidebarConnectionStatus(unsyncedQueue.length > 0 ? 'error' : 'connected');
                     return true;
                 }
-
-                if (result.status === 'unauthorized' && !isBackgroundRefresh) {
+                if (result.status === 'unauthorized') {
+                    if (unsyncedQueue.length > 0) {
+                        updateSidebarConnectionStatus('error');
+                        showToast('Sesi server berakhir, namun masih ada perubahan lokal yang belum tersinkron. Silakan login ulang untuk mengirim ulang.', 'error');
+                        return false;
+                    }
                     clearAuthSession();
                     showLoginScreen();
-                    showToast(result.message || 'Sesi berakhir. Silakan login kembali.', 'error');
+                    showToast('Sesi Anda telah berakhir. Silakan login kembali.', 'info');
+                    return false;
                 }
                 return false;
             } catch (err) {
-                updateSidebarConnectionStatus('error');
                 if (!isBackgroundRefresh) {
                     showToast('Gagal mengambil data terbaru dari Google Spreadsheet.', 'error');
                 }
                 return false;
+            } finally {
+                isTasksLoading = false;
+            }
+        }
+
+        function applyUserSession() {
+            if (!currentUser) return;
+            const initial = getPicInitial(currentUser);
+            const name = currentUser.Nama || currentUser.Username || 'User';
+            const divisi = currentUser.Divisi || 'Workspace';
+            const role = currentUser.Role || 'Staff';
+            const isStaff = isSameText(role, 'Staff');
+
+            const avatarEl = document.getElementById('top-profile-avatar');
+            const nameEl = document.getElementById('top-profile-name');
+            const divisiEl = document.getElementById('top-profile-divisi');
+            const ddNameEl = document.getElementById('dropdown-user-name');
+            const ddRoleEl = document.getElementById('dropdown-user-role-badge');
+
+            if (avatarEl) avatarEl.textContent = initial;
+            if (nameEl) nameEl.textContent = name;
+            if (divisiEl) divisiEl.textContent = divisi;
+            if (ddNameEl) ddNameEl.textContent = name;
+            if (ddRoleEl) ddRoleEl.textContent = role;
+
+            const navMon = document.getElementById('nav-monitoring');
+            const navMaster = document.getElementById('nav-master');
+            if (navMon) navMon.classList.toggle('hidden', isStaff);
+            if (navMaster) navMaster.classList.toggle('hidden', isStaff);
+
+            populateFilterAndFormDropdowns();
+
+            const filterPicEl = document.getElementById('filter-pic');
+            if (filterPicEl) {
+                if (isStaff && currentUser.Nama) {
+                    setSelectValueSafe('filter-pic', currentUser.Nama);
+                    filterPicEl.disabled = true;
+                } else {
+                    filterPicEl.disabled = false;
+                }
             }
         }
 
@@ -1756,97 +1831,74 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             document.getElementById('connection-gatekeeper').classList.add('hidden');
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-shell').classList.remove('hidden');
+
             applyUserSession();
-            updateSidebarConnectionStatus(unsyncedQueue.length > 0 ? 'error' : 'connected');
-            refreshAllViews(true);
-            switchView('dashboard');
+            updateUnsyncedBanner();
+            refreshAllViews(false);
+            switchView(activeView || 'dashboard');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function handleLogout() {
-            closeProfileDropdown();
-            const tokenToRevoke = sessionToken;
+        async function handleLogout() {
+            const dropdown = document.getElementById('top-profile-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+
+            const oldToken = sessionToken;
+            if (gasUrl && oldToken) {
+                try {
+                    fetch(gasUrl, {
+                        method: 'POST',
+                        keepalive: true,
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'LOGOUT', token: oldToken })
+                    }).catch(() => {});
+                } catch (e) {}
+            }
+
             clearAuthSession();
             db = JSON.parse(JSON.stringify(EMPTY_DB));
-            showLoginScreen();
-            showToast('Anda telah keluar dari aplikasi.', 'info');
 
-            if (gasUrl && tokenToRevoke) {
-                fetch(gasUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'LOGOUT', token: tokenToRevoke })
-                }).catch(() => {});
-            }
-        }
-
-        function applyUserSession() {
-            if (!currentUser) return;
-            const nama = currentUser.Nama || 'User';
-            const divisi = currentUser.Divisi || 'Workspace';
-            const role = currentUser.Role || 'Staff';
-            const initial = getPicInitial(currentUser);
-
-            document.getElementById('top-profile-avatar').textContent = initial;
-            document.getElementById('top-profile-name').textContent = nama;
-            document.getElementById('top-profile-divisi').textContent = divisi;
-            document.getElementById('dropdown-user-name').textContent = nama;
-            document.getElementById('dropdown-user-role-badge').textContent = role;
-
-            const isStaff = isSameText(role, 'Staff');
-            const navMonitoring = document.getElementById('nav-monitoring');
-            const navMaster = document.getElementById('nav-master');
-            if (navMonitoring) navMonitoring.classList.toggle('hidden', isStaff);
-            if (navMaster) navMaster.classList.toggle('hidden', isStaff);
-        }
-
-        function toggleProfileDropdown(e) {
-            if (e) e.stopPropagation();
-            const menu = document.getElementById('top-profile-dropdown');
-            if (menu) menu.classList.toggle('hidden');
-        }
-
-        function closeProfileDropdown() {
-            const menu = document.getElementById('top-profile-dropdown');
-            if (menu) menu.classList.add('hidden');
-        }
-
-        document.addEventListener('click', (e) => {
-            const wrapper = document.getElementById('top-profile-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                closeProfileDropdown();
-            }
-            // Static Modal: klik area backdrop tidak menutup modal, hanya memberi umpan balik visual halus
-            if (e.target && e.target.dataset && e.target.dataset.staticModal === 'true') {
-                const card = e.target.firstElementChild;
-                if (card) {
-                    card.classList.remove('modal-static-pulse');
-                    void card.offsetWidth;
-                    card.classList.add('modal-static-pulse');
+            [picChart, statusChart, priorityChart, reportTrendChart, reportCategoryChart].forEach(ch => {
+                if (ch && typeof ch.destroy === 'function') {
+                    try { ch.destroy(); } catch (e) {}
                 }
-            }
-        });
+            });
+            picChart = null;
+            statusChart = null;
+            priorityChart = null;
+            reportTrendChart = null;
+            reportCategoryChart = null;
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeProfileDropdown();
-                closeMobileSidebar();
+            activeView = 'dashboard';
+            showLoginScreen();
+            showToast('Anda telah keluar dari sesi.', 'info');
+        }
+
+        function toggleProfileDropdown(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('top-profile-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
             }
-        });
+        }
 
         function openProfileModal() {
-            closeProfileDropdown();
-            if (!currentUser) return;
+            const dropdown = document.getElementById('top-profile-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+
             const modal = document.getElementById('profile-modal');
+            if (!modal || !currentUser) return;
+
+            const name = currentUser.Nama || currentUser.Username || 'User';
             document.getElementById('profile-modal-avatar').textContent = getPicInitial(currentUser);
-            document.getElementById('profile-modal-name').textContent = currentUser.Nama || '-';
+            document.getElementById('profile-modal-name').textContent = name;
             document.getElementById('profile-modal-divisi').textContent = currentUser.Divisi || '-';
             document.getElementById('profile-modal-kode').textContent = currentUser.Kode || '-';
             document.getElementById('profile-modal-initial').textContent = getPicInitial(currentUser);
             document.getElementById('profile-modal-username').textContent = currentUser.Username || '-';
             document.getElementById('profile-modal-role').textContent = currentUser.Role || 'Staff';
 
-            const myTasks = getScopedTasks().filter(t => isSameText(t.PIC, currentUser.Nama));
+            const myTasks = (db.Tasks || []).filter(t => isSameText(t.PIC, name));
             const myDone = myTasks.filter(t => isTaskCompleted(t)).length;
             document.getElementById('profile-modal-task-stats').textContent = `${myDone} Completed / ${myTasks.length} Total`;
 
@@ -1865,17 +1917,15 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
         }
 
         function closeMobileSidebar() {
-            document.getElementById('app-sidebar').classList.add('-translate-x-full');
-            document.getElementById('mobile-sidebar-backdrop').classList.add('hidden');
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('mobile-sidebar-backdrop');
+            if (sidebar) sidebar.classList.add('-translate-x-full');
+            if (backdrop) backdrop.classList.add('hidden');
         }
 
         function switchView(viewName) {
-            closeMobileSidebar();
-
-            // RBAC Guard: Role Staff tidak diizinkan mengakses Monitoring Tim maupun Master Data
             const isStaff = currentUser && isSameText(currentUser.Role, 'Staff');
             if (isStaff && (viewName === 'monitoring' || viewName === 'master')) {
-                showToast('Akses terbatas: Halaman tersebut hanya tersedia untuk Manager atau Admin.', 'error');
                 viewName = 'dashboard';
             }
 
@@ -1891,63 +1941,69 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                 }
             });
 
-            const mainEl = document.getElementById('main-viewport');
-            if (mainEl) {
-                const isTasksDesktop = viewName === 'tasks' && window.innerWidth >= 1024;
-                mainEl.classList.toggle('lg:overflow-hidden', isTasksDesktop);
-                mainEl.classList.toggle('lg:overflow-y-auto', !isTasksDesktop);
-                mainEl.classList.toggle('lg:pb-3', isTasksDesktop);
-                mainEl.classList.toggle('lg:pb-10', !isTasksDesktop);
-            }
-
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                const active = btn.dataset.nav === viewName;
-                btn.classList.toggle('bg-indigo-600', active);
-                btn.classList.toggle('text-white', active);
-                btn.classList.toggle('text-slate-400', !active);
+                const isActive = btn.dataset.nav === viewName;
+                btn.classList.toggle('bg-indigo-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('text-slate-400', !isActive);
+                btn.classList.toggle('hover:text-white', !isActive);
+                btn.classList.toggle('hover:bg-slate-800/70', !isActive);
             });
 
-            const titles = {
-                dashboard: ['Dashboard Monitoring', 'Ringkasan progres pekerjaan dan performa tim'],
-                tasks: ['Daftar Pekerjaan', 'Kelola, pantau, dan perbarui status seluruh task'],
-                monitoring: ['Monitoring Tim', 'Pantau kapasitas beban kerja dan progres per anggota tim'],
-                reports: ['Laporan & Analitik', 'Evaluasi tren penyelesaian, produktivitas PIC, dan ekspor laporan'],
-                master: ['Master Data', 'Pengaturan referensi kategori, priority, PIC, dan status']
+            const metaMap = {
+                dashboard: { title: 'Dashboard Monitoring', subtitle: 'Ringkasan progres pekerjaan dan performa tim' },
+                tasks: { title: 'Daftar Pekerjaan', subtitle: 'Kelola, filter, dan perbarui progres seluruh tugas' },
+                monitoring: { title: 'Monitoring Tim', subtitle: 'Kapasitas beban kerja dan task overdue per anggota tim' },
+                reports: { title: 'Laporan & Analitik', subtitle: 'Evaluasi kinerja periode, tren penyelesaian, dan ekspor data' },
+                master: { title: 'Master Data', subtitle: 'Pengaturan referensi kategori, priority, PIC, dan status' }
             };
-            const [t, sub] = titles[viewName] || ['Task Flow', ''];
+            const meta = metaMap[viewName] || metaMap.dashboard;
             const titleEl = document.getElementById('header-page-title');
             const subEl = document.getElementById('header-page-subtitle');
-            if (titleEl) titleEl.textContent = t;
-            if (subEl) subEl.textContent = sub;
+            if (titleEl) titleEl.textContent = meta.title;
+            if (subEl) subEl.textContent = meta.subtitle;
 
-            if (viewName === 'dashboard') {
-                if (dirtyViews.dashboard) {
-                    renderDashboard();
-                    dirtyViews.dashboard = false;
-                }
-            } else if (viewName === 'tasks') {
-                if (dirtyViews.tasks) {
-                    renderTasksTable();
-                    dirtyViews.tasks = false;
-                }
-                requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
-            } else if (viewName === 'monitoring') {
-                if (dirtyViews.monitoring) {
-                    renderMonitoringView();
-                    dirtyViews.monitoring = false;
-                }
-            } else if (viewName === 'reports') {
-                if (dirtyViews.reports) {
-                    renderReportsView();
-                    dirtyViews.reports = false;
-                }
-            } else if (viewName === 'master') {
-                if (dirtyViews.master) {
-                    switchMasterTab(currentMasterTab);
-                    dirtyViews.master = false;
-                }
+            if (dirtyViews[viewName]) {
+                if (viewName === 'dashboard') renderDashboard();
+                else if (viewName === 'tasks') renderTasksTable();
+                else if (viewName === 'monitoring') renderMonitoringView();
+                else if (viewName === 'reports') renderReportsView();
+                else if (viewName === 'master') renderMasterTable();
+                dirtyViews[viewName] = false;
             }
+
+            closeMobileSidebar();
+            requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function drillDownTasks(mode, value = '') {
+            const selectedDashPic = getSelectedDashboardPic();
+            resetAllTaskFilters();
+
+            if (selectedDashPic) {
+                setSelectValueSafe('filter-pic', selectedDashPic);
+            }
+
+            if (mode === 'completed' || mode === 'inprogress' || mode === 'overdue') {
+                tasksSpecialFilter = mode;
+            } else if (mode === 'pic') {
+                setSelectValueSafe('filter-pic', value);
+            } else if (mode === 'priority') {
+                setSelectValueSafe('filter-priority', value);
+            } else if (mode === 'kategori') {
+                setSelectValueSafe('filter-kategori', value);
+            } else if (mode === 'status') {
+                setSelectValueSafe('filter-status', value);
+            } else if (mode === 'kategori_status') {
+                const [catVal, stVal] = String(value || '').split('|||');
+                if (catVal) setSelectValueSafe('filter-kategori', catVal);
+                if (stVal) setSelectValueSafe('filter-status', stVal);
+            }
+
+            tasksCurrentPage = 1;
+            dirtyViews.tasks = true;
+            switchView('tasks');
         }
 
         function refreshAllViews(forceAll = false) {
@@ -2273,44 +2329,55 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             document.getElementById('rep-kpi-avg-prog').textContent = `${avgProg}%`;
             document.getElementById('rep-kpi-ontime').textContent = `${onTimeRate}%`;
 
-            // Chart 1: Tren Bulanan
+            // Chart 1: Tren Bulanan (In-place update tanpa .destroy() ulang)
             const trendCanvas = document.getElementById('chart-report-trend');
             if (trendCanvas && typeof Chart !== 'undefined') {
                 const months = Array.from(agg.byMonth.keys()).sort();
-                if (reportTrendChart) reportTrendChart.destroy();
-                reportTrendChart = new Chart(trendCanvas, {
-                    type: 'line',
-                    data: {
-                        labels: months.length ? months : [today.slice(0, 7)],
-                        datasets: [
-                            {
-                                label: 'Task Masuk',
-                                data: months.length ? months.map(m => agg.byMonth.get(m).total) : [0],
-                                borderColor: '#4F46E5',
-                                backgroundColor: 'rgba(79, 70, 229, 0.12)',
-                                fill: true,
-                                tension: 0.35
-                            },
-                            {
-                                label: 'Completed',
-                                data: months.length ? months.map(m => agg.byMonth.get(m).done) : [0],
-                                borderColor: '#059669',
-                                backgroundColor: 'rgba(5, 150, 105, 0.12)',
-                                fill: true,
-                                tension: 0.35
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
+                const trendLabels = months.length ? months : [today.slice(0, 7)];
+                const trendDataIn = months.length ? months.map(m => agg.byMonth.get(m).total) : [0];
+                const trendDataDone = months.length ? months.map(m => agg.byMonth.get(m).done) : [0];
+
+                if (reportTrendChart && reportTrendChart.canvas === trendCanvas) {
+                    reportTrendChart.data.labels = trendLabels;
+                    reportTrendChart.data.datasets[0].data = trendDataIn;
+                    reportTrendChart.data.datasets[1].data = trendDataDone;
+                    reportTrendChart.update('none');
+                } else {
+                    if (reportTrendChart) reportTrendChart.destroy();
+                    reportTrendChart = new Chart(trendCanvas, {
+                        type: 'line',
+                        data: {
+                            labels: trendLabels,
+                            datasets: [
+                                {
+                                    label: 'Task Masuk',
+                                    data: trendDataIn,
+                                    borderColor: '#4F46E5',
+                                    backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                                    fill: true,
+                                    tension: 0.35
+                                },
+                                {
+                                    label: 'Completed',
+                                    data: trendDataDone,
+                                    borderColor: '#059669',
+                                    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                                    fill: true,
+                                    tension: 0.35
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+                            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                        }
+                    });
+                }
             }
 
-            // Chart 2: Volume Pekerjaan per Kategori
+            // Chart 2: Volume Pekerjaan per Kategori (In-place update)
             const catCanvas = document.getElementById('chart-report-category');
             if (catCanvas && typeof Chart !== 'undefined') {
                 const catNames = Array.from(new Set([
@@ -2318,26 +2385,34 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                     ...tasks.map(t => String(t.Kategori || '').trim())
                 ].filter(Boolean)));
                 const catCounts = catNames.map(c => (agg.byCategory.get(c.toLowerCase())?.total || 0));
+                const catLabels = catNames.length ? catNames : ['Belum ada data'];
+                const catData = catNames.length ? catCounts : [0];
 
-                if (reportCategoryChart) reportCategoryChart.destroy();
-                reportCategoryChart = new Chart(catCanvas, {
-                    type: 'bar',
-                    data: {
-                        labels: catNames.length ? catNames : ['Belum ada data'],
-                        datasets: [{
-                            label: 'Jumlah Task',
-                            data: catNames.length ? catCounts : [0],
-                            backgroundColor: '#6366F1',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
+                if (reportCategoryChart && reportCategoryChart.canvas === catCanvas) {
+                    reportCategoryChart.data.labels = catLabels;
+                    reportCategoryChart.data.datasets[0].data = catData;
+                    reportCategoryChart.update('none');
+                } else {
+                    if (reportCategoryChart) reportCategoryChart.destroy();
+                    reportCategoryChart = new Chart(catCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: catLabels,
+                            datasets: [{
+                                label: 'Jumlah Task',
+                                data: catData,
+                                backgroundColor: '#6366F1',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                        }
+                    });
+                }
             }
 
             // Tabel Rapor Kinerja per PIC + Baris Total
@@ -2410,6 +2485,12 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             }
         }
 
+        function sanitizeCsvCell(val) {
+            const raw = String(val ?? '');
+            const guarded = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+            return `"${guarded.replace(/"/g, '""')}"`;
+        }
+
         function exportReportCsv() {
             const tasks = getFilteredReportTasks();
             if (tasks.length === 0) {
@@ -2419,82 +2500,18 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             const headers = ['ID', 'Tanggal', 'Kategori', 'Task', 'Priority', 'PIC', 'TargetDate', 'Status', 'Progress', 'Reference', 'ActionPlan', 'Catatan', 'CompletedDate'];
             const csvRows = [
                 headers.join(','),
-                ...tasks.map(t => headers.map(h => `"${String(t[h] ?? '').replace(/"/g, '""')}"`).join(','))
+                ...tasks.map(t => headers.map(h => sanitizeCsvCell(t[h])).join(','))
             ];
             const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `TaskFlow_Laporan_${getTodayOffset(0)}.csv`;
+            a.download = `TaskFlow_Report_${getTodayOffset(0)}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('Laporan CSV berhasil diunduh!', 'success');
-        }
-
-        // ==================== DASHBOARD RENDERING & DRILL-DOWN ====================
-        function drillDownTasks(mode, value = '') {
-            tasksSpecialFilter = '';
-            const filterIds = [
-                'filter-search',
-                'filter-kategori',
-                'filter-priority',
-                'filter-pic',
-                'filter-status',
-                'filter-reference',
-                'filter-actionplan'
-            ];
-            filterIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-
-            const katEl = document.getElementById('filter-kategori');
-            const prioEl = document.getElementById('filter-priority');
-            const picEl = document.getElementById('filter-pic');
-            const statusEl = document.getElementById('filter-status');
-
-            const setSelectCaseInsensitive = (sel, val) => {
-                if (!sel) return false;
-                const matched = Array.from(sel.options).find(o => isSameText(o.value, val));
-                if (matched) {
-                    sel.value = matched.value;
-                    return true;
-                }
-                return false;
-            };
-
-            const activeDashPic = getSelectedDashboardPic();
-            if (activeDashPic) {
-                setSelectCaseInsensitive(picEl, activeDashPic);
-            }
-
-            if (mode === 'completed') {
-                tasksSpecialFilter = 'completed';
-            } else if (mode === 'inprogress') {
-                tasksSpecialFilter = 'inprogress';
-            } else if (mode === 'overdue') {
-                tasksSpecialFilter = 'overdue';
-            } else if (mode === 'pic') {
-                setSelectCaseInsensitive(picEl, value);
-            } else if (mode === 'status') {
-                setSelectCaseInsensitive(statusEl, value);
-            } else if (mode === 'kategori') {
-                setSelectCaseInsensitive(katEl, value);
-            } else if (mode === 'kategori_status') {
-                const [katName, statusName] = String(value || '').split('|||');
-                if (katName) setSelectCaseInsensitive(katEl, katName);
-                if (statusName) setSelectCaseInsensitive(statusEl, statusName);
-            } else if (mode === 'priority') {
-                if (!setSelectCaseInsensitive(prioEl, value)) {
-                    tasksSpecialFilter = `priority:${value}`;
-                }
-            }
-
-            tasksCurrentPage = 1;
-            dirtyViews.tasks = true;
-            switchView('tasks');
+            showToast('Laporan CSV berhasil diunduh.', 'success');
         }
 
         function renderDashboard() {
@@ -2545,7 +2562,7 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                 ? db.Status
                 : Array.from(new Set(tasks.map(t => String(t.Status || '').trim()).filter(Boolean))).map(name => getStatusConfig(name));
 
-            // 1. Chart Beban Kerja per PIC (Single-Pass O(N))
+            // 1. Chart Beban Kerja per PIC (Single-Pass O(N) & In-place Update)
             const picCanvas = document.getElementById('chart-pic');
             if (picCanvas && typeof Chart !== 'undefined') {
                 const allPicNames = Array.from(new Set([
@@ -2611,49 +2628,68 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                     }
                 ];
 
-                if (picChart) picChart.destroy();
-                picChart = new Chart(picCanvas, {
+                const finalPicLabels = picLabels.length ? picLabels : ['Belum ada data'];
+                const finalPicDatasets = picLabels.length ? datasets : [{
                     type: 'bar',
-                    data: {
-                        labels: picLabels.length ? picLabels : ['Belum ada data'],
-                        datasets: picLabels.length ? datasets : [{
-                            type: 'bar',
-                            label: 'Total Task',
-                            data: [0],
-                            backgroundColor: '#CBD5E1'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        onClick: (evt, elements) => {
-                            if (elements && elements.length > 0) {
-                                const idx = elements[0].index;
-                                if (picNames[idx]) drillDownTasks('pic', picNames[idx]);
-                            }
+                    label: 'Total Task',
+                    data: [0],
+                    backgroundColor: '#CBD5E1'
+                }];
+
+                if (picChart && picChart.canvas === picCanvas) {
+                    picChart.data.labels = finalPicLabels;
+                    picChart.data.datasets = finalPicDatasets;
+                    picChart.options.onClick = (evt, elements) => {
+                        if (elements && elements.length > 0) {
+                            const idx = elements[0].index;
+                            if (picNames[idx]) drillDownTasks('pic', picNames[idx]);
+                        }
+                    };
+                    picChart.options.plugins.tooltip.callbacks.title = items => {
+                        const idx = items?.[0]?.dataIndex ?? -1;
+                        return picNames[idx] ? `${picNames[idx]} (${picLabels[idx]})` : (items?.[0]?.label || '');
+                    };
+                    picChart.update('none');
+                } else {
+                    if (picChart) picChart.destroy();
+                    picChart = new Chart(picCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: finalPicLabels,
+                            datasets: finalPicDatasets
                         },
-                        plugins: {
-                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                callbacks: {
-                                    title: items => {
-                                        const idx = items?.[0]?.dataIndex ?? -1;
-                                        return picNames[idx] ? `${picNames[idx]} (${picLabels[idx]})` : (items?.[0]?.label || '');
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            onClick: (evt, elements) => {
+                                if (elements && elements.length > 0) {
+                                    const idx = elements[0].index;
+                                    if (picNames[idx]) drillDownTasks('pic', picNames[idx]);
+                                }
+                            },
+                            plugins: {
+                                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: items => {
+                                            const idx = items?.[0]?.dataIndex ?? -1;
+                                            return picNames[idx] ? `${picNames[idx]} (${picLabels[idx]})` : (items?.[0]?.label || '');
+                                        }
                                     }
                                 }
+                            },
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { beginAtZero: true, ticks: { precision: 0 } }
                             }
-                        },
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { beginAtZero: true, ticks: { precision: 0 } }
                         }
-                    }
-                });
+                    });
+                }
             }
 
-            // 2. Chart Komposisi Status
+            // 2. Chart Komposisi Status (In-place update)
             const statusCanvas = document.getElementById('chart-status');
             if (statusCanvas && typeof Chart !== 'undefined') {
                 const stLabels = ['Completed', 'In Progress'];
@@ -2668,65 +2704,73 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
 
                 const dlPlugin = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
 
-                if (statusChart) statusChart.destroy();
-                statusChart = new Chart(statusCanvas, {
-                    type: 'doughnut',
-                    plugins: dlPlugin,
-                    data: {
-                        labels: stLabels,
-                        datasets: [{
-                            data: stCounts,
-                            backgroundColor: stColors,
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '56%',
-                        onClick: (evt, elements) => {
-                            if (elements && elements.length > 0) {
-                                const idx = elements[0].index;
-                                drillDownTasks(idx === 0 ? 'completed' : 'inprogress');
-                            }
+                if (statusChart && statusChart.canvas === statusCanvas) {
+                    statusChart.data.labels = stLabels;
+                    statusChart.data.datasets[0].data = stCounts;
+                    statusChart.options.plugins.datalabels.formatter = val => formatValuePct(Number(val || 0));
+                    statusChart.options.plugins.tooltip.callbacks.label = ctx => `${ctx.label}: ${formatValuePct(Number(ctx.raw || 0))}`;
+                    statusChart.update('none');
+                } else {
+                    if (statusChart) statusChart.destroy();
+                    statusChart = new Chart(statusCanvas, {
+                        type: 'doughnut',
+                        plugins: dlPlugin,
+                        data: {
+                            labels: stLabels,
+                            datasets: [{
+                                data: stCounts,
+                                backgroundColor: stColors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
                         },
-                        plugins: {
-                            datalabels: {
-                                color: '#ffffff',
-                                font: { weight: 'bold', size: 11 },
-                                display: ctx => Number(ctx.dataset.data[ctx.dataIndex] || 0) > 0,
-                                formatter: val => formatValuePct(Number(val || 0))
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: ctx => `${ctx.label}: ${formatValuePct(Number(ctx.raw || 0))}`
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '56%',
+                            onClick: (evt, elements) => {
+                                if (elements && elements.length > 0) {
+                                    const idx = elements[0].index;
+                                    drillDownTasks(idx === 0 ? 'completed' : 'inprogress');
                                 }
                             },
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    boxWidth: 10,
-                                    font: { size: 11 },
-                                    generateLabels: chart => {
-                                        const ds = chart.data.datasets[0];
-                                        return chart.data.labels.map((lbl, i) => ({
-                                            text: `${lbl}: ${formatValuePct(Number(ds.data[i] || 0))}`,
-                                            fillStyle: ds.backgroundColor[i],
-                                            strokeStyle: ds.borderColor,
-                                            lineWidth: 1,
-                                            hidden: !chart.getDataVisibility(i),
-                                            index: i
-                                        }));
+                            plugins: {
+                                datalabels: {
+                                    color: '#ffffff',
+                                    font: { weight: 'bold', size: 11 },
+                                    display: ctx => Number(ctx.dataset.data[ctx.dataIndex] || 0) > 0,
+                                    formatter: val => formatValuePct(Number(val || 0))
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `${ctx.label}: ${formatValuePct(Number(ctx.raw || 0))}`
+                                    }
+                                },
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        boxWidth: 10,
+                                        font: { size: 11 },
+                                        generateLabels: chart => {
+                                            const ds = chart.data.datasets[0];
+                                            return chart.data.labels.map((lbl, i) => ({
+                                                text: `${lbl}: ${formatValuePct(Number(ds.data[i] || 0))}`,
+                                                fillStyle: ds.backgroundColor[i],
+                                                strokeStyle: ds.borderColor,
+                                                lineWidth: 1,
+                                                hidden: !chart.getDataVisibility(i),
+                                                index: i
+                                            }));
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                }
             }
 
-            // 3. Chart Distribusi Priority
+            // 3. Chart Distribusi Priority (In-place update)
             const prioCanvas = document.getElementById('chart-priority');
             if (prioCanvas && typeof Chart !== 'undefined') {
                 const prioNames = Array.from(new Set([
@@ -2736,33 +2780,49 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
                 const prioCounts = prioNames.map(pName => agg.byPriority.get(pName.toLowerCase()) || 0);
                 const prioColorMap = { urgent: '#E11D48', high: '#F59E0B', medium: '#3B82F6', low: '#10B981' };
                 const prioColors = prioNames.map(n => prioColorMap[n.toLowerCase()] || '#6366F1');
+                const finalPrioLabels = prioNames.length ? prioNames : ['Belum ada data'];
+                const finalPrioData = prioNames.length ? prioCounts : [0];
+                const finalPrioColors = prioNames.length ? prioColors : ['#CBD5E1'];
 
-                if (priorityChart) priorityChart.destroy();
-                priorityChart = new Chart(prioCanvas, {
-                    type: 'bar',
-                    data: {
-                        labels: prioNames.length ? prioNames : ['Belum ada data'],
-                        datasets: [{
-                            label: 'Total Task',
-                            data: prioNames.length ? prioCounts : [0],
-                            backgroundColor: prioNames.length ? prioColors : ['#CBD5E1'],
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        onClick: (evt, elements) => {
-                            if (elements && elements.length > 0) {
-                                const idx = elements[0].index;
-                                if (prioNames[idx]) drillDownTasks('priority', prioNames[idx]);
-                            }
+                if (priorityChart && priorityChart.canvas === prioCanvas) {
+                    priorityChart.data.labels = finalPrioLabels;
+                    priorityChart.data.datasets[0].data = finalPrioData;
+                    priorityChart.data.datasets[0].backgroundColor = finalPrioColors;
+                    priorityChart.options.onClick = (evt, elements) => {
+                        if (elements && elements.length > 0) {
+                            const idx = elements[0].index;
+                            if (prioNames[idx]) drillDownTasks('priority', prioNames[idx]);
+                        }
+                    };
+                    priorityChart.update('none');
+                } else {
+                    if (priorityChart) priorityChart.destroy();
+                    priorityChart = new Chart(prioCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: finalPrioLabels,
+                            datasets: [{
+                                label: 'Total Task',
+                                data: finalPrioData,
+                                backgroundColor: finalPrioColors,
+                                borderRadius: 6
+                            }]
                         },
-                        plugins: { legend: { display: false } },
-                        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            onClick: (evt, elements) => {
+                                if (elements && elements.length > 0) {
+                                    const idx = elements[0].index;
+                                    if (prioNames[idx]) drillDownTasks('priority', prioNames[idx]);
+                                }
+                            },
+                            plugins: { legend: { display: false } },
+                            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                        }
+                    });
+                }
             }
 
             // 4. Matriks Rekapitulasi Task per Kategori & Status (Single-Pass + Delegated Click)
@@ -2935,26 +2995,148 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             if (typeof lucide !== 'undefined' && dashEl) lucide.createIcons({ root: dashEl });
         }
 
-        // ==================== FILTER & DAFTAR PEKERJAAN ====================
-        function toggleMobileTaskFilters() {
+        // ==================== FILTER & DAFTAR PEKERJAAN (COLLAPSIBLE & SKELETON) ====================
+        function toggleMobileTaskFilters(forceState) {
             const wrapper = document.getElementById('tasks-filter-grid-wrapper');
+            const btn = document.getElementById('mobile-filter-toggle-btn');
             if (!wrapper) return;
-            const isCurrentlyHidden = wrapper.classList.contains('hidden');
-            wrapper.classList.toggle('hidden', !isCurrentlyHidden);
-            wrapper.classList.toggle('grid', isCurrentlyHidden);
+
+            isMobileFilterOpen = typeof forceState === 'boolean'
+                ? forceState
+                : wrapper.classList.contains('hidden');
+
+            wrapper.classList.toggle('hidden', !isMobileFilterOpen);
+            wrapper.classList.toggle('grid', isMobileFilterOpen);
+            if (btn) {
+                btn.setAttribute('aria-expanded', String(isMobileFilterOpen));
+            }
+            updateMobileFilterBadge();
             requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
         }
 
         function updateMobileFilterBadge() {
-            const lbl = document.getElementById('mobile-filter-toggle-label');
-            if (!lbl) return;
-            const ids = ['filter-kategori', 'filter-priority', 'filter-pic', 'filter-status', 'filter-reference', 'filter-actionplan'];
-            let activeCount = ids.reduce((cnt, id) => cnt + (document.getElementById(id)?.value ? 1 : 0), 0);
+            const badge = document.getElementById('mobile-filter-badge');
+            const btn = document.getElementById('mobile-filter-toggle-btn');
+            const clearSearchBtn = document.getElementById('btn-clear-search');
+            const searchVal = (document.getElementById('filter-search')?.value || '').trim();
+
+            if (clearSearchBtn) {
+                clearSearchBtn.classList.toggle('hidden', searchVal.length === 0);
+            }
+
+            const filterIds = ['filter-kategori', 'filter-priority', 'filter-status', 'filter-reference', 'filter-actionplan'];
+            const picEl = document.getElementById('filter-pic');
+            if (picEl && !picEl.disabled) {
+                filterIds.push('filter-pic');
+            }
+
+            let activeCount = filterIds.reduce((cnt, id) => cnt + (document.getElementById(id)?.value ? 1 : 0), 0);
             if (tasksSpecialFilter) activeCount++;
-            lbl.textContent = activeCount > 0 ? `Filter (${activeCount})` : 'Filter';
+
+            if (badge) {
+                badge.textContent = String(activeCount);
+                badge.classList.toggle('hidden', activeCount === 0);
+            }
+            if (btn) {
+                const isHighlighted = isMobileFilterOpen || activeCount > 0;
+                btn.classList.toggle('border-indigo-500', isHighlighted);
+                btn.classList.toggle('bg-indigo-50/70', isHighlighted);
+                btn.classList.toggle('text-indigo-700', isHighlighted);
+                btn.classList.toggle('border-slate-300', !isHighlighted);
+                btn.classList.toggle('bg-white', !isHighlighted);
+                btn.classList.toggle('text-slate-700', !isHighlighted);
+            }
+        }
+
+        function clearTasksSearchInput() {
+            const searchEl = document.getElementById('filter-search');
+            if (!searchEl) return;
+            searchEl.value = '';
+            updateMobileFilterBadge();
+            tasksCurrentPage = 1;
+            renderTasksTable();
+        }
+
+        function renderTasksSkeleton(cardCount = 4, rowCount = 6) {
+            const mobileCardsEl = document.getElementById('tasks-mobile-cards');
+            const tbody = document.getElementById('tasks-table-body');
+            const pagEl = document.getElementById('tasks-pagination');
+
+            if (mobileCardsEl) {
+                mobileCardsEl.innerHTML = Array.from({ length: cardCount }).map(() => `
+                    <div class="p-4 space-y-3 animate-pulse" aria-hidden="true">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="space-y-2 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                    <div class="h-4 w-14 bg-slate-200 rounded"></div>
+                                </div>
+                                <div class="h-4 w-11/12 bg-slate-200 rounded"></div>
+                                <div class="h-3 w-2/3 bg-slate-100 rounded"></div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <div class="w-9 h-9 bg-slate-100 rounded-xl"></div>
+                                <div class="w-9 h-9 bg-slate-100 rounded-xl"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-2 pt-1">
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-5 h-5 rounded-full bg-slate-200"></div>
+                                <div class="h-3.5 w-24 bg-slate-200 rounded"></div>
+                            </div>
+                            <div class="h-5 w-20 bg-slate-200 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 pt-1">
+                            <div class="h-3 w-28 bg-slate-100 rounded"></div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 h-1.5 bg-slate-200 rounded-full"></div>
+                                <div class="h-3 w-8 bg-slate-200 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            if (tbody) {
+                tbody.innerHTML = Array.from({ length: rowCount }).map(() => `
+                    <tr class="animate-pulse" aria-hidden="true">
+                        <td class="py-3.5 px-4"><div class="h-3.5 w-16 bg-slate-200 rounded"></div></td>
+                        <td class="py-3.5 px-4 space-y-1.5">
+                            <div class="h-4 w-64 bg-slate-200 rounded"></div>
+                            <div class="h-3 w-40 bg-slate-100 rounded"></div>
+                        </td>
+                        <td class="py-3.5 px-4"><div class="h-5 w-16 bg-slate-200 rounded-lg"></div></td>
+                        <td class="py-3.5 px-4">
+                            <div class="inline-flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-slate-200"></div>
+                                <div class="h-3.5 w-24 bg-slate-200 rounded"></div>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4"><div class="h-3.5 w-24 bg-slate-200 rounded"></div></td>
+                        <td class="py-3.5 px-4"><div class="h-5 w-20 bg-slate-200 rounded-full"></div></td>
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 h-1.5 bg-slate-200 rounded-full"></div>
+                                <div class="h-3 w-8 bg-slate-200 rounded"></div>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <div class="w-7 h-7 bg-slate-100 rounded-lg"></div>
+                                <div class="w-7 h-7 bg-slate-100 rounded-lg"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            if (pagEl) {
+                pagEl.innerHTML = `<span class="text-slate-400">Memuat daftar pekerjaan dari Google Spreadsheet...</span>`;
+            }
         }
 
         function onTasksSearchInput() {
+            updateMobileFilterBadge();
             clearTimeout(tasksSearchTimer);
             tasksSearchTimer = setTimeout(() => {
                 tasksCurrentPage = 1;
@@ -3098,6 +3280,12 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             if (!tbody) return;
 
             updateMobileFilterBadge();
+
+            if (isTasksLoading && (db.Tasks || []).length === 0) {
+                renderTasksSkeleton();
+                requestAnimationFrame(() => updateStickyTasksTableHeaderOffset());
+                return;
+            }
 
             if (quickBar && quickLabel) {
                 if (tasksSpecialFilter) {
@@ -3660,6 +3848,10 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
         }
 
         function openMasterModal(editIdx = -1) {
+            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
+                showToast('Akses ditolak: Staff tidak diizinkan mengubah Master Data.', 'error');
+                return;
+            }
             const modal = document.getElementById('master-modal');
             const meta = MASTER_META[currentMasterTab] || MASTER_META.Kategori;
             document.getElementById('master-edit-index').value = editIdx;
@@ -3728,6 +3920,10 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
 
         async function saveMasterItem(e) {
             e.preventDefault();
+            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
+                showToast('Akses ditolak: Staff tidak diizinkan mengubah Master Data.', 'error');
+                return;
+            }
             const editIdx = Number(document.getElementById('master-edit-index').value);
             const nama = document.getElementById('master-input-name').value.trim();
             const extra = document.getElementById('master-input-extra').value.trim();
@@ -3793,6 +3989,10 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
         }
 
         function deleteMasterItem(idx) {
+            if (currentUser && isSameText(currentUser.Role, 'Staff')) {
+                showToast('Akses ditolak: Staff tidak diizinkan menghapus Master Data.', 'error');
+                return;
+            }
             const list = db[currentMasterTab] || [];
             const targetItem = list[idx];
             if (!targetItem) return;
@@ -3849,6 +4049,67 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
         }
 
         // ==================== EVENT DELEGATION UNTUK SECURITY & AKSESIBILITAS ====================
+        function bindStaticModalGuards() {
+            // Tutup dropdown profil saat klik di luar area profil
+            document.addEventListener('click', (e) => {
+                const wrapper = document.getElementById('top-profile-wrapper');
+                const dropdown = document.getElementById('top-profile-dropdown');
+                if (wrapper && dropdown && !dropdown.classList.contains('hidden') && !wrapper.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // Static modal pulse saat klik backdrop
+            document.querySelectorAll('[data-static-modal="true"]').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        const card = modal.firstElementChild;
+                        if (card) {
+                            card.classList.remove('modal-static-pulse');
+                            void card.offsetWidth;
+                            card.classList.add('modal-static-pulse');
+                        }
+                    }
+                });
+            });
+
+            // Focus trap & blokir Escape pada static modal yang sedang terbuka
+            document.addEventListener('keydown', (e) => {
+                const openModal = Array.from(document.querySelectorAll('[data-static-modal="true"]'))
+                    .find(m => !m.classList.contains('hidden'));
+                if (!openModal) return;
+
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    const card = openModal.firstElementChild;
+                    if (card) {
+                        card.classList.remove('modal-static-pulse');
+                        void card.offsetWidth;
+                        card.classList.add('modal-static-pulse');
+                    }
+                    return;
+                }
+
+                if (e.key === 'Tab') {
+                    const focusables = Array.from(
+                        openModal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')
+                    ).filter(el => el.offsetParent !== null);
+
+                    if (focusables.length === 0) return;
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            });
+        }
+
         function bindDelegatedInteractions() {
             const handleInteractiveEvent = (e) => {
                 const editTaskEl = e.target.closest('[data-edit-task-id]');
@@ -3905,12 +4166,19 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             if (unsyncedQueue.length > 0) {
                 await retryUnsyncedOperations();
             }
+            isTasksLoading = true;
+            if (activeView === 'tasks') renderTasksTable();
             showToast('Menyinkronkan data dari Google Spreadsheet...', 'info');
-            const ok = await fetchAuthorizedData(sessionToken, false);
-            if (ok) {
-                applyUserSession();
-                refreshAllViews();
-                showToast('Data berhasil disinkronkan!', 'success');
+            try {
+                const ok = await fetchAuthorizedData(sessionToken, false);
+                if (ok) {
+                    applyUserSession();
+                    refreshAllViews();
+                    showToast('Data berhasil disinkronkan!', 'success');
+                }
+            } finally {
+                isTasksLoading = false;
+                if (activeView === 'tasks') renderTasksTable();
             }
         }
 
@@ -3951,7 +4219,7 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
         window.addEventListener('DOMContentLoaded', async () => {
             SafeStorage._scrubLegacyUnsafeStorage();
             bindDelegatedInteractions();
-
+            bindStaticModalGuards();
             const verEl = document.getElementById('login-app-version');
             if (verEl) verEl.textContent = `Version ${APP_DEFAULT_CONFIG.APP_VERSION}`;
 
@@ -3969,15 +4237,21 @@ Kompatibel dengan Backend Google Apps Script v1.2.13
             const urlInp = document.getElementById('gatekeeper-url-input');
             if (urlInp && initialUrl) urlInp.value = initialUrl;
 
-            const hasValidSession = restoreActiveSession();
-            if (initialUrl && hasValidSession) {
-                gasUrl = initialUrl;
-                isConnected = true;
+            const stickyFilterEl = document.getElementById('tasks-sticky-filter');
+            if (stickyFilterEl && typeof ResizeObserver !== 'undefined') {
+                const ro = new ResizeObserver(() => updateStickyTasksTableHeaderOffset());
+                ro.observe(stickyFilterEl);
+            }
+
+            if (restoreActiveSession()) {
                 enterMainApp();
                 fetchAuthorizedData(sessionToken, true).then(updated => {
+                    isTasksLoading = false;
                     if (updated) {
                         applyUserSession();
                         refreshAllViews();
+                    } else if (activeView === 'tasks') {
+                        renderTasksTable();
                     }
                 });
                 return;

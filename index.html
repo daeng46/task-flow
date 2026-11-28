@@ -83,13 +83,13 @@
                     </div>
 
                     <div>
-                        <label for="gatekeeper-url-input" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        <label for="gatekeeper-url-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             URL GOOGLE APPS SCRIPT WEB APP <span class="text-rose-500">*</span>
                         </label>
-                        <input type="url" id="gatekeeper-url-input" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
+                        <input type="url" id="gatekeeper-url-input" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full text-base sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all">
                     </div>
 
-                    <button type="button" onclick="connectFromGatekeeper()" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
+                    <button type="button" onclick="connectFromGatekeeper()" class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-[13px] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
                         <i data-lucide="plug-zap" class="w-4 h-4"></i>
                         <span>Hubungkan &amp; Buka Aplikasi</span>
                     </button>
@@ -106,7 +106,7 @@
                     <i data-lucide="check-square" class="w-6 h-6"></i>
                 </div>
                 <h2 class="text-2xl font-bold tracking-tight text-white">Task <span class="text-[#6366F1]">Flow</span></h2>
-                <p class="text-xs text-slate-400 mt-1.5">Silahkan masuk untuk menggunakan aplikasi</p>
+                <p class="text-xs sm:text-[13px] text-slate-400 mt-1.5">Silahkan masuk untuk menggunakan aplikasi</p>
             </div>
 
             <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
@@ -119,7 +119,7 @@
                     <label for="login-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
                     <div class="relative">
                         <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" id="login-username" required autocomplete="username" placeholder="Masukkan Username" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
+                        <input type="text" id="login-username" required autocomplete="username" placeholder="Masukkan Username" class="w-full text-base sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
                     </div>
                 </div>
 
@@ -127,17 +127,17 @@
                     <label for="login-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Masukkan Password" class="w-full text-base sm:text-sm text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
+                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Masukkan Password" class="w-full text-base sm:text-[13px] text-slate-800 placeholder:text-slate-400 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-all">
                     </div>
                 </div>
 
-                <button type="submit" id="login-submit-btn" class="w-full mt-1 py-3 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/25 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100 transition-all flex items-center justify-center gap-2">
+                <button type="submit" id="login-submit-btn" class="w-full mt-1 py-2.5 bg-[#4F46E5] hover:bg-indigo-700 active:scale-[0.99] text-white text-[13px] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100 transition-all flex items-center justify-center gap-2">
                     <i data-lucide="log-in" class="w-4 h-4"></i>
                     <span>Masuk ke Aplikasi</span>
                 </button>
 
                 <div class="pt-3 mt-1 border-t border-slate-100 text-center">
-                    <span id="login-app-version" class="text-[11px] font-medium text-slate-400 tracking-wide">Version v1.2.9</span>
+                    <span id="login-app-version" class="text-xs font-medium text-slate-400 tracking-wide">Version v1.2.10</span>
                 </div>
             </form>
         </div>
@@ -157,15 +157,15 @@
                 <input type="hidden" id="master-edit-index" value="-1">
 
                 <div>
-                    <label id="master-label-name" for="master-input-name" class="block text-xs font-semibold text-slate-700 mb-1">Nama Item <span class="text-rose-500">*</span></label>
-                    <input type="text" id="master-input-name" required placeholder="Masukkan nama..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                    <label id="master-label-name" for="master-input-name" class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Item <span class="text-rose-500">*</span></label>
+                    <input type="text" id="master-input-name" required placeholder="Masukkan nama..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <!-- Field Khusus Master KATEGORI (Group) -->
                 <div id="master-kategori-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
                     <div>
-                        <label for="master-input-group" class="block text-xs font-semibold text-slate-700 mb-1">Group Kategori <span class="text-rose-500">*</span></label>
-                        <input type="text" id="master-input-group" list="master-group-datalist" placeholder="Contoh: Internal / Eksternal / Operasional..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                        <label for="master-input-group" class="block text-xs font-semibold text-slate-700 mb-1.5">Group Kategori <span class="text-rose-500">*</span></label>
+                        <input type="text" id="master-input-group" list="master-group-datalist" placeholder="Contoh: Internal / Eksternal / Operasional..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                         <datalist id="master-group-datalist"></datalist>
                     </div>
                 </div>
@@ -174,12 +174,12 @@
                 <div id="master-pic-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label for="master-input-initial" class="block text-xs font-semibold text-slate-700 mb-1">Initial (Untuk Chart) <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-initial" maxlength="8" placeholder="Contoh: BS / AND" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                            <label for="master-input-initial" class="block text-xs font-semibold text-slate-700 mb-1.5">Initial (Untuk Chart) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="master-input-initial" maxlength="8" placeholder="Contoh: BS / AND" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label for="master-input-role" class="block text-xs font-semibold text-slate-700 mb-1">Hak Akses (Role) <span class="text-rose-500">*</span></label>
-                            <select id="master-input-role" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <label for="master-input-role" class="block text-xs font-semibold text-slate-700 mb-1.5">Hak Akses (Role) <span class="text-rose-500">*</span></label>
+                            <select id="master-input-role" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                 <option value="Staff">Staff (Terbatas)</option>
                                 <option value="Manager">Manager (Kelola Master &amp; Monitor Tim)</option>
                                 <option value="Admin">Admin (Full Akses &amp; Database)</option>
@@ -188,13 +188,13 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1">Username Login <span class="text-rose-500">*</span></label>
-                            <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                            <label for="master-input-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username Login <span class="text-rose-500">*</span></label>
+                            <input type="text" id="master-input-username" autocomplete="off" placeholder="Username..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1">Password Login <span id="master-password-required-mark" class="text-rose-500">*</span></label>
+                            <label for="master-input-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password Login <span id="master-password-required-mark" class="text-rose-500">*</span></label>
                             <div class="relative">
-                                <input type="password" id="master-input-password" autocomplete="new-password" placeholder="Password..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg pl-3 pr-9 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                                <input type="password" id="master-input-password" autocomplete="new-password" placeholder="Password..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg pl-3 pr-9 py-2 focus:outline-none focus:border-indigo-500">
                                 <button type="button" onclick="toggleMasterPasswordVisibility()" aria-label="Tampilkan atau sembunyikan password" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
                                     <i id="master-password-eye-icon" data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
@@ -207,15 +207,15 @@
                 <div id="master-status-fields" class="hidden space-y-4 pt-2 border-t border-slate-100">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label for="master-input-color-hex" class="block text-xs font-semibold text-slate-700 mb-1">Warna HEXA <span class="text-rose-500">*</span></label>
+                            <label for="master-input-color-hex" class="block text-xs font-semibold text-slate-700 mb-1.5">Warna HEXA <span class="text-rose-500">*</span></label>
                             <div class="flex items-center gap-2">
-                                <input type="color" id="master-input-colorpicker" value="#3b82f6" onchange="document.getElementById('master-input-color-hex').value = this.value.toUpperCase()" class="h-10 w-12 rounded-lg border border-slate-300 cursor-pointer p-0.5 bg-white shrink-0">
-                                <input type="text" id="master-input-color-hex" value="#3B82F6" maxlength="9" oninput="syncColorPickerFromHex(this.value)" placeholder="#3B82F6" class="w-full text-base sm:text-sm font-mono uppercase border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                <input type="color" id="master-input-colorpicker" value="#3b82f6" onchange="document.getElementById('master-input-color-hex').value = this.value.toUpperCase()" class="h-9 w-11 rounded-lg border border-slate-300 cursor-pointer p-0.5 bg-white shrink-0">
+                                <input type="text" id="master-input-color-hex" value="#3B82F6" maxlength="9" oninput="syncColorPickerFromHex(this.value)" placeholder="#3B82F6" class="w-full text-base sm:text-[13px] font-mono uppercase border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                             </div>
                         </div>
                         <div>
-                            <label for="master-input-completed" class="block text-xs font-semibold text-slate-700 mb-1">Completed <span class="text-rose-500">*</span></label>
-                            <select id="master-input-completed" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <label for="master-input-completed" class="block text-xs font-semibold text-slate-700 mb-1.5">Completed <span class="text-rose-500">*</span></label>
+                            <select id="master-input-completed" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                 <option value="No">No (In Progress)</option>
                                 <option value="Yes">Yes (Completed)</option>
                             </select>
@@ -224,13 +224,13 @@
                 </div>
 
                 <div id="master-extra-container">
-                    <label id="master-label-extra" for="master-input-extra" class="block text-xs font-semibold text-slate-700 mb-1">Keterangan</label>
-                    <input type="text" id="master-input-extra" placeholder="Keterangan tambahan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-indigo-500">
+                    <label id="master-label-extra" for="master-input-extra" class="block text-xs font-semibold text-slate-700 mb-1.5">Keterangan</label>
+                    <input type="text" id="master-input-extra" placeholder="Keterangan tambahan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
-                    <button type="button" onclick="closeMasterModal()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                    <button type="submit" id="master-submit-btn" class="w-full sm:w-auto px-5 py-2.5 sm:py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan</button>
+                    <button type="button" onclick="closeMasterModal()" class="w-full sm:w-auto px-4 py-2 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" id="master-submit-btn" class="w-full sm:w-auto px-5 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan</button>
                 </div>
             </form>
         </div>
@@ -244,11 +244,11 @@
             </div>
             <div>
                 <h4 class="text-base font-bold text-slate-800">Konfirmasi Hapus</h4>
-                <p id="confirm-message" class="text-xs text-slate-500 mt-1">Apakah Anda yakin ingin menghapus data ini?</p>
+                <p id="confirm-message" class="text-xs sm:text-[13px] text-slate-500 mt-1.5 leading-relaxed">Apakah Anda yakin ingin menghapus data ini?</p>
             </div>
-            <div class="flex gap-2 justify-center pt-2">
-                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 sm:py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Batal</button>
-                <button type="button" id="confirm-yes-btn" class="flex-1 py-2.5 sm:py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Ya, Hapus</button>
+            <div class="flex gap-2.5 justify-center pt-2">
+                <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                <button type="button" id="confirm-yes-btn" class="flex-1 py-2 text-[13px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors">Ya, Hapus</button>
             </div>
         </div>
     </div>
@@ -275,19 +275,19 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Kode PIC</p>
-                        <p id="profile-modal-kode" class="text-sm font-mono font-bold text-slate-800 mt-1">-</p>
+                        <p id="profile-modal-kode" class="text-[13px] font-mono font-bold text-slate-800 mt-1">-</p>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Initial</p>
-                        <p id="profile-modal-initial" class="text-sm font-bold text-indigo-600 mt-1">-</p>
+                        <p id="profile-modal-initial" class="text-[13px] font-bold text-indigo-600 mt-1">-</p>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Username</p>
-                        <p id="profile-modal-username" class="text-sm font-semibold text-slate-800 mt-1 truncate">-</p>
+                        <p id="profile-modal-username" class="text-[13px] font-semibold text-slate-800 mt-1 truncate">-</p>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hak Akses (Role)</p>
-                        <p id="profile-modal-role" class="text-sm font-bold text-slate-800 mt-1">-</p>
+                        <p id="profile-modal-role" class="text-[13px] font-bold text-slate-800 mt-1">-</p>
                     </div>
                 </div>
 
@@ -297,7 +297,7 @@
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeProfileModal()" class="w-full sm:w-auto px-5 py-2.5 sm:py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                    <button type="button" onclick="closeProfileModal()" class="w-full sm:w-auto px-5 py-2 text-[13px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                         Tutup
                     </button>
                 </div>
@@ -320,42 +320,42 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="task-input-tanggal" class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Input <span class="text-rose-500">*</span></label>
-                        <input type="date" id="task-input-tanggal" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <label for="task-input-tanggal" class="block text-xs font-semibold text-slate-700 mb-1.5">Tanggal Input <span class="text-rose-500">*</span></label>
+                        <input type="date" id="task-input-tanggal" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
-                        <label for="task-input-targetdate" class="block text-xs font-semibold text-slate-700 mb-1">Target Date (Deadline) <span class="text-rose-500">*</span></label>
-                        <input type="date" id="task-input-targetdate" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <label for="task-input-targetdate" class="block text-xs font-semibold text-slate-700 mb-1.5">Target Date (Deadline) <span class="text-rose-500">*</span></label>
+                        <input type="date" id="task-input-targetdate" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
                 <div>
-                    <label for="task-input-task" class="block text-xs font-semibold text-slate-700 mb-1">Nama / Deskripsi Pekerjaan <span class="text-rose-500">*</span></label>
-                    <input type="text" id="task-input-task" required placeholder="Contoh: Rekonsiliasi Laporan Bulanan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <label for="task-input-task" class="block text-xs font-semibold text-slate-700 mb-1.5">Nama / Deskripsi Pekerjaan <span class="text-rose-500">*</span></label>
+                    <input type="text" id="task-input-task" required placeholder="Contoh: Rekonsiliasi Laporan Bulanan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label for="task-input-kategori" class="block text-xs font-semibold text-slate-700 mb-1">Kategori <span class="text-rose-500">*</span></label>
-                        <select id="task-input-kategori" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <label for="task-input-kategori" class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori <span class="text-rose-500">*</span></label>
+                        <select id="task-input-kategori" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
-                        <label for="task-input-priority" class="block text-xs font-semibold text-slate-700 mb-1">Priority <span class="text-rose-500">*</span></label>
-                        <select id="task-input-priority" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <label for="task-input-priority" class="block text-xs font-semibold text-slate-700 mb-1.5">Priority <span class="text-rose-500">*</span></label>
+                        <select id="task-input-priority" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
-                        <label for="task-input-pic" class="block text-xs font-semibold text-slate-700 mb-1">PIC <span class="text-rose-500">*</span></label>
-                        <select id="task-input-pic" required class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <label for="task-input-pic" class="block text-xs font-semibold text-slate-700 mb-1.5">PIC <span class="text-rose-500">*</span></label>
+                        <select id="task-input-pic" required class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="task-input-status" class="block text-xs font-semibold text-slate-700 mb-1">Status <span class="text-rose-500">*</span></label>
-                        <select id="task-input-status" required onchange="onTaskStatusChange()" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <label for="task-input-status" class="block text-xs font-semibold text-slate-700 mb-1.5">Status <span class="text-rose-500">*</span></label>
+                        <select id="task-input-status" required onchange="onTaskStatusChange()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
-                        <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center justify-between mb-1.5">
                             <label for="task-input-progress" class="block text-xs font-semibold text-slate-700">Progress (%)</label>
                             <span id="task-progress-label" class="text-xs font-bold text-indigo-600">0%</span>
                         </div>
@@ -365,23 +365,23 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="task-input-reference" class="block text-xs font-semibold text-slate-700 mb-1">Reference</label>
-                        <select id="task-input-reference" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <label for="task-input-reference" class="block text-xs font-semibold text-slate-700 mb-1.5">Reference</label>
+                        <select id="task-input-reference" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                     <div>
-                        <label for="task-input-actionplan" class="block text-xs font-semibold text-slate-700 mb-1">Action Plan</label>
-                        <select id="task-input-actionplan" class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
+                        <label for="task-input-actionplan" class="block text-xs font-semibold text-slate-700 mb-1.5">Action Plan</label>
+                        <select id="task-input-actionplan" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-500"></select>
                     </div>
                 </div>
 
                 <div>
-                    <label for="task-input-catatan" class="block text-xs font-semibold text-slate-700 mb-1">Catatan Tambahan</label>
-                    <textarea id="task-input-catatan" rows="2" placeholder="Catatan progres atau kendala..." class="w-full text-base sm:text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"></textarea>
+                    <label for="task-input-catatan" class="block text-xs font-semibold text-slate-700 mb-1.5">Catatan Tambahan</label>
+                    <textarea id="task-input-catatan" rows="2" placeholder="Catatan progres atau kendala..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"></textarea>
                 </div>
 
                 <div class="pt-4 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-end gap-2">
-                    <button type="button" onclick="closeTaskModal()" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 sm:py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan Task</button>
+                    <button type="button" onclick="closeTaskModal()" class="w-full sm:w-auto px-4 py-2 text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button type="submit" class="w-full sm:w-auto px-5 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Simpan Task</button>
                 </div>
             </form>
         </div>
@@ -401,7 +401,7 @@
                     </div>
                     <div>
                         <span class="text-base font-bold text-white tracking-tight">Task <span class="text-indigo-400">Flow</span></span>
-                        <p class="text-[10px] text-slate-400 leading-none mt-0.5">Enterprise Workspace</p>
+                        <p class="text-[11px] text-slate-400 leading-none mt-1">Enterprise Workspace</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeMobileSidebar()" aria-label="Tutup menu" class="lg:hidden text-slate-400 hover:text-white p-1.5 rounded-lg">
@@ -410,29 +410,29 @@
             </div>
 
             <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-                <button type="button" onclick="switchView('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition-colors">
+                <button type="button" onclick="switchView('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold bg-indigo-600 text-white transition-colors">
                     <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
                     <span>Dashboard</span>
                 </button>
-                <button type="button" onclick="switchView('tasks')" data-nav="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
+                <button type="button" onclick="switchView('tasks')" data-nav="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
                     <i data-lucide="list-todo" class="w-4 h-4 shrink-0"></i>
                     <span>Daftar Pekerjaan</span>
                 </button>
-                <button type="button" id="nav-monitoring" onclick="switchView('monitoring')" data-nav="monitoring" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
+                <button type="button" id="nav-monitoring" onclick="switchView('monitoring')" data-nav="monitoring" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
                     <i data-lucide="users" class="w-4 h-4 shrink-0"></i>
                     <span>Monitoring Tim</span>
                 </button>
-                <button type="button" id="nav-reports" onclick="switchView('reports')" data-nav="reports" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
+                <button type="button" id="nav-reports" onclick="switchView('reports')" data-nav="reports" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
                     <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0"></i>
                     <span>Laporan &amp; Analitik</span>
                 </button>
-                <button type="button" id="nav-master" onclick="switchView('master')" data-nav="master" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
+                <button type="button" id="nav-master" onclick="switchView('master')" data-nav="master" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/70 transition-colors">
                     <i data-lucide="folder-kanban" class="w-4 h-4 shrink-0"></i>
                     <span>Master Data</span>
                 </button>
             </nav>
 
-            <div class="p-4 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+            <div class="p-4 border-t border-slate-800/80 text-xs text-slate-400 flex items-center justify-between">
                 <span id="sidebar-sync-indicator" class="inline-flex items-center gap-1.5 text-emerald-400 font-medium">
                     <span id="sidebar-sync-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span id="sidebar-sync-text">Sheet Terhubung</span>
@@ -451,17 +451,17 @@
                     </button>
                     <div class="min-w-0">
                         <h1 id="header-page-title" class="text-base sm:text-lg font-bold text-slate-800 truncate">Dashboard Monitoring</h1>
-                        <p id="header-page-subtitle" class="text-[11px] text-slate-400 hidden sm:block truncate">Ringkasan progres pekerjaan dan performa tim</p>
+                        <p id="header-page-subtitle" class="text-xs text-slate-400 hidden sm:block truncate">Ringkasan progres pekerjaan dan performa tim</p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <button type="button" id="unsynced-retry-btn" onclick="retryUnsyncedOperations()" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-semibold transition-colors">
+                    <button type="button" id="unsynced-retry-btn" onclick="retryUnsyncedOperations()" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition-colors">
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                         <span id="unsynced-retry-label">Kirim Ulang</span>
                     </button>
 
-                    <span id="sync-status-pill" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">
+                    <span id="sync-status-pill" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">
                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
                         <span>Menyimpan ke Sheet...</span>
                     </span>
@@ -470,26 +470,26 @@
                     <div id="top-profile-wrapper" class="relative">
                         <button type="button" onclick="toggleProfileDropdown(event)" class="flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
                             <div id="top-profile-avatar" class="w-8 h-8 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0">U</div>
-                            <div class="hidden sm:block text-left min-w-0 max-w-[120px]">
-                                <p id="top-profile-name" class="text-xs font-bold text-slate-800 truncate">User</p>
-                                <p id="top-profile-divisi" class="text-[10px] text-slate-400 truncate">Workspace</p>
+                            <div class="hidden sm:block text-left min-w-0 max-w-[135px]">
+                                <p id="top-profile-name" class="text-[13px] font-bold text-slate-800 leading-tight truncate">User</p>
+                                <p id="top-profile-divisi" class="text-[11px] text-slate-400 leading-tight mt-0.5 truncate">Workspace</p>
                             </div>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                         </button>
 
                         <div id="top-profile-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 fade-in">
                             <div class="px-4 py-2.5 border-b border-slate-100">
-                                <p id="dropdown-user-name" class="text-xs font-bold text-slate-800 truncate">User</p>
+                                <p id="dropdown-user-name" class="text-[13px] font-bold text-slate-800 truncate">User</p>
                                 <div class="mt-1 flex items-center gap-1.5">
-                                    <span class="text-[10px] text-slate-400">Role:</span>
-                                    <span id="dropdown-user-role-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Staff</span>
+                                    <span class="text-[11px] text-slate-400">Role:</span>
+                                    <span id="dropdown-user-role-badge" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Staff</span>
                                 </div>
                             </div>
-                            <button type="button" onclick="openProfileModal()" class="w-full px-4 py-2.5 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                            <button type="button" onclick="openProfileModal()" class="w-full px-4 py-2.5 text-left text-[13px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
                                 <i data-lucide="user-circle" class="w-4 h-4 text-slate-400"></i>
                                 <span>My Profile</span>
                             </button>
-                            <button type="button" onclick="handleLogout()" class="w-full px-4 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5">
+                            <button type="button" onclick="handleLogout()" class="w-full px-4 py-2.5 text-left text-[13px] font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5">
                                 <i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i>
                                 <span>Logout</span>
                             </button>
@@ -506,57 +506,57 @@
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div data-drill-mode="all" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">Total Task</span>
+                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">Total Task</span>
                                 <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="layers" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-total" class="text-2xl font-bold text-slate-800 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1">
-                                <p class="text-[11px] text-slate-400">Seluruh pekerjaan</p>
-                                <span class="text-[10px] font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">Lihat &rarr;</span>
+                            <p id="kpi-total" class="text-2xl sm:text-[28px] font-bold tracking-tight text-slate-800 mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1.5">
+                                <p class="text-xs text-slate-400">Seluruh pekerjaan</p>
+                                <span class="text-[11px] font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">Lihat &rarr;</span>
                             </div>
                         </div>
 
                         <div data-drill-mode="completed" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-emerald-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Completed</span>
+                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Completed</span>
                                 <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-done" class="text-2xl font-bold text-emerald-600 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1">
-                                <p id="kpi-done-pct" class="text-[11px] text-slate-400">0% selesai</p>
-                                <span class="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
+                            <p id="kpi-done" class="text-2xl sm:text-[28px] font-bold tracking-tight text-emerald-600 mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1.5">
+                                <p id="kpi-done-pct" class="text-xs text-slate-400">0% selesai</p>
+                                <span class="text-[11px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
                             </div>
                         </div>
 
                         <div data-drill-mode="inprogress" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">In Progress</span>
+                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">In Progress</span>
                                 <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="clock" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-progress" class="text-2xl font-bold text-blue-600 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1">
-                                <p class="text-[11px] text-slate-400">Sedang dikerjakan</p>
-                                <span class="text-[10px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
+                            <p id="kpi-progress" class="text-2xl sm:text-[28px] font-bold tracking-tight text-blue-600 mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1.5">
+                                <p class="text-xs text-slate-400">Sedang dikerjakan</p>
+                                <span class="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
                             </div>
                         </div>
 
                         <div data-drill-mode="overdue" role="button" tabindex="0" class="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 hover:border-rose-400 hover:shadow-md cursor-pointer transition-all">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold text-slate-500 group-hover:text-rose-600 transition-colors">Overdue</span>
+                                <span class="text-xs sm:text-[13px] font-semibold text-slate-500 group-hover:text-rose-600 transition-colors">Overdue</span>
                                 <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i data-lucide="alert-circle" class="w-4 h-4"></i>
                                 </span>
                             </div>
-                            <p id="kpi-overdue" class="text-2xl font-bold text-rose-600 mt-2">0</p>
-                            <div class="flex items-center justify-between mt-1">
-                                <p class="text-[11px] text-slate-400">Lewat target date</p>
-                                <span class="text-[10px] font-semibold text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
+                            <p id="kpi-overdue" class="text-2xl sm:text-[28px] font-bold tracking-tight text-rose-600 mt-2">0</p>
+                            <div class="flex items-center justify-between mt-1.5">
+                                <p class="text-xs text-slate-400">Lewat target date</p>
+                                <span class="text-[11px] font-semibold text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity">Filter &rarr;</span>
                             </div>
                         </div>
                     </div>
@@ -566,8 +566,8 @@
                         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 class="text-sm font-bold text-slate-800">Komposisi Status</h3>
-                                    <p class="text-[11px] text-slate-400">Klik segmen untuk filter status</p>
+                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Komposisi Status</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Klik segmen untuk filter status</p>
                                 </div>
                             </div>
                             <div class="h-64 relative">
@@ -578,8 +578,8 @@
                         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-6 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 class="text-sm font-bold text-slate-800">Beban Kerja per PIC</h3>
-                                    <p class="text-[11px] text-slate-400">Klik batang PIC untuk melihat daftar tugasnya</p>
+                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Beban Kerja per PIC</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Klik batang PIC untuk melihat daftar tugasnya</p>
                                 </div>
                             </div>
                             <div class="h-64 relative">
@@ -590,8 +590,8 @@
                         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs lg:col-span-3 flex flex-col">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 class="text-sm font-bold text-slate-800">Distribusi Priority</h3>
-                                    <p class="text-[11px] text-slate-400">Klik untuk filter tingkat prioritas</p>
+                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Distribusi Priority</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Klik untuk filter tingkat prioritas</p>
                                 </div>
                             </div>
                             <div class="h-64 relative">
@@ -606,27 +606,27 @@
                         <div class="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
                             <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                                 <div>
-                                    <h3 class="text-sm font-bold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Distribusi pekerjaan berdasarkan kategori dan progres penyelesaian</p>
+                                    <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Rekapitulasi Task per Kategori &amp; Status</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Distribusi pekerjaan berdasarkan kategori dan progres penyelesaian</p>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2.5">
-                                    <select id="rekap-filter-group" onchange="renderDashboard()" class="text-xs font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
+                                    <select id="rekap-filter-group" onchange="renderDashboard()" class="text-base sm:text-[13px] font-medium text-slate-700 border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Group</option>
                                     </select>
-                                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer text-xs font-medium text-slate-700 select-none">
+                                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer text-[13px] font-medium text-slate-700 select-none">
                                         <input type="checkbox" id="rekap-show-empty" checked onchange="renderDashboard()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                                         <span>Tampilkan Data kosong</span>
                                     </label>
-                                    <span id="rekap-kategori-count" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-semibold shrink-0">0 Kategori</span>
+                                    <span id="rekap-kategori-count" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold shrink-0">0 Kategori</span>
                                 </div>
                             </div>
                             <div class="overflow-x-auto flex-1">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
-                                        <tr id="rekap-kategori-head" class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500"></tr>
+                                        <tr id="rekap-kategori-head" class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500"></tr>
                                     </thead>
-                                    <tbody id="rekap-kategori-body" class="divide-y divide-slate-100 text-xs"></tbody>
-                                    <tfoot id="rekap-kategori-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-xs font-bold text-slate-800"></tfoot>
+                                    <tbody id="rekap-kategori-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
+                                    <tfoot id="rekap-kategori-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-[13px] font-bold text-slate-800"></tfoot>
                                 </table>
                             </div>
                         </div>
@@ -639,11 +639,11 @@
                                         <i data-lucide="bell-ring" class="w-4 h-4"></i>
                                     </span>
                                     <div class="min-w-0">
-                                        <h3 class="text-sm font-bold text-slate-800 truncate">Perlu Ditindaklanjuti</h3>
-                                        <p class="text-[11px] text-slate-400 truncate">Overdue, mendekati deadline (H-3), atau Urgent</p>
+                                        <h3 class="text-sm sm:text-[15px] font-bold text-slate-800 truncate">Perlu Ditindaklanjuti</h3>
+                                        <p class="text-xs text-slate-400 truncate mt-0.5">Overdue, mendekati deadline (H-3), atau Urgent</p>
                                     </div>
                                 </div>
-                                <span id="action-required-count" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold shrink-0">0 Task</span>
+                                <span id="action-required-count" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shrink-0">0 Task</span>
                             </div>
                             <div id="action-required-list" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto flex-1"></div>
                         </div>
@@ -654,7 +654,7 @@
                 <section id="view-tasks" class="hidden flex-col lg:h-full lg:overflow-hidden space-y-3">
                     <div id="tasks-sticky-filter" class="sticky top-16 lg:static z-10 bg-slate-50 shrink-0">
                         <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-                            <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-800">
+                            <div id="tasks-active-quickfilter" class="hidden flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs sm:text-[13px] text-indigo-800">
                                 <span id="tasks-active-quickfilter-label" class="font-semibold">Filter Aktif</span>
                                 <button type="button" onclick="resetAllTaskFilters()" class="text-indigo-700 hover:underline font-bold">Hapus Filter</button>
                             </div>
@@ -663,18 +663,18 @@
                             <div class="flex flex-col sm:flex-row gap-2.5">
                                 <div class="flex-1 relative">
                                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
+                                    <input type="text" id="filter-search" oninput="onTasksSearchInput()" placeholder="Cari ID, nama pekerjaan, PIC, atau catatan..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" class="lg:hidden inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors">
+                                    <button type="button" id="mobile-filter-toggle-btn" onclick="toggleMobileTaskFilters()" class="lg:hidden inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors">
                                         <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
                                         <span id="mobile-filter-toggle-label">Filter</span>
                                     </button>
-                                    <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                                    <button type="button" onclick="resetAllTaskFilters()" title="Reset Semua Filter" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                                         <span>Reset Filter</span>
                                     </button>
-                                    <button type="button" onclick="openTaskModal('')" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
+                                    <button type="button" onclick="openTaskModal('')" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors">
                                         <i data-lucide="plus" class="w-4 h-4"></i>
                                         <span>Tambah Task</span>
                                     </button>
@@ -684,38 +684,38 @@
                             <!-- Baris 2: Grid 6 Filter (Kategori, Priority, PIC, Status, Reference, Action Plan) -->
                             <div id="tasks-filter-grid-wrapper" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
                                 <div>
-                                    <label for="filter-kategori" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori</label>
-                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-kategori" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Kategori</label>
+                                    <select id="filter-kategori" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Kategori</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-priority" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
-                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-priority" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Priority</label>
+                                    <select id="filter-priority" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Priority</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-pic" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">PIC</label>
-                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-pic" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">PIC</label>
+                                    <select id="filter-pic" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua PIC</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-status" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
-                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-status" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Status</label>
+                                    <select id="filter-status" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Status</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-reference" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reference</label>
-                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-reference" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Reference</label>
+                                    <select id="filter-reference" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Reference</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="filter-actionplan" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Action Plan</label>
-                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-sm border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                                    <label for="filter-actionplan" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Action Plan</label>
+                                    <select id="filter-actionplan" onchange="tasksCurrentPage=1; renderTasksTable()" class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-2.5 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                         <option value="">Semua Action Plan</option>
                                     </select>
                                 </div>
@@ -731,7 +731,7 @@
                         <div class="hidden md:block overflow-x-auto lg:overflow-y-auto lg:flex-1 rounded-t-2xl">
                             <table class="w-full text-left border-collapse">
                                 <thead id="tasks-table-head" class="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
-                                    <tr class="text-[11px] uppercase tracking-wider text-slate-500">
+                                    <tr class="text-xs uppercase tracking-wider text-slate-500">
                                         <th class="py-3 px-4 font-semibold bg-slate-50 rounded-tl-2xl">ID</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">Pekerjaan &amp; Detail</th>
                                         <th class="py-3 px-4 font-semibold bg-slate-50">Priority</th>
@@ -742,10 +742,10 @@
                                         <th class="py-3 px-4 text-right font-semibold bg-slate-50 rounded-tr-2xl">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                                <tbody id="tasks-table-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
                             </table>
                         </div>
-                        <div id="tasks-pagination" class="px-4 py-3 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500"></div>
+                        <div id="tasks-pagination" class="px-4 py-3 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-[13px] text-slate-500"></div>
                     </div>
                 </section>
 
@@ -753,11 +753,11 @@
                 <section id="view-monitoring" class="hidden space-y-3.5">
                     <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800">Kapasitas &amp; Beban Kerja Anggota Tim</h3>
+                            <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Kapasitas &amp; Beban Kerja Anggota Tim</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Klik kartu PIC untuk meninjau seluruh daftar pekerjaan yang ditugaskan.</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <select id="monitoring-divisi-filter" onchange="renderMonitoringView()" class="text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <select id="monitoring-divisi-filter" onchange="renderMonitoringView()" class="text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                 <option value="">Semua Divisi</option>
                             </select>
                         </div>
@@ -770,15 +770,15 @@
                 <section id="view-reports" class="hidden space-y-3.5">
                     <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800">Filter Periode &amp; Ekspor Laporan</h3>
+                            <h3 class="text-sm sm:text-[15px] font-bold text-slate-800">Filter Periode &amp; Ekspor Laporan</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Analisis produktivitas tim dan unduh ringkasan kinerja dalam format CSV.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <input type="date" id="report-date-from" onchange="renderReportsView()" class="text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <input type="date" id="report-date-from" onchange="renderReportsView()" class="text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                             <span class="text-xs text-slate-400 font-medium">s/d</span>
-                            <input type="date" id="report-date-to" onchange="renderReportsView()" class="text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
-                            <button type="button" onclick="resetReportFilters()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100">Reset</button>
-                            <button type="button" onclick="exportReportCsv()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs">
+                            <input type="date" id="report-date-to" onchange="renderReportsView()" class="text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
+                            <button type="button" onclick="resetReportFilters()" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-[13px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors">Reset</button>
+                            <button type="button" onclick="exportReportCsv()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-[13px] font-semibold shadow-xs transition-colors">
                                 <i data-lucide="download" class="w-3.5 h-3.5"></i>
                                 <span>Export CSV</span>
                             </button>
@@ -788,35 +788,35 @@
                     <!-- Ringkasan Analitik Periode -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs font-semibold text-slate-500">Total Task Periode</p>
-                            <p id="rep-kpi-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">Total Task Periode</p>
+                            <p id="rep-kpi-total" class="text-2xl sm:text-[26px] font-bold tracking-tight text-slate-800 mt-1.5">0</p>
                         </div>
                         <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs font-semibold text-slate-500">Completion Rate</p>
-                            <p id="rep-kpi-rate" class="text-2xl font-bold text-emerald-600 mt-1">0%</p>
+                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">Completion Rate</p>
+                            <p id="rep-kpi-rate" class="text-2xl sm:text-[26px] font-bold tracking-tight text-emerald-600 mt-1.5">0%</p>
                         </div>
                         <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs font-semibold text-slate-500">Rata-rata Progress</p>
-                            <p id="rep-kpi-avg-prog" class="text-2xl font-bold text-indigo-600 mt-1">0%</p>
+                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">Rata-rata Progress</p>
+                            <p id="rep-kpi-avg-prog" class="text-2xl sm:text-[26px] font-bold tracking-tight text-indigo-600 mt-1.5">0%</p>
                         </div>
                         <div class="bg-white p-4 rounded-2xl border border-slate-200/80">
-                            <p class="text-xs font-semibold text-slate-500">On-Time Delivery</p>
-                            <p id="rep-kpi-ontime" class="text-2xl font-bold text-blue-600 mt-1">0%</p>
+                            <p class="text-xs sm:text-[13px] font-semibold text-slate-500">On-Time Delivery</p>
+                            <p id="rep-kpi-ontime" class="text-2xl sm:text-[26px] font-bold tracking-tight text-blue-600 mt-1.5">0%</p>
                         </div>
                     </div>
 
                     <!-- Grafik Analitik -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                            <h4 class="text-sm font-bold text-slate-800 mb-1">Tren Input vs Penyelesaian Task</h4>
-                            <p class="text-[11px] text-slate-400 mb-3">Perbandingan jumlah task masuk dan task selesai per bulan</p>
+                            <h4 class="text-sm sm:text-[15px] font-bold text-slate-800 mb-0.5">Tren Input vs Penyelesaian Task</h4>
+                            <p class="text-xs text-slate-400 mb-3">Perbandingan jumlah task masuk dan task selesai per bulan</p>
                             <div class="h-64 relative">
                                 <canvas id="chart-report-trend"></canvas>
                             </div>
                         </div>
                         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                            <h4 class="text-sm font-bold text-slate-800 mb-1">Volume Pekerjaan per Kategori</h4>
-                            <p class="text-[11px] text-slate-400 mb-3">Sebaran total task berdasarkan kategori pekerjaan</p>
+                            <h4 class="text-sm sm:text-[15px] font-bold text-slate-800 mb-0.5">Volume Pekerjaan per Kategori</h4>
+                            <p class="text-xs text-slate-400 mb-3">Sebaran total task berdasarkan kategori pekerjaan</p>
                             <div class="h-64 relative">
                                 <canvas id="chart-report-category"></canvas>
                             </div>
@@ -826,13 +826,13 @@
                     <!-- Tabel Performa Detail per PIC -->
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                         <div class="px-5 py-4 border-b border-slate-100">
-                            <h4 class="text-sm font-bold text-slate-800">Rapor Kinerja &amp; Penyelesaian per PIC</h4>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Rekapitulasi produktivitas masing-masing anggota tim pada periode terpilih</p>
+                            <h4 class="text-sm sm:text-[15px] font-bold text-slate-800">Rapor Kinerja &amp; Penyelesaian per PIC</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">Rekapitulasi produktivitas masing-masing anggota tim pada periode terpilih</p>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
                                         <th class="sticky left-0 z-10 bg-slate-50 py-3 px-4 font-semibold">Nama PIC</th>
                                         <th class="py-3 px-4 font-semibold">Divisi</th>
                                         <th class="py-3 px-3 text-center font-semibold">Total</th>
@@ -843,8 +843,8 @@
                                         <th class="py-3 px-4 text-right font-semibold">Completion Rate</th>
                                     </tr>
                                 </thead>
-                                <tbody id="report-pic-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
-                                <tfoot id="report-pic-table-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-xs font-bold text-slate-800"></tfoot>
+                                <tbody id="report-pic-table-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
+                                <tfoot id="report-pic-table-foot" class="bg-slate-100/90 border-t-2 border-slate-200 text-[13px] font-bold text-slate-800"></tfoot>
                             </table>
                         </div>
                     </div>
@@ -853,44 +853,44 @@
                 <!-- ==================== VIEW 5: MASTER DATA ==================== -->
                 <section id="view-master" class="hidden space-y-3">
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                        <div class="border-b border-slate-200 px-3 sm:px-4 flex items-center gap-1 overflow-x-auto">
-                            <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
-                            <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Priority</button>
-                            <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">PIC &amp; User</button>
-                            <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Status</button>
-                            <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Reference</button>
-                            <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn py-2.5 px-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Action Plan</button>
+                        <div class="border-b border-slate-200 px-3 sm:px-4 flex items-center gap-1.5 overflow-x-auto">
+                            <button type="button" onclick="switchMasterTab('Kategori')" data-mtab="Kategori" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">Kategori</button>
+                            <button type="button" onclick="switchMasterTab('Priority')" data-mtab="Priority" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Priority</button>
+                            <button type="button" onclick="switchMasterTab('PIC')" data-mtab="PIC" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">PIC &amp; User</button>
+                            <button type="button" onclick="switchMasterTab('Status')" data-mtab="Status" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Status</button>
+                            <button type="button" onclick="switchMasterTab('Reference')" data-mtab="Reference" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Reference</button>
+                            <button type="button" onclick="switchMasterTab('ActionPlan')" data-mtab="ActionPlan" class="master-tab-btn py-3 px-3 text-[13px] font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Action Plan</button>
                         </div>
 
-                        <div class="p-3 sm:p-4 space-y-3">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="p-3.5 sm:p-4 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                 <div>
-                                    <h3 id="master-title" class="text-sm sm:text-base font-bold text-slate-800">Master Data: Kategori</h3>
-                                    <p id="master-desc" class="text-xs text-slate-500">Kelola daftar referensi kategori pekerjaan.</p>
+                                    <h3 id="master-title" class="text-sm sm:text-[15px] font-bold text-slate-800">Master Data: Kategori</h3>
+                                    <p id="master-desc" class="text-xs text-slate-500 mt-0.5">Kelola daftar referensi kategori pekerjaan.</p>
                                 </div>
-                                <button type="button" onclick="openMasterModal(-1)" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm shrink-0">
+                                <button type="button" onclick="openMasterModal(-1)" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-[13px] font-semibold rounded-xl shadow-sm shrink-0 transition-colors">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     <span id="master-add-btn-label">Tambah Kategori</span>
                                 </button>
                             </div>
 
-                            <div id="master-filter-grid" class="grid grid-cols-1 gap-2">
+                            <div id="master-filter-grid" class="grid grid-cols-1 gap-2.5">
                                 <div class="relative">
-                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                                    <input type="text" id="master-filter-search" oninput="onMasterSearchInput()" placeholder="Cari data master..." class="w-full text-base sm:text-sm border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="master-filter-search" oninput="onMasterSearchInput()" placeholder="Cari data master..." class="w-full text-base sm:text-[13px] border border-slate-300 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:border-indigo-500">
                                 </div>
-                                <select id="master-filter-role" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-role" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Role</option>
                                     <option value="Admin">Admin</option>
                                     <option value="Manager">Manager</option>
                                     <option value="Staff">Staff</option>
                                 </select>
-                                <select id="master-filter-completed" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-completed" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Status Completed</option>
                                     <option value="Yes">Yes (Completed)</option>
                                     <option value="No">No (In Progress)</option>
                                 </select>
-                                <select id="master-filter-group" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-sm border border-slate-300 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:border-indigo-500">
+                                <select id="master-filter-group" onchange="renderMasterTable()" class="hidden w-full text-base sm:text-[13px] border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="">Semua Group</option>
                                 </select>
                             </div>
@@ -899,12 +899,12 @@
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left border-collapse">
                                         <thead>
-                                            <tr id="master-table-head" class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500"></tr>
+                                            <tr id="master-table-head" class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500"></tr>
                                         </thead>
-                                        <tbody id="master-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                                        <tbody id="master-table-body" class="divide-y divide-slate-100 text-[13px]"></tbody>
                                     </table>
                                 </div>
-                                <div class="px-3 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
+                                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-xs sm:text-[13px] text-slate-500">
                                     Total ditampilkan: <strong id="master-count-label" class="text-slate-700">0</strong> item
                                 </div>
                             </div>
@@ -1022,7 +1022,7 @@
 
         // Parameter Default URL Google Apps Script Web App
         const APP_DEFAULT_CONFIG = {
-            APP_VERSION: 'v1.2.9',
+            APP_VERSION: 'v1.2.10',
             DEFAULT_GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz88a9DVKQRQt1lqPHOi7JWdUUV5rGNQTSJgPfFeob6uHoit33T7qDry-ajS0pNw0NTmQ/exec',
             SESSION_TTL_MS: 6 * 60 * 60 * 1000
         };
@@ -2063,7 +2063,7 @@
             const filteredPics = pics.filter(p => !selectedDiv || isSameText(p.Divisi, selectedDiv));
 
             if (filteredPics.length === 0) {
-                gridEl.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-400">Belum ada data anggota tim (PIC) yang tersedia.</div>`;
+                gridEl.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-slate-200 text-center text-[13px] text-slate-400">Belum ada data anggota tim (PIC) yang tersedia.</div>`;
                 return;
             }
 
@@ -2082,8 +2082,8 @@
                                     ${escapeHtml(getPicInitial(pic))}
                                 </div>
                                 <div class="min-w-0">
-                                    <h4 class="text-sm font-bold text-slate-800 group-hover:text-indigo-600 truncate transition-colors">${escapeHtml(pic.Nama)}</h4>
-                                    <p class="text-[11px] text-slate-500 truncate">${escapeHtml(pic.Divisi || '-')} • <span class="font-semibold text-slate-600">${escapeHtml(pic.Role || 'Staff')}</span></p>
+                                    <h4 class="text-sm sm:text-[15px] font-bold text-slate-800 group-hover:text-indigo-600 truncate transition-colors">${escapeHtml(pic.Nama)}</h4>
+                                    <p class="text-xs text-slate-500 truncate mt-0.5">${escapeHtml(pic.Divisi || '-')} • <span class="font-semibold text-slate-600">${escapeHtml(pic.Role || 'Staff')}</span></p>
                                 </div>
                             </div>
                             <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold shrink-0">${pStat.total} Task</span>
@@ -2091,21 +2091,21 @@
 
                         <div class="grid grid-cols-3 gap-2 pt-1">
                             <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
-                                <p class="text-base font-bold text-emerald-700">${pStat.done}</p>
-                                <p class="text-[10px] font-semibold text-emerald-600">Selesai</p>
+                                <p class="text-base sm:text-lg font-bold text-emerald-700">${pStat.done}</p>
+                                <p class="text-[11px] font-semibold text-emerald-600">Selesai</p>
                             </div>
                             <div class="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-center">
-                                <p class="text-base font-bold text-blue-700">${pStat.inProgress}</p>
-                                <p class="text-[10px] font-semibold text-blue-600">Berjalan</p>
+                                <p class="text-base sm:text-lg font-bold text-blue-700">${pStat.inProgress}</p>
+                                <p class="text-[11px] font-semibold text-blue-600">Berjalan</p>
                             </div>
                             <div class="p-2.5 rounded-xl bg-rose-50/70 border border-rose-100 text-center">
-                                <p class="text-base font-bold text-rose-700">${pStat.overdue}</p>
-                                <p class="text-[10px] font-semibold text-rose-600">Overdue</p>
+                                <p class="text-base sm:text-lg font-bold text-rose-700">${pStat.overdue}</p>
+                                <p class="text-[11px] font-semibold text-rose-600">Overdue</p>
                             </div>
                         </div>
 
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between text-[11px]">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-xs">
                                 <span class="text-slate-500 font-medium">Rata-rata Progres</span>
                                 <span class="font-bold text-indigo-600">${avgProg}%</span>
                             </div>
@@ -2114,12 +2114,12 @@
                             </div>
                         </div>
 
-                        <div class="pt-2 border-t border-slate-100 space-y-1.5">
-                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Task Aktif Teratas</p>
+                        <div class="pt-2.5 border-t border-slate-100 space-y-1.5">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Task Aktif Teratas</p>
                             ${pStat.activeTasks.length === 0
-                                ? `<p class="text-[11px] text-slate-400 italic">Tidak ada task aktif saat ini.</p>`
+                                ? `<p class="text-xs text-slate-400 italic">Tidak ada task aktif saat ini.</p>`
                                 : pStat.activeTasks.map(t => `
-                                    <div class="flex items-center justify-between gap-2 text-[11px]">
+                                    <div class="flex items-center justify-between gap-2 text-xs">
                                         <span class="text-slate-700 truncate">${escapeHtml(t.Task)}</span>
                                         <span class="font-semibold text-slate-500 shrink-0">${Number(t.Progress || 0)}%</span>
                                     </div>
@@ -2127,7 +2127,7 @@
                         </div>
                     </div>
 
-                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-indigo-600">
+                    <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-indigo-600">
                         <span>Lihat Semua Pekerjaan</span>
                         <span>&rarr;</span>
                     </div>
@@ -2210,7 +2210,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 12 } } } },
                         scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
                     }
                 });
@@ -2256,7 +2256,7 @@
                 ].filter(Boolean)));
 
                 if (picNames.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400">Belum ada data PIC.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-[13px] text-slate-400">Belum ada data PIC.</td></tr>`;
                     if (tfoot) tfoot.innerHTML = '';
                 } else {
                     let sumTotal = 0;
@@ -2280,15 +2280,15 @@
                         sumAllProgressVal += pStat.progSum;
 
                         return `<tr class="hover:bg-slate-50">
-                            <td class="sticky left-0 z-10 bg-white py-3 px-4 font-bold text-slate-800 whitespace-nowrap border-r border-slate-100">${escapeHtml(picName)}</td>
-                            <td class="py-3 px-4 text-slate-500 whitespace-nowrap">${escapeHtml(picObj?.Divisi || '-')}</td>
+                            <td class="sticky left-0 z-10 bg-white py-3 px-4 font-semibold text-slate-800 whitespace-nowrap border-r border-slate-100">${escapeHtml(picName)}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">${escapeHtml(picObj?.Divisi || '-')}</td>
                             <td class="py-3 px-3 text-center font-bold text-slate-800">${pStat.total}</td>
                             <td class="py-3 px-3 text-center font-semibold text-emerald-600">${pStat.done}</td>
                             <td class="py-3 px-3 text-center font-semibold text-blue-600">${pStat.inProgress}</td>
                             <td class="py-3 px-3 text-center font-semibold text-rose-600">${pStat.overdue}</td>
                             <td class="py-3 px-3 text-center font-semibold text-slate-700">${pAvg}%</td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
-                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${pRate >= 80 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${pRate}%</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${pRate >= 80 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${pRate}%</span>
                             </td>
                         </tr>`;
                     }).join('');
@@ -2298,14 +2298,14 @@
                         const grandRate = sumTotal ? Math.round((sumDone / sumTotal) * 100) : 0;
                         tfoot.innerHTML = `<tr>
                             <td class="sticky left-0 z-10 bg-slate-100 py-3 px-4 font-extrabold text-slate-900 whitespace-nowrap border-r border-slate-200">TOTAL KESELURUHAN</td>
-                            <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${picNames.length} PIC</td>
+                            <td class="py-3 px-4 text-xs text-slate-500 font-medium whitespace-nowrap">${picNames.length} PIC</td>
                             <td class="py-3 px-3 text-center font-extrabold text-slate-900">${sumTotal}</td>
                             <td class="py-3 px-3 text-center font-extrabold text-emerald-700">${sumDone}</td>
                             <td class="py-3 px-3 text-center font-extrabold text-blue-700">${sumProg}</td>
                             <td class="py-3 px-3 text-center font-extrabold text-rose-700">${sumOver}</td>
                             <td class="py-3 px-3 text-center font-extrabold text-slate-800">${grandAvg}%</td>
                             <td class="py-3 px-4 text-right whitespace-nowrap">
-                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-100 text-indigo-800">${grandRate}%</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-100 text-indigo-800">${grandRate}%</span>
                             </td>
                         </tr>`;
                     }
@@ -2500,7 +2500,7 @@
                             }
                         },
                         plugins: {
-                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 12 } } },
                             tooltip: {
                                 mode: 'index',
                                 intersect: false,
@@ -2574,7 +2574,7 @@
                                 position: 'bottom',
                                 labels: {
                                     boxWidth: 10,
-                                    font: { size: 11 },
+                                    font: { size: 12 },
                                     generateLabels: chart => {
                                         const ds = chart.data.datasets[0];
                                         return chart.data.labels.map((lbl, i) => ({
@@ -2698,7 +2698,7 @@
                 if (rekapCountEl) rekapCountEl.textContent = `${categoryRows.length} Kategori`;
 
                 if (categoryRows.length === 0) {
-                    rekapBody.innerHTML = `<tr><td colspan="${statusList.length + 3}" class="py-6 text-center text-slate-400">Tidak ada data kategori yang sesuai dengan filter.</td></tr>`;
+                    rekapBody.innerHTML = `<tr><td colspan="${statusList.length + 3}" class="py-6 text-center text-[13px] text-slate-400">Tidak ada data kategori yang sesuai dengan filter.</td></tr>`;
                     if (rekapFoot) rekapFoot.innerHTML = '';
                 } else {
                     rekapBody.innerHTML = categoryRows.map(({ cat, cStat, total: rowTotal, done: rowDone, pct }) => {
@@ -2712,7 +2712,7 @@
                                 ? `background-color:${hexToRgba(st.Warna, 0.14)};color:${normalizeHexColor(st.Warna, '#334155')};`
                                 : '';
                             return `<td class="py-2.5 px-3 text-center">
-                                <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(cat)}|||${escapeHtml(st.Nama)}" style="${badgeStyle}" class="min-w-[28px] px-2 py-0.5 rounded-md font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
+                                <button type="button" data-drill-mode="kategori_status" data-drill-value="${escapeHtml(cat)}|||${escapeHtml(st.Nama)}" style="${badgeStyle}" class="min-w-[30px] px-2.5 py-0.5 rounded-md text-xs font-bold ${cnt > 0 ? 'hover:opacity-80' : 'text-slate-300'}">${cnt}</button>
                             </td>`;
                         }).join('');
 
@@ -2731,7 +2731,7 @@
                         const totalStatusCells = statusList.map((st, sIdx) => {
                             const cnt = statusTotals[sIdx];
                             return `<td class="py-3 px-3 text-center">
-                                <button type="button" data-drill-mode="status" data-drill-value="${escapeHtml(st.Nama)}" class="min-w-[28px] px-2 py-0.5 rounded-md font-extrabold text-slate-800 hover:bg-slate-200/70">${cnt}</button>
+                                <button type="button" data-drill-mode="status" data-drill-value="${escapeHtml(st.Nama)}" class="min-w-[30px] px-2.5 py-0.5 rounded-md text-xs font-extrabold text-slate-800 hover:bg-slate-200/70">${cnt}</button>
                             </td>`;
                         }).join('');
 
@@ -2769,8 +2769,8 @@
                             <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
                                 <i data-lucide="check-check" class="w-5 h-5"></i>
                             </div>
-                            <p class="text-xs font-semibold text-slate-700">Semua pekerjaan terkendali</p>
-                            <p class="text-[11px] text-slate-400">Tidak ada task overdue atau mendesak saat ini.</p>
+                            <p class="text-[13px] font-semibold text-slate-700">Semua pekerjaan terkendali</p>
+                            <p class="text-xs text-slate-400">Tidak ada task overdue atau mendesak saat ini.</p>
                         </div>`;
                 } else {
                     actionListEl.innerHTML = urgentList.slice(0, 12).map(t => {
@@ -2782,10 +2782,10 @@
                         const badgeLabel = isOver ? 'Overdue' : (target && target <= threeDaysAhead ? 'Due Soon' : t.Priority);
 
                         return `
-                        <div data-edit-task-id="${escapeHtml(t.ID)}" role="button" tabindex="0" class="p-3 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-start justify-between gap-3">
+                        <div data-edit-task-id="${escapeHtml(t.ID)}" role="button" tabindex="0" class="p-3.5 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-start justify-between gap-3">
                             <div class="min-w-0 space-y-1">
-                                <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(t.Task)}</p>
-                                <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                <p class="text-[13px] font-semibold text-slate-800 truncate">${escapeHtml(t.Task)}</p>
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                                     <span class="font-semibold text-indigo-600">${escapeHtml(t.PIC || '-')}</span>
                                     <span>•</span>
                                     <span>Target: ${formatDateDisplay(t.TargetDate)}</span>
@@ -2793,7 +2793,7 @@
                                     <span>${Number(t.Progress || 0)}%</span>
                                 </div>
                             </div>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border shrink-0 ${badgeClass}">${escapeHtml(badgeLabel)}</span>
                         </div>`;
                     }).join('');
                 }
@@ -2989,9 +2989,9 @@
 
             if (pageItems.length === 0) {
                 const emptyMsg = 'Tidak ada pekerjaan yang sesuai dengan filter saat ini.';
-                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400">${emptyMsg}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-[13px] text-slate-400">${emptyMsg}</td></tr>`;
                 if (mobileCardsEl) {
-                    mobileCardsEl.innerHTML = `<div class="py-10 px-4 text-center text-xs text-slate-400">${emptyMsg}</div>`;
+                    mobileCardsEl.innerHTML = `<div class="py-10 px-4 text-center text-[13px] text-slate-400">${emptyMsg}</div>`;
                 }
             } else {
                 const preparedRows = pageItems.map(t => {
@@ -3010,10 +3010,10 @@
 
                     const subParts = [t.Kategori, t.Catatan].filter(Boolean).map(v => escapeHtml(v));
                     const refBadge = t.Reference
-                        ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-medium">Ref: ${escapeHtml(t.Reference)}</span>`
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[11px] font-medium">Ref: ${escapeHtml(t.Reference)}</span>`
                         : '';
                     const actBadge = t.ActionPlan
-                        ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[10px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 text-[11px] font-medium">Plan: ${escapeHtml(t.ActionPlan)}</span>`
                         : '';
 
                     return { t, stHex, over, prog, prioBadge, subParts, refBadge, actBadge };
@@ -3021,37 +3021,37 @@
 
                 tbody.innerHTML = preparedRows.map(({ t, stHex, over, prog, prioBadge, subParts, refBadge, actBadge }) => {
                     return `<tr class="hover:bg-slate-50/90 transition-colors">
-                        <td class="py-3 px-4 font-mono text-[11px] font-semibold text-slate-500 whitespace-nowrap">${escapeHtml(t.ID)}</td>
-                        <td class="py-3 px-4 min-w-[240px]">
-                            <p class="font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">${subParts.join(' • ') || '-'}</p>
-                            ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5 mt-1">${refBadge}${actBadge}</div>` : ''}
+                        <td class="py-3.5 px-4 font-mono text-xs font-semibold text-slate-500 whitespace-nowrap">${escapeHtml(t.ID)}</td>
+                        <td class="py-3.5 px-4 min-w-[240px]">
+                            <p class="text-[13px] font-semibold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
+                            <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${subParts.join(' • ') || '-'}</p>
+                            ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5 mt-1.5">${refBadge}${actBadge}</div>` : ''}
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
+                        <td class="py-3.5 px-4 whitespace-nowrap">
                             <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
+                        <td class="py-3.5 px-4 whitespace-nowrap">
                             <div class="inline-flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
-                                <span class="font-medium text-slate-700">${escapeHtml(t.PIC || '-')}</span>
+                                <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
+                                <span class="text-[13px] font-medium text-slate-700">${escapeHtml(t.PIC || '-')}</span>
                             </div>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="font-medium ${over ? 'text-rose-600 font-bold' : 'text-slate-600'}">${formatDateDisplay(t.TargetDate)}</span>
-                            ${over ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-bold">Overdue</span>' : ''}
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="text-[13px] font-medium ${over ? 'text-rose-600 font-bold' : 'text-slate-600'}">${formatDateDisplay(t.TargetDate)}</span>
+                            ${over ? '<span class="ml-1.5 px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Overdue</span>' : ''}
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
+                        <td class="py-3.5 px-4 whitespace-nowrap">
                             <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-1 rounded-full text-[11px] font-bold border">${escapeHtml(t.Status || '-')}</span>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
+                        <td class="py-3.5 px-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                     <div class="h-full bg-indigo-600 rounded-full" style="width:${prog}%"></div>
                                 </div>
-                                <span class="font-bold text-slate-700 text-[11px]">${prog}%</span>
+                                <span class="font-semibold text-slate-700 text-xs">${prog}%</span>
                             </div>
                         </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
                             <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" title="Edit Task" class="p-2.5 lg:p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
                                 <i data-lucide="pencil" class="w-4 h-4 lg:w-3.5 lg:h-3.5 pointer-events-none"></i>
                             </button>
@@ -3066,39 +3066,39 @@
                     mobileCardsEl.innerHTML = preparedRows.map(({ t, stHex, over, prog, prioBadge, subParts, refBadge, actBadge }) => {
                         return `<div class="p-4 space-y-3 hover:bg-slate-50/80 transition-colors">
                             <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-1.5 min-w-0">
-                                    <span class="font-mono text-[11px] font-semibold text-slate-400 shrink-0">${escapeHtml(t.ID)}</span>
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="font-mono text-xs font-semibold text-slate-400 shrink-0">${escapeHtml(t.ID)}</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border shrink-0 ${prioBadge}">${escapeHtml(t.Priority || '-')}</span>
                                 </div>
-                                <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0">${escapeHtml(t.Status || '-')}</span>
+                                <span style="background-color:${hexToRgba(stHex, 0.14)};color:${stHex};border-color:${hexToRgba(stHex, 0.35)};" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0">${escapeHtml(t.Status || '-')}</span>
                             </div>
 
                             <div>
                                 <p class="text-sm font-bold text-slate-800 leading-snug">${escapeHtml(t.Task)}</p>
-                                <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">${subParts.join(' • ') || '-'}</p>
+                                <p class="text-xs text-slate-500 mt-1 line-clamp-2">${subParts.join(' • ') || '-'}</p>
                                 ${(refBadge || actBadge) ? `<div class="flex flex-wrap items-center gap-1.5 mt-1.5">${refBadge}${actBadge}</div>` : ''}
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 pt-1">
                                 <div class="inline-flex items-center gap-2 min-w-0">
-                                    <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
+                                    <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold flex items-center justify-center shrink-0">${escapeHtml(getPicInitial(t.PIC))}</span>
                                     <span class="font-medium text-slate-700 truncate">${escapeHtml(t.PIC || '-')}</span>
                                 </div>
                                 <div class="inline-flex items-center gap-1.5 shrink-0">
                                     <span class="text-slate-400">Target:</span>
                                     <span class="font-semibold ${over ? 'text-rose-600' : 'text-slate-700'}">${formatDateDisplay(t.TargetDate)}</span>
-                                    ${over ? '<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-bold">Overdue</span>' : ''}
+                                    ${over ? '<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Overdue</span>' : ''}
                                 </div>
                             </div>
 
-                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                            <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-2.5 flex-1">
                                     <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                                         <div class="h-full bg-indigo-600 rounded-full" style="width:${prog}%"></div>
                                     </div>
                                     <span class="font-bold text-slate-700 text-xs shrink-0">${prog}%</span>
                                 </div>
-                                <div class="flex items-center gap-1 shrink-0">
+                                <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button" data-edit-task-id="${escapeHtml(t.ID)}" aria-label="Edit Task" class="p-2.5 rounded-xl text-slate-600 bg-slate-100 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
                                         <i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i>
                                     </button>
@@ -3405,7 +3405,7 @@
             }
             if (grid) {
                 const hasSubFilter = ['PIC', 'Status', 'Kategori'].includes(tabName);
-                grid.className = hasSubFilter ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : 'grid grid-cols-1 gap-2';
+                grid.className = hasSubFilter ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' : 'grid grid-cols-1 gap-2.5';
             }
 
             renderMasterTable();
@@ -3451,41 +3451,41 @@
             }
 
             if (indexed.length === 0) {
-                bodyEl.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Belum ada data pada tabel ${escapeHtml(currentMasterTab)}.</td></tr>`;
+                bodyEl.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-[13px] text-slate-400">Belum ada data pada tabel ${escapeHtml(currentMasterTab)}.</td></tr>`;
                 return;
             }
 
             bodyEl.innerHTML = indexed.map(({ item, idx }) => {
                 const actions = `
-                    <td class="py-2.5 px-4 text-right whitespace-nowrap">
+                    <td class="py-3 px-4 text-right whitespace-nowrap">
                         <button type="button" data-master-edit-idx="${idx}" title="Edit Item" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i></button>
                         <button type="button" data-master-delete-idx="${idx}" title="Hapus Item" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"><i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i></button>
                     </td>`;
 
                 if (currentMasterTab === 'Kategori') {
                     return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">${escapeHtml(item.Group || '-')}</span></td>
-                        <td class="py-2.5 px-4 text-slate-500">${escapeHtml(item.Keterangan || '-')}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode || '-')}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.Nama)}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-medium">${escapeHtml(item.Group || '-')}</span></td>
+                        <td class="py-3 px-4 text-xs text-slate-500">${escapeHtml(item.Keterangan || '-')}</td>
                         ${actions}
                     </tr>`;
                 }
                 if (currentMasterTab === 'Priority') {
                     return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.SLA_Hari || '0')} Hari</td>
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode || '-')}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.Nama)}</td>
+                        <td class="py-3 px-4 text-slate-600">${escapeHtml(item.SLA_Hari || '0')} Hari</td>
                         ${actions}
                     </tr>`;
                 }
                 if (currentMasterTab === 'PIC') {
                     return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)} <span class="ml-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px]">${escapeHtml(getPicInitial(item))}</span></td>
-                        <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.Divisi || '-')}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">${escapeHtml(item.Role || 'Staff')}</span></td>
-                        <td class="py-2.5 px-4 font-mono text-slate-600">${escapeHtml(item.Username || '-')}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode || '-')}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.Nama)} <span class="ml-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[11px] font-bold">${escapeHtml(getPicInitial(item))}</span></td>
+                        <td class="py-3 px-4 text-slate-600">${escapeHtml(item.Divisi || '-')}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-semibold">${escapeHtml(item.Role || 'Staff')}</span></td>
+                        <td class="py-3 px-4 font-mono text-xs text-slate-600">${escapeHtml(item.Username || '-')}</td>
                         ${actions}
                     </tr>`;
                 }
@@ -3493,18 +3493,18 @@
                     const hex = normalizeHexColor(item.Warna, '#64748B');
                     const isYes = normalizeCompletedFlag(item.Completed) === 'Yes';
                     return `<tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                        <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                        <td class="py-2.5 px-4 font-mono"><span class="inline-block w-3 h-3 rounded-full mr-1.5 align-middle" style="background:${hex}"></span>${hex}</td>
-                        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded font-bold ${isYes ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${isYes ? 'Yes' : 'No'}</span></td>
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode || '-')}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.Nama)}</td>
+                        <td class="py-3 px-4 font-mono text-xs"><span class="inline-block w-3 h-3 rounded-full mr-1.5 align-middle" style="background:${hex}"></span>${hex}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold ${isYes ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${isYes ? 'Yes' : 'No'}</span></td>
                         ${actions}
                     </tr>`;
                 }
                 const extraVal = currentMasterTab === 'Reference' ? item.Keterangan : item.KategoriTerkait;
                 return `<tr class="hover:bg-slate-50">
-                    <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.Kode || '-')}</td>
-                    <td class="py-2.5 px-4 font-bold text-slate-800">${escapeHtml(item.Nama)}</td>
-                    <td class="py-2.5 px-4 text-slate-500">${escapeHtml(extraVal || '-')}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">${escapeHtml(item.Kode || '-')}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.Nama)}</td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${escapeHtml(extraVal || '-')}</td>
                     ${actions}
                 </tr>`;
             }).join('');
@@ -3795,7 +3795,7 @@
                 info: 'bg-slate-800 text-white'
             };
             const el = document.createElement('div');
-            el.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 fade-in ${colorMap[type] || colorMap.info}`;
+            el.className = `px-4 py-3 rounded-xl shadow-lg text-xs sm:text-[13px] font-semibold flex items-center gap-2 fade-in ${colorMap[type] || colorMap.info}`;
             el.textContent = message;
             container.appendChild(el);
             setTimeout(() => {
